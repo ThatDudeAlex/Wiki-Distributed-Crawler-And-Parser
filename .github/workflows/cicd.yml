@@ -1,0 +1,21 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Ruff linter
+        run: |
+          pip install ruff
+          ruff .
+
+      - name: Check docker-compose syntax
+        run: docker compose config
+        
