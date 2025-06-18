@@ -14,7 +14,7 @@ jobs:
       - name: Run Ruff linter
         run: |
           pip install ruff
-          ruff .
+          ruff check .
 
       - name: Check docker-compose syntax
         run: docker compose config
