@@ -7,6 +7,12 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    env:
+      RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
+      RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB}}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD}}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,6 +27,12 @@ jobs:
   
   test:
     runs-on: ubuntu-latest
+    env:
+      RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
+      RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB}}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD}}
     needs: lint
     steps:
       - name: Checkout code
