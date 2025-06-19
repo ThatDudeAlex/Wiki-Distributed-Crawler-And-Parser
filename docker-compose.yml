@@ -1,39 +1,39 @@
 services:
-  rabbitmq_crawler:
-    image: rabbitmq:3-management
-    restart: unless-stopped
-    ports:
-      - "15672:15672"
-      - "5672:5672"
-    environment:
-      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}"
-      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
+  # rabbitmq_crawler:
+  #   image: rabbitmq:3-management
+  #   restart: unless-stopped
+  #   ports:
+  #     - "15672:15672"
+  #     - "5672:5672"
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}"
+  #     RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
 
-  rabbitmq_parser:
-    image: rabbitmq:3-management
-    restart: unless-stopped
-    ports:
-      - "15673:15672"
-      - "5673:5672"
-    environment:
-      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}"
-      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
+  # rabbitmq_parser:
+  #   image: rabbitmq:3-management
+  #   restart: unless-stopped
+  #   ports:
+  #     - "15673:15672"
+  #     - "5673:5672"
+  #   environment:
+  #     RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}"
+  #     RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
 
-  redis_visited:
-    image: redis:alpine
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
+  # redis_visited:
+  #   image: redis:alpine
+  #   restart: unless-stopped
+  #   ports:
+  #     - "6379:6379"
 
-  redis_enqueued:
-    image: redis:alpine
-    restart: unless-stopped
-    ports:
-      - "6380:6379"
+  # redis_enqueued:
+  #   image: redis:alpine
+  #   restart: unless-stopped
+  #   ports:
+  #     - "6380:6379"
 
   postgres:
     image: postgres:16
-    container_name: db_distributed_crawler
+    container_name: crawler_db
     restart: unless-stopped
     environment:
       POSTGRES_DB: "${POSTGRES_DB}"
@@ -41,10 +41,17 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./db-init:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
 
+  db_init:
+    container_name: db_init
+    build:
+      context: ./db_init
+    depends_on:
+      - postgres
+    env_file: .env
+    command: [ "python", "db_init.py" ]
   # prometheus:
   #   image: prom/prometheus
   #   restart: unless-stopped
@@ -53,14 +60,13 @@ services:
   #   ports:
   #     - "9090:9090"
 
-  grafana:
-    image: grafana/grafana
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
+  # grafana:
+  #   image: grafana/grafana
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
 
 volumes:
-  pg_data:
-  grafana_data:
+  pg_data: # grafana_data:
