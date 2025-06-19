@@ -50,7 +50,7 @@ services:
       context: ./db_init
     depends_on:
       - postgres
-    env_file: .env
+    # env_file: .env # Only used in local dev
     command: [ "python", "db_init.py" ]
   # prometheus:
   #   image: prom/prometheus
