@@ -13,13 +13,14 @@ BASE_HEADERS = {
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36'
 }
 
-# Wikimedia namespaces
+# Wikimedia namespaces & home page
 EXCLUDED_PREFIXES = [
     "/wiki/Special:",
     "/wiki/Help:",
     "/wiki/Portal:",
     "/wiki/File:",
     "/wiki/Template:",
+    "/wiki/Template_talk:",
     "/wiki/Wikipedia:",
     "/wiki/Talk:",
     "/wiki/Category:",

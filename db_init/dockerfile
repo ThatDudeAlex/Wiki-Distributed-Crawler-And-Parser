@@ -2,9 +2,14 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# shared code
+COPY requirements-common.txt  ./requirements-common.txt
+COPY db_models/   ./db_models/
+COPY db/          ./db/
 
-COPY . .  
+# service-specific code
+COPY db_init/     ./db_init/
 
-CMD ["python", "db_init.py"]
+RUN pip install --no-cache-dir -r db_init/requirements.txt
+
+CMD ["python", "-m", "db_init.db_init"]

@@ -6,6 +6,7 @@ import pika
 import redis
 import requests
 import json
+import hashlib
 import urllib.robotparser
 from utilities import utils
 from bs4 import BeautifulSoup
@@ -13,6 +14,8 @@ from dotenv import load_dotenv
 from pika.exceptions import AMQPConnectionError
 from ratelimit import limits, sleep_and_retry
 from .init_logging import setup_logging
+from db.engine import SessionLocal
+from db_models.models import Page, Link, CrawlStatus
 from config import (SEED_URL, ROBOTS_TXT, BASE_HEADERS, MAX_DEPTH,
                     R_VISITED, R_ENQUEUED, CRAWL_QNAME, PARSE_QNAME)
 
@@ -37,8 +40,11 @@ class WebCrawler:
         self.rp = urllib.robotparser.RobotFileParser()
         self._setup_robot_text()
 
+        # database setup
+        self.db = SessionLocal()
+
         # TODO: move into the database
-        self.count = 0  # number of urls navigated to
+        # self.count = 0  # number of urls navigated to
         self.skipped = 0  # number of urls skipped
 
         self._add_to_crawl_queue((SEED_URL, 0))
@@ -116,7 +122,7 @@ class WebCrawler:
             self.logger.error(
                 f"Error establishing a connection to RabbitMQ: {e}")
 
-    def _wait_for_rabbit(self, max_retries=20, delay=5):
+    def _wait_for_rabbit(self, max_retries=10, delay=10):
         for attempt in range(max_retries):
             try:
                 creds = pika.PlainCredentials(
@@ -149,10 +155,10 @@ class WebCrawler:
         return True
 
     """" === Crawling Methods === """
-    # TODO: Implement adding data to the DB
 
+    # TODO: Implement adding data to the DB
     def _crawl_pages(self, url, depth):
-        self._current_status_report(depth)
+        # self._current_status_report(depth)
 
         if not self.robot_allows_crawling(url) or depth > MAX_DEPTH:
             self.logger.warning(f"Robot prevents crawling into: {url}")
@@ -174,24 +180,18 @@ class WebCrawler:
             self.skipped += 1
             return
 
-        self.logger.info(f"Crawled URL: {url}")
+        # self.logger.info(f"Crawled URL: {url}")
+
+        page_id = self.save_page(
+            url, CrawlStatus.CRAWLED_SUCCESS, response.status_code)
 
         # Add links to queue
-        self.add_links_to_queue(0, links, depth)
-        # self.add_links_to_queue(page_id, links, depth)
-
-        # TODO: get hash of url
+        self.add_links_to_queue(page_id, links, depth)
 
         # TODO: download compressed html content
 
-        # TODO: add page to db
-        # Add Page into db: page_id = add(url, url_hash)
-
         # TODO: cleanup
-        # Add page to visited set: visited_set.add(url)
         self.redis.sadd(R_VISITED, url)
-
-        self.count += 1
 
     @sleep_and_retry
     @limits(calls=1, period=1)  # 1 request per second
@@ -220,10 +220,13 @@ class WebCrawler:
             for link in links:
                 to_url = link.get('href')
 
-                if self.is_excluded(to_url):
+                if not to_url:
                     continue
 
                 normalized_url = utils.normalize_url(to_url)
+
+                if self.is_excluded(to_url):
+                    continue
 
                 # TODO: Add url into queue and enqueued set
                 if self.is_queueable(normalized_url):
@@ -234,6 +237,8 @@ class WebCrawler:
                     # enqueued_set.add(normalized_to_url)
 
                     # TODO: add normalized URL to the DB
+                    is_internal = not utils.is_external_link(normalized_url)
+                    self.save_link(page_id, normalized_url, is_internal)
                     # DB.add_link(page_id, normalized_to_url)
         except Exception as e:
             self.logger.error(f"Enqueue error adding link : {str(e)}")
@@ -241,7 +246,7 @@ class WebCrawler:
     def is_excluded(self, to_url):
         # ignore external urls and link tags with no href
         if (
-            to_url is None or
+            utils.is_home_page(to_url) or
             utils.is_external_link(to_url) or
             utils.has_excluded_prefix(to_url)
         ):
@@ -257,6 +262,40 @@ class WebCrawler:
             return False
         return True
 
+    """" === DB Methods === """
+
+    def save_page(self, url, crawl_status=CrawlStatus.PENDING, status_code=200):
+        page = Page(
+            url=url,
+            url_hash=self._hash_url(url),
+            last_crawl_status=crawl_status,
+            http_status_code=status_code
+        )
+        self.db.add(page)
+        self.db.commit()
+        return page.id
+
+    def save_link(self, page_id, target_url, is_internal=False):
+        link = Link(
+            source_page_id=page_id,
+            target_url=target_url,
+            is_internal=is_internal
+        )
+        self.db.add(link)
+        self.db.commit()
+
+    def _hash_url(self, url):
+        # Create a SHA-256 hash object
+        hash_object = hashlib.sha256()
+
+        # Update the hash object with the bytes of the url string
+        hash_object.update(url.encode())
+
+        # return the hexadecimal representation of the hash
+        return hash_object.hexdigest()
+
+    """" === Temp Dev Logging Methods === """
+
     # TODO: pull this into the python-utility package
     def clear_terminal(self):
         if platform.system() == "Windows":
@@ -264,11 +303,11 @@ class WebCrawler:
         else:
             os.system("clear")
 
-    def _current_status_report(self, depth):
-        self.clear_terminal()
-        self.logger.info(f"Pages Crawled :  {self.count}")
-        self.logger.info(f"Pages Skipped :  {self.skipped}")
-        self.logger.info(f"Current Depth :  {depth}\n")
+    # def _current_status_report(self, depth):
+    #     self.clear_terminal()
+    #     # self.logger.info(f"Pages Crawled :  {self.count}")
+    #     self.logger.info(f"Pages Skipped :  {self.skipped}")
+    #     self.logger.info(f"Current Depth :  {depth}\n")
 
 
 if __name__ == "__main__":

@@ -16,7 +16,6 @@ def normalize_url(href: str) -> str:
 
 
 def is_external_link(href):
-    '''Need to go over how the return works more in depth'''
     parsed = urlparse(href)
     return parsed.scheme in ["http", "https"] and "wikipedia.org" not in parsed.netloc
 
@@ -30,3 +29,8 @@ def has_excluded_prefix(href):
         if path.startswith(prefix):
             return True
     return False
+
+
+def is_home_page(href):
+    parsed = urlparse(href)
+    return parsed.path.strip("/") == "" and parsed.netloc in ["", "en.wikipedia.org"]
