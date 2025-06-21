@@ -1,10 +1,11 @@
+WIKI_BASE = "https://en.wikipedia.org"
+
 SEED_URL = 'https://en.wikipedia.org/wiki/Computer_science'
 
 MAX_DEPTH = 3
 
 ROBOTS_TXT = 'https://en.wikipedia.org/robots.txt'
 
-WIKI_BASE = "https://en.wikipedia.org"
 
 BASE_HEADERS = {
     'accept': 'text/html',
@@ -28,3 +29,15 @@ EXCLUDED_PREFIXES = [
     "/wiki/Project:",
     "/wiki/Main_Page",
 ]
+
+# Redis sets
+R_VISITED = "visited"
+R_ENQUEUED = "enqueued"
+
+# RabbitMQ queues
+CRAWL_QNAME = 'crawler'
+PARSE_QNAME = 'parser'
+# RABIT_CREDS = pika.PlainCredentials(
+#     os.environ["RABBITMQ_USER"],
+#     os.environ["RABBITMQ_PASSWORD"],
+# )

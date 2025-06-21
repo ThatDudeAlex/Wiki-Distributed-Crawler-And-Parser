@@ -2,24 +2,145 @@
 import os
 import platform
 import time
+import pika
+import redis
 import requests
-import logging
+import json
 import urllib.robotparser
 from utilities import utils
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+from pika.exceptions import AMQPConnectionError
 from ratelimit import limits, sleep_and_retry
 from .init_logging import setup_logging
-from config import SEED_URL, ROBOTS_TXT, BASE_HEADERS, MAX_DEPTH
+from config import (SEED_URL, ROBOTS_TXT, BASE_HEADERS, MAX_DEPTH,
+                    R_VISITED, R_ENQUEUED, CRAWL_QNAME, PARSE_QNAME)
 
 
 class WebCrawler:
-    def __init__(self, logger: logging.Logger):
-        self.is_running = False
-        self.logger = logger
+    def __init__(self):
+        load_dotenv()
+        self.logger = setup_logging(
+            os.getenv('CRAWL_LOGS', 'logs/crawler.log')
+        )
+        # rabbitMQ setup
+        self.crawl_queue_name = CRAWL_QNAME
+        self.parse_queue_name = PARSE_QNAME
+        self._wait_for_rabbit()
+        self._setup_rabbit_connection()
+
+        # redis setup
+        self.redis = redis.Redis(
+            host='redis', port=6379, decode_responses=True)
+
+        # robot.txt setup
+        self.rp = urllib.robotparser.RobotFileParser()
+        self._setup_robot_text()
+
+        # TODO: move into the database
         self.count = 0  # number of urls navigated to
         self.skipped = 0  # number of urls skipped
-        self.rp = urllib.robotparser.RobotFileParser()
+
+        self._add_to_crawl_queue((SEED_URL, 0))
+        self.logger.info('Crawler Initiation Complete')
+
+    """" === RabiitMQ Methods === """
+
+    def _setup_rabbit_connection(self):
+        # self.connection = self._get_rabbit_connection()
+        creds = pika.PlainCredentials(
+            os.environ["RABBITMQ_USER"],
+            os.environ["RABBITMQ_PASSWORD"],
+        )
+        # connection = self._get_rabbit_connection()
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters("rabbitmq", port=5672, credentials=creds))
+        self.channel = self.connection.channel()
+        self.channel.basic_qos(prefetch_count=1)
+        self.channel.queue_declare(queue=self.crawl_queue_name, durable=True)
+        self.channel.queue_declare(queue=self.parse_queue_name, durable=True)
+        self.channel.basic_consume(
+            queue=self.crawl_queue_name,
+            on_message_callback=self._consume_rabbit_message,
+            auto_ack=False
+        )
+
+    def _publish(self, queue_name, payload):
+        body = json.dumps(payload)
+        self.channel.basic_publish(
+            exchange='',
+            routing_key=queue_name,
+            body=body,
+            properties=pika.BasicProperties(delivery_mode=2)
+        )
+
+    def _add_to_crawl_queue(self, payload):
+        try:
+            self._publish(self.crawl_queue_name, payload)
+        except Exception as e:
+            self.logger.error(f"Issue adding to the crawler queue: {e}")
+
+    def _add_to_parse_queue(self, payload):
+        try:
+            self._publish(self.parse_queue_name, payload)
+        except Exception as e:
+            self.logger.error(f"Issue adding to the parser queue: {e}")
+
+    def _consume_rabbit_message(self, ch, method, properties, body):
+        try:
+            # Process the message
+            self.logger.info(f"Processing: {body.decode()}")
+            url, depth = json.loads(body.decode())
+
+            self.logger.info("Calling page crawl")
+            self._crawl_pages(url, depth)
+
+            # Acknowledge only after success
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+
+        except Exception as e:
+            self.logger.error(f"Failed to process message: {str(e)}")
+            # Optionally reject the message (without requeue)
+            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
+    # TODO: debug why using this method is not returning the connection
+    def _get_rabbit_connection(self):
+        try:
+            creds = pika.PlainCredentials(
+                os.environ["RABBITMQ_USER"],
+                os.environ["RABBITMQ_PASSWORD"],
+            )
+            return pika.BlockingConnection(
+                pika.ConnectionParameters("rabbitmq", port=5672, credentials=creds))
+        except AMQPConnectionError as e:
+            self.logger.error(
+                f"Error establishing a connection to RabbitMQ: {e}")
+
+    def _wait_for_rabbit(self, max_retries=20, delay=5):
+        for attempt in range(max_retries):
+            try:
+                creds = pika.PlainCredentials(
+                    os.environ["RABBITMQ_USER"],
+                    os.environ["RABBITMQ_PASSWORD"],
+                )
+                # connection = self._get_rabbit_connection()
+                connection = pika.BlockingConnection(
+                    pika.ConnectionParameters("rabbitmq", port=5672, credentials=creds))
+                connection.close()
+                self.logger.info("RabbitMQ is ready!")
+                return
+            except AMQPConnectionError as e:
+                self.logger.error(
+                    f"Attempt {attempt+1}: RabbitMQ not ready yet, retrying in {delay}s...")
+                time.sleep(delay)
+
+        raise Exception("RabbitMQ not ready after max retries")
+
+    """" === Robot.txt Methods === """
+
+    def _setup_robot_text(self):
+        self.rp.set_url(ROBOTS_TXT)
+        self.rp.read()
 
     def robot_allows_crawling(self, url):
         if not self.rp.can_fetch(BASE_HEADERS['user-agent'], url):
@@ -27,82 +148,10 @@ class WebCrawler:
             return False
         return True
 
+    """" === Crawling Methods === """
     # TODO: Implement adding data to the DB
 
-    @sleep_and_retry
-    @limits(calls=1, period=1)  # 1 request per second
-    def get_page(self, url):
-        try:
-            response = requests.get(url, headers=BASE_HEADERS, timeout=10)
-            if response.status_code != 200:
-                self.logger.warning(
-                    f"Non-200 response ({response.status_code}) for {url}"
-                )
-            return response
-        except Exception as e:
-            self.logger.error(f"Request failed for {url}: {e}")
-            return None
-
-    def extract_links(self, html_text, url):
-        try:
-            soup = BeautifulSoup(html_text, "lxml")
-            return soup.select('#mw-content-text a')
-        except Exception as e:
-            self.logger.error(f"Parsing or DB error at {url}: {e}")
-            return None
-
-    def add_links_to_queue(self, page_id, links, depth):
-        try:
-            for link in links:
-                to_url = link.get('href')
-
-                if self.is_excluded(to_url):
-                    continue
-
-                normalized_to_url = utils.normalize_url(to_url)
-
-                # TODO: Add url into queue and enqueued set
-                if self.is_queueable(normalized_to_url):
-                    continue
-                    # queue.add((normalized_to_url, depth + 1))
-                    # enqueued_set.add(normalized_to_url)
-
-                    # TODO: add normalized URL to the DB
-                    # DB.add_link(page_id, normalized_to_url)
-        except Exception as e:
-            self.logger.error(f"Enqueue error adding link : {e}")
-
-    def is_excluded(self, to_url):
-        # ignore external urls and link tags with no href
-        if (
-            to_url is None or
-            utils.is_external_link(to_url) or
-            utils.has_excluded_prefix(to_url)
-        ):
-            return True
-        return False
-
-    # TODO: Once redis is implemented updated if statement to use redis for the sets
-    def is_queueable(self, normalized_to_url):
-        # if normalized_to_url in self.visited_set or normalized_to_url in self.enqueued_set:
-        #     return False
-        return True
-
-    def clear_terminal(self):
-        if platform.system() == "Windows":
-            os.system("cls")
-        else:
-            os.system("clear")
-
-    def _current_status_report(self, depth):
-        self.clear_terminal()
-        print(f"Pages Crawled :  {self.count}")
-        print(f"Pages Skipped :  {self.skipped}")
-        print(f"Current Depth :  {depth}\n")
-
-    def _crawl_pages(self):
-        # TODO: Implement receiving messages from rabbitMQ
-        url, depth = queue.message
+    def _crawl_pages(self, url, depth):
         self._current_status_report(depth)
 
         if not self.robot_allows_crawling(url) or depth > MAX_DEPTH:
@@ -125,34 +174,103 @@ class WebCrawler:
             self.skipped += 1
             return
 
-        # Add Page into db: page_id = add(url, url_hash)
+        self.logger.info(f"Crawled URL: {url}")
 
         # Add links to queue
+        self.add_links_to_queue(0, links, depth)
         # self.add_links_to_queue(page_id, links, depth)
 
+        # TODO: get hash of url
+
+        # TODO: download compressed html content
+
+        # TODO: add page to db
+        # Add Page into db: page_id = add(url, url_hash)
+
+        # TODO: cleanup
         # Add page to visited set: visited_set.add(url)
+        self.redis.sadd(R_VISITED, url)
+
         self.count += 1
 
-    def stop(self):
-        self.logger.info('Stopping The Crawler\n')
-        self.is_running = False
-        # TODO: remove method if nothing else is added or using this
+    @sleep_and_retry
+    @limits(calls=1, period=1)  # 1 request per second
+    def get_page(self, url):
+        try:
+            response = requests.get(url, headers=BASE_HEADERS, timeout=10)
+            if response.status_code != 200:
+                self.logger.warning(
+                    f"Non-200 response ({response.status_code}) for {url}"
+                )
+            return response
+        except Exception as e:
+            self.logger.error(f"Request failed for {url}: {str(e)}")
+            return None
 
-    def run(self):
-        self.logger.info('Crawler Initiated & Running')
-        self.rp.set_url(ROBOTS_TXT)
-        self.rp.read()
-        self.is_running = True
+    def extract_links(self, html_text, url):
+        try:
+            soup = BeautifulSoup(html_text, "lxml")
+            return soup.select('#mw-content-text a')
+        except Exception as e:
+            self.logger.error(f"Parsing or DB error at {url}: {e}")
+            return None
 
-        # TODO: Implement adding to the crawl queue and enqueued set with redis
-        # queue.add((SEED_URL, 0))
-        # enqueued_set.add(SEED_URL)
+    def add_links_to_queue(self, page_id, links, depth):
+        try:
+            for link in links:
+                to_url = link.get('href')
 
-        self._crawl_pages()
-        self.logger.info('\n✅ Crawler Finished Succesfully!\n')
-        self.stop()
+                if self.is_excluded(to_url):
+                    continue
+
+                normalized_url = utils.normalize_url(to_url)
+
+                # TODO: Add url into queue and enqueued set
+                if self.is_queueable(normalized_url):
+                    self._add_to_crawl_queue((normalized_url, depth + 1))
+                    self.redis.sadd(R_ENQUEUED, normalized_url)
+                    # TODO: cleanup after successful implementation
+                    # queue.add((normalized_to_url, depth + 1))
+                    # enqueued_set.add(normalized_to_url)
+
+                    # TODO: add normalized URL to the DB
+                    # DB.add_link(page_id, normalized_to_url)
+        except Exception as e:
+            self.logger.error(f"Enqueue error adding link : {str(e)}")
+
+    def is_excluded(self, to_url):
+        # ignore external urls and link tags with no href
+        if (
+            to_url is None or
+            utils.is_external_link(to_url) or
+            utils.has_excluded_prefix(to_url)
+        ):
+            return True
+        return False
+
+    # TODO: Once redis is implemented updated if statement to use redis for the sets
+    def is_queueable(self, normalized_url):
+        in_visited = self.redis.sismember(R_VISITED, normalized_url)
+        in_enqueued = self.redis.sismember(R_ENQUEUED, normalized_url)
+
+        if in_visited or in_enqueued:
+            return False
+        return True
+
+    # TODO: pull this into the python-utility package
+    def clear_terminal(self):
+        if platform.system() == "Windows":
+            os.system("cls")
+        else:
+            os.system("clear")
+
+    def _current_status_report(self, depth):
+        self.clear_terminal()
+        self.logger.info(f"Pages Crawled :  {self.count}")
+        self.logger.info(f"Pages Skipped :  {self.skipped}")
+        self.logger.info(f"Current Depth :  {depth}\n")
 
 
 if __name__ == "__main__":
-    load_dotenv()
-    logger = setup_logging(os.getenv('CRAWL_LOGS', '../logs/crawler.log'))
+    crawler = WebCrawler()
+    crawler.channel.start_consuming()

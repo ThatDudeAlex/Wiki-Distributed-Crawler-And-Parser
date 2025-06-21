@@ -1,6 +1,9 @@
 from urllib.parse import urlparse, urljoin, urlunparse
 from config import EXCLUDED_PREFIXES, WIKI_BASE
 
+# TODO: pull any common utility function into the
+# my python-utilities package
+
 
 def normalize_url(href: str) -> str:
     # Convert relative URL to absolute

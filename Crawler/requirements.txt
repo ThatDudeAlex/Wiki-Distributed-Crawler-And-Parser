@@ -4,3 +4,4 @@ pika
 requests
 ratelimit
 bs4
+lxml

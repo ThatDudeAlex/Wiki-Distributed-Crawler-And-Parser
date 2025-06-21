@@ -114,6 +114,9 @@ class Link(Base):
         Index("idx_source_page_id", "source_page_id"),
     )
 
+# TODO: this function can be repurposed into a general `wait_for`
+#       and added to my python-utilities package
+
 
 def wait_for_db():
     print("Waiting for the database to be ready...")
