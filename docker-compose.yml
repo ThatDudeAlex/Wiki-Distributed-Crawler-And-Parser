@@ -54,7 +54,7 @@ services:
     env_file: .env # Only used in local dev
     command: [ "python", "-m", "crawler.crawler" ]
     volumes:
-      - compressed_html_data:/data/html
+      - compressed_html_data:${DL_HTML_PATH}
   # prometheus:
   #   image: prom/prometheus
   #   restart: unless-stopped

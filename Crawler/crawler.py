@@ -6,6 +6,7 @@ import pika
 import redis
 import requests
 import json
+import gzip
 import hashlib
 import urllib.robotparser
 from utilities import utils
@@ -180,18 +181,15 @@ class WebCrawler:
             self.skipped += 1
             return
 
-        # self.logger.info(f"Crawled URL: {url}")
+        self.download_compressed_html(url, response.text)
 
         page_id = self.save_page(
             url, CrawlStatus.CRAWLED_SUCCESS, response.status_code)
-
-        # Add links to queue
         self.add_links_to_queue(page_id, links, depth)
 
-        # TODO: download compressed html content
-
-        # TODO: cleanup
+        # Add url to visited set
         self.redis.sadd(R_VISITED, url)
+        self.logger.info(f"Crawled URL: {url}")
 
     @sleep_and_retry
     @limits(calls=1, period=1)  # 1 request per second
@@ -261,6 +259,16 @@ class WebCrawler:
         if in_visited or in_enqueued:
             return False
         return True
+
+    def download_compressed_html(self, url, html_content):
+        name = self._hash_url(url)
+        path = os.path.join(os.getenv('DL_HTML_PATH'), name)
+
+        with gzip.open(path, "wt", encoding="utf-8") as f:
+            f.write(html_content)
+
+        self.logger.info(
+            f"Downloaded compressed HTML for URL: {url} - filepath: {path}")
 
     """" === DB Methods === """
 
