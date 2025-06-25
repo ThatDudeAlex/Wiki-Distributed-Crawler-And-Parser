@@ -41,8 +41,7 @@ services:
     env_file: .env # Only used in local dev
     command: [ "python", "-m", "db_init.db_init" ]
 
-  crawler:
-    # container_name: crawler
+  crawler_ashburn:
     build:
       context: .
       dockerfile: crawler/Dockerfile
@@ -52,25 +51,30 @@ services:
       - rabbitmq
       - redis
     env_file: .env # Only used in local dev
+    environment:
+      - HTTP_PROXY=${ASHBURN_PROXY}
+      - HTTPS_PROXY=${ASHBURN_PROXY}
+      - NO_PROXY=localhost,127.0.0.1,rabbitmq,redis,postgres,192.168.0.0/16
     command: [ "python", "-m", "crawler.crawler" ]
     volumes:
       - compressed_html_data:${DL_HTML_PATH}
-  # prometheus:
-  #   image: prom/prometheus
-  #   restart: unless-stopped
-  #   volumes:
-  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
-  #   ports:
-  #     - "9090:9090"
+  # ===========================================
+  # Testing services for proxies/vpn services
+  # ===========================================
 
-  # grafana:
-  #   image: grafana/grafana
-  #   restart: unless-stopped
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - grafana_data:/var/lib/grafana
+  # testapp:
+  #   image: curlimages/curl
+  #   container_name: testapp
+  # environment:
+  #   - HTTP_PROXY=${DALLAS2_PROXY}
+  #   - HTTPS_PROXY=${DALLAS2_PROXY}
+  #   - NO_PROXY=localhost,127.0.0.1,rabbitmq,redis,postgres,192.168.0.0/16
+  # command: [ "curl", "-sS", "https://am.i.mullvad.net/json" ]
+  # command: [ "curl", "-sS", "http://192.168.86.15:15672/" ]
+
 
 volumes:
   pg_data:
   compressed_html_data:
+
+
