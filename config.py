@@ -2,7 +2,7 @@ WIKI_BASE = "https://en.wikipedia.org"
 
 SEED_URL = 'https://en.wikipedia.org/wiki/Computer_science'
 
-MAX_DEPTH = 3
+MAX_DEPTH = 2
 
 ROBOTS_TXT = 'https://en.wikipedia.org/robots.txt'
 

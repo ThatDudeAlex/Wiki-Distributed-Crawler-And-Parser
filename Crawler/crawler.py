@@ -188,11 +188,18 @@ class WebCrawler:
             self.skipped += 1
             return
 
-        self.download_compressed_html(url, response.text)
+        url_hash, filepath = self.download_compressed_html(url, response.text)
 
         page_id = self.save_page(
-            url, CrawlStatus.CRAWLED_SUCCESS, response.status_code)
-        self.add_links_to_queue(page_id, links, depth)
+            (url, url_hash, filepath, CrawlStatus.CRAWLED_SUCCESS, response.status_code))
+
+        new_depth = depth + 1
+
+        if new_depth <= MAX_DEPTH:
+            self.add_links_to_queue(page_id, links, new_depth)
+        else:
+            self.logger.info(
+                f"Skipping links for url: {url} - links exceed the max depth of {MAX_DEPTH}")
 
         # Add url to visited set
         self.redis.sadd(R_VISITED, url)
@@ -220,7 +227,7 @@ class WebCrawler:
             self.logger.error(f"Parsing or DB error at {url}: {e}")
             return None
 
-    def add_links_to_queue(self, page_id, links, depth):
+    def add_links_to_queue(self, page_id, links, new_depth):
         try:
             for link in links:
                 to_url = link.get('href')
@@ -235,7 +242,7 @@ class WebCrawler:
 
                 # TODO: Add url into queue and enqueued set
                 if self.is_queueable(normalized_url):
-                    self._add_to_crawl_queue((normalized_url, depth + 1))
+                    self._add_to_crawl_queue((normalized_url, new_depth))
                     self.redis.sadd(R_ENQUEUED, normalized_url)
                     # TODO: cleanup after successful implementation
                     # queue.add((normalized_to_url, depth + 1))
@@ -268,24 +275,27 @@ class WebCrawler:
         return True
 
     def download_compressed_html(self, url, html_content):
-        name = self._hash_url(url)
-        path = os.path.join(os.getenv('DL_HTML_PATH'), name)
+        url_hash = self._hash_url(url)
+        filename = f"{url_hash}.html.gz"
+        filepath = os.path.join(os.getenv('DL_HTML_PATH'), filename)
 
-        with gzip.open(path, "wt", encoding="utf-8") as f:
+        with gzip.open(filepath, "wt", encoding="utf-8") as f:
             f.write(html_content)
 
         self.logger.info(
-            f"Downloaded compressed HTML for URL: {url} - filepath: {path}")
+            f"Downloaded compressed HTML for URL: {url} - filepath: {filepath}")
+        return (url_hash, filepath)
 
     """" === DB Methods === """
 
-    def save_page(self, url, crawl_status=CrawlStatus.PENDING, status_code=200):
+    def save_page(self, crawl_data):
+        url, url_hash, filepath, crawl_status, status_code = crawl_data
         page = Page(
             url=url,
-            url_hash=self._hash_url(url),
+            url_hash=url_hash,
             last_crawl_status=crawl_status,
-            http_status_code=status_code
-        )
+            http_status_code=status_code,
+            compressed_path=filepath)
         self.db.add(page)
         self.db.commit()
         return page.id
