@@ -48,7 +48,14 @@ class WebCrawler:
         # self.count = 0  # number of urls navigated to
         self.skipped = 0  # number of urls skipped
 
-        self._add_to_crawl_queue((SEED_URL, 0))
+        # Only becomes true if it doesnt exist - This helps prevent the race condition of
+        # multiple instances & allows only 1 instance to make the seed the queue
+        queue_is_seeded = self.redis.set(f"enqueued:{SEED_URL}", 1, nx=True)
+
+        if queue_is_seeded:
+            self.redis.sadd(R_ENQUEUED, SEED_URL)
+            self._add_to_crawl_queue((SEED_URL, 0))
+
         self.logger.info('Crawler Initiation Complete')
 
     """" === RabiitMQ Methods === """
@@ -304,6 +311,22 @@ class WebCrawler:
 
     """" === Temp Dev Logging Methods === """
 
+    def mullvad(self):
+        try:
+            response = requests.get(
+                'https://am.i.mullvad.net/json', headers=BASE_HEADERS, timeout=10)
+
+            if response.status_code != 200:
+                self.logger.warning(
+                    f"Non-200 response ({response.status_code}) for https://am.i.mullvad.net/json"
+                )
+            self.logger.info(response.text)
+            return response
+        except Exception as e:
+            self.logger.error(
+                f"Request failed for https://am.i.mullvad.net/json: {str(e)}")
+            return None
+
     # TODO: pull this into the python-utility package
     def clear_terminal(self):
         if platform.system() == "Windows":
@@ -320,4 +343,5 @@ class WebCrawler:
 
 if __name__ == "__main__":
     crawler = WebCrawler()
+    # crawler.mullvad()
     crawler.channel.start_consuming()
