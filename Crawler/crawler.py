@@ -8,6 +8,7 @@ from shared.queue_service import QueueService
 from .cache_service import CacheService
 from .robot_hander import RobotHandler
 from .download_handler import DownloadHandler
+from .fetcher import Fetcher
 from shared.logger import setup_logging
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -39,7 +40,11 @@ class WebCrawler:
         # robot.txt setup
         self.robot = RobotHandler(self.logger)
 
+        # html downloader setup
         self.downloader = DownloadHandler(self.logger)
+
+        # http fetcher setup
+        self.fetcher = Fetcher(self.logger, BASE_HEADERS)
 
         # database setup
         self.db = SessionLocal()
@@ -130,11 +135,9 @@ class WebCrawler:
         self.cache.add_to_visited_set(url)
         self.logger.info(f"Crawled URL: {url}")
 
-    @sleep_and_retry
-    @limits(calls=1, period=1)  # 1 request per second
     def get_page(self, url):
         try:
-            response = requests.get(url, headers=BASE_HEADERS, timeout=10)
+            response = self.fetcher.get(url, headers=BASE_HEADERS, timeout=10)
             if response.status_code != 200:
                 self.logger.warning(
                     f"Non-200 response ({response.status_code}) for {url}"
