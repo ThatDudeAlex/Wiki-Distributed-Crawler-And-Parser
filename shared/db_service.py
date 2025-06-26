@@ -1,5 +1,5 @@
 import logging
-from database.db_models.models import Page, Link, CrawlStatus
+from database.db_models.models import Page, Link, PageContent, Category, CrawlStatus
 from database.engine import SessionLocal
 
 
@@ -27,6 +27,27 @@ class DatabaseService:
         self._db.add(page)
         self._db.commit()
         return page.id
+
+    def save_parsed_page(self, page_id, title, summary, content):
+        r"""Adds a new ``page_content`` entry into the database. Returns ``page_id``"""
+
+        page_content = PageContent(
+            page_id=page_id,
+            title=title,
+            summary=summary,
+            content=content
+        )
+        self._db.add(page_content)
+        self._db.commit()
+        return page_id
+
+    def save_category(self, name):
+        category = Category(
+            name=name
+        )
+        self._db.add(category)
+        self._db.commit()
+        return True
 
     def _save_uncrawled_page(self, url: str, crawl_status: CrawlStatus, status_code: int) -> int:
         page = Page(

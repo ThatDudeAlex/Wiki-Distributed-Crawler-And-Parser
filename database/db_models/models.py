@@ -11,7 +11,9 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
+    Table,
     Text,
+    UniqueConstraint,
     func,
 )
 
@@ -42,7 +44,6 @@ class Page(Base):
     url = Column(String(2048), unique=True, nullable=False)
     url_hash = Column(String(2048), unique=True, nullable=False)
     compressed_path = Column(String(2048), unique=True, nullable=True)
-    title = Column(String(512), nullable=True)
 
     last_crawled_at = Column(
         DateTime(timezone=True),
@@ -125,13 +126,13 @@ class PageContent(Base):
 
     # the first paragraph in an article page (under title)
     summary = Column(Text, nullable=True)
-    infobox = Column(JSON, nullable=True)
+    # infobox = Column(JSON, nullable=True)
 
     # The entire main article content (#bodyContent)
     content = Column(Text, nullable=True)
 
     # List of article page categories/tags
-    categories = Column(JSON, nullable=True)
+    # categories = Column(JSON, nullable=True)
 
     parsed_at = Column(DateTime(timezone=True),
                        server_default=func.now(), nullable=False)
@@ -144,3 +145,28 @@ class PageContent(Base):
 
     # ORM relationship back to Page
     page = relationship("Page", backref="parsed_page", uselist=False)
+
+
+# Association table for many-to-many relationship
+page_category_association = Table(
+    'page_categories',
+    Base.metadata,
+    Column('page_id', Integer, ForeignKey(
+        'page_content.id', ondelete="CASCADE"), primary_key=True),
+    Column('category_id', Integer, ForeignKey(
+        'categories.id', ondelete="CASCADE"), primary_key=True),
+    UniqueConstraint('page_id', 'category_id', name='uix_page_category')
+)
+
+
+class Category(Base):
+    __tablename__ = 'categories'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, unique=True, nullable=False)
+
+    pages = relationship(
+        "PageContent",
+        secondary=page_category_association,
+        back_populates="categories"
+    )

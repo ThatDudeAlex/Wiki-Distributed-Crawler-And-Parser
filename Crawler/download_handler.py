@@ -31,7 +31,7 @@ class DownloadHandler:
         """
         Downloads the ``HTML`` content into as a compressed file into the ``download_path``.
         The downloaded file will be named after a hash of its ``URL`` and follow this naming
-        format: ``url_hash.html.gz``
+        scheme: ``url_hash.html.gz``
 
         Returns the following Tuple: ``(url_hash, filepath)``
         """
