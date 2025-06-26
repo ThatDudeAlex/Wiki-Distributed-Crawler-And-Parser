@@ -252,12 +252,6 @@ class WebCrawler:
         else:
             os.system("clear")
 
-    # def _current_status_report(self, depth):
-    #     self.clear_terminal()
-    #     # self.logger.info(f"Pages Crawled :  {self.count}")
-    #     self.logger.info(f"Pages Skipped :  {self.skipped}")
-    #     self.logger.info(f"Current Depth :  {depth}\n")
-
 
 if __name__ == "__main__":
     crawler = WebCrawler()

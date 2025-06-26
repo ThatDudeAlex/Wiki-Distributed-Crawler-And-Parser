@@ -31,11 +31,11 @@ def test_initiate_default_retries(mock_queue_setup):
                            mock_queue_setup["mock_logger"])
 
     # Assert that attributes are set correctly
-    assert service.crawl_queue_name == "test1"
-    assert service.parse_queue_name == "test2"
-    assert service.logger == mock_queue_setup["mock_logger"]
-    assert service.retry_interval == 10
-    assert service.max_retries == 6
+    assert service._crawl_queue_name == "test1"
+    assert service._parse_queue_name == "test2"
+    assert service._logger == mock_queue_setup["mock_logger"]
+    assert service._retry_interval == 10
+    assert service._max_retries == 6
 
 
 @patch('shared.queue_service.pika.BlockingConnection')
@@ -45,11 +45,11 @@ def test_initiate_specified_retries(mock_queue_setup):
                            mock_queue_setup["mock_logger"], 5, 12)
 
     # Assert that attributes are set correctly
-    assert service.crawl_queue_name == "test1"
-    assert service.parse_queue_name == "test2"
-    assert service.logger == mock_queue_setup["mock_logger"]
-    assert service.retry_interval == 5
-    assert service.max_retries == 12
+    assert service._crawl_queue_name == "test1"
+    assert service._parse_queue_name == "test2"
+    assert service._logger == mock_queue_setup["mock_logger"]
+    assert service._retry_interval == 5
+    assert service._max_retries == 12
 
 
 # def test_publish(mock_connection_class):

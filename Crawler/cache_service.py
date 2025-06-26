@@ -7,7 +7,7 @@ class CacheService:
     def __init__(self, logger):
         self._redis = redis.Redis(
             host='redis', port=6379, decode_responses=True)
-        self.logger = logger
+        self._logger = logger
 
     def add_to_enqueued_set(self, url: str) -> bool:
         """
@@ -15,7 +15,7 @@ class CacheService:
         and returns true
         """
         self._redis.sadd(R_ENQUEUED, url)
-        self.logger.info(f"Added to enqueued set: {url}")
+        self._logger.info(f"Added to enqueued set: {url}")
         return True
 
     def add_to_visited_set(self, url: str) -> bool:
@@ -24,7 +24,7 @@ class CacheService:
         and returns true
         """
         self._redis.sadd(R_VISITED, url)
-        self.logger.info(f"Added to visited set: {url}")
+        self._logger.info(f"Added to visited set: {url}")
         return True
 
     def set_if_not_existing(self, url: str) -> bool:
@@ -35,7 +35,7 @@ class CacheService:
         """
         is_seeded = self._redis.set(f"enqueued:{url}", 1, nx=True)
         if is_seeded:
-            self.logger.info(f"Set initiating seed key for: {url}")
+            self._logger.info(f"Set initiating seed key for: {url}")
         return is_seeded
 
     def is_queueable(self, url):
