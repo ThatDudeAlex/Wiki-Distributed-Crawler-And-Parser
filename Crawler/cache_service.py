@@ -1,9 +1,13 @@
+import logging
 import redis
 from shared.config import R_VISITED, R_ENQUEUED
 
 
 class CacheService:
-    def __init__(self, logger):
+    def __init__(self, logger: logging.Logger):
+        if not logger:
+            raise ValueError("logger is required")
+
         self._redis = redis.Redis(
             host='redis', port=6379, decode_responses=True)
         self._logger = logger
@@ -11,20 +15,26 @@ class CacheService:
     def add_to_enqueued_set(self, url: str) -> bool:
         """
         Add ``URL`` to the ``enqueued`` set
-        and returns true
+
+        Returns ``True`` if it successfully adds the ``URL`` else returns ``False``
         """
-        self._redis.sadd(R_ENQUEUED, url)
-        self._logger.info(f"Added to enqueued set: {url}")
-        return True
+        if url:
+            self._redis.sadd(R_ENQUEUED, url)
+            self._logger.info(f"Added to enqueued set: {url}")
+            return True
+        return False
 
     def add_to_visited_set(self, url: str) -> bool:
         """
         Add ``URL`` to the ``visited`` set
-        and returns true
+
+        Returns ``True`` if it successfully adds the ``URL`` else returns ``False``
         """
-        self._redis.sadd(R_VISITED, url)
-        self._logger.info(f"Added to visited set: {url}")
-        return True
+        if url:
+            self._redis.sadd(R_VISITED, url)
+            self._logger.info(f"Added to visited set: {url}")
+            return True
+        return False
 
     def set_if_not_existing(self, url: str) -> bool:
         """
@@ -37,7 +47,7 @@ class CacheService:
             self._logger.info(f"Set initiating seed key for: {url}")
         return is_seeded
 
-    def is_queueable(self, url):
+    def is_queueable(self, url: str) -> bool:
         in_visited = self._redis.sismember(R_VISITED, url)
         in_enqueued = self._redis.sismember(R_ENQUEUED, url)
 

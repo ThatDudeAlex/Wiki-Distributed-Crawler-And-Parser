@@ -46,3 +46,11 @@ def create_hash(content: str) -> str:
 
     # return the hexadecimal representation of the hash
     return hash_object.hexdigest()
+
+
+def validate_param(value, name, expected_type):
+    # TODO: use this across various class methods
+    if value is None:
+        raise ValueError(f"{name} is required")
+    if not isinstance(value, expected_type):
+        raise TypeError(f"{name} must be of type {expected_type.__name__}")
