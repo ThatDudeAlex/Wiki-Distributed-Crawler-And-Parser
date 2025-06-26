@@ -1,6 +1,3 @@
-import time
-import os
-import json
 import redis
 from dotenv import load_dotenv
 from shared.config import R_VISITED, R_ENQUEUED

@@ -19,8 +19,8 @@ from pika.exceptions import AMQPConnectionError
 from ratelimit import limits, sleep_and_retry
 from database.engine import SessionLocal
 from database.db_models.models import Page, Link, CrawlStatus
-from shared.config import (SEED_URL, ROBOTS_TXT, BASE_HEADERS, MAX_DEPTH,
-                           R_VISITED, R_ENQUEUED, CRAWL_QNAME, PARSE_QNAME)
+from shared.config import (
+    SEED_URL, ROBOTS_TXT, BASE_HEADERS, MAX_DEPTH, CRAWL_QNAME, PARSE_QNAME)
 
 
 class WebCrawler:
@@ -31,14 +31,9 @@ class WebCrawler:
         )
 
         # rabbitMQ setup
-        self.crawl_queue_name = CRAWL_QNAME
-        self.parse_queue_name = PARSE_QNAME
-
-        self.queue = QueueService(
-            self.crawl_queue_name, self.parse_queue_name, self.logger)
-
+        self.queue = QueueService(CRAWL_QNAME, PARSE_QNAME, self.logger)
         self.queue.channel.basic_consume(
-            queue=self.crawl_queue_name,
+            queue=CRAWL_QNAME,
             on_message_callback=self._consume_rabbit_message,
             auto_ack=False
         )
@@ -71,13 +66,13 @@ class WebCrawler:
 
     def _add_to_crawl_queue(self, payload):
         try:
-            self.queue.publish(self.crawl_queue_name, payload)
+            self.queue.publish(CRAWL_QNAME, payload)
         except Exception as e:
             self.logger.error(f"Issue adding to the crawler queue: {e}")
 
     def _add_to_parse_queue(self, payload):
         try:
-            self.queue.publish(self.parse_queue_name, payload)
+            self.queue.publish(PARSE_QNAME, payload)
         except Exception as e:
             self.logger.error(f"Issue adding to the parser queue: {e}")
 
