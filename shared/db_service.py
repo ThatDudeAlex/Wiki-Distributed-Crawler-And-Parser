@@ -1,7 +1,6 @@
 import logging
-from database.db_models.models import Page, Link, CrawlStatus
+from database.db_models.models import Page, Link
 from database.engine import SessionLocal
-from dotenv import load_dotenv
 
 
 class DatabaseService:
