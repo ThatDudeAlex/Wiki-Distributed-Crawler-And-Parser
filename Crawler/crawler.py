@@ -12,10 +12,10 @@ import urllib.robotparser
 from utilities import utils
 from shared.queue_service import QueueService
 from .cache_service import CacheService
+from .robot_hander import RobotHandler
 from shared.logger import setup_logging
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from pika.exceptions import AMQPConnectionError
 from ratelimit import limits, sleep_and_retry
 from database.engine import SessionLocal
 from database.db_models.models import Page, Link, CrawlStatus
@@ -42,8 +42,7 @@ class WebCrawler:
         self.cache = CacheService(self.logger)
 
         # robot.txt setup
-        self.rp = urllib.robotparser.RobotFileParser()
-        self._setup_robot_text()
+        self.robot = RobotHandler(self.logger)
 
         # database setup
         self.db = SessionLocal()
@@ -107,12 +106,9 @@ class WebCrawler:
 
     """" === Crawling Methods === """
 
-    # TODO: Implement adding data to the DB
     def _crawl_pages(self, url, depth):
-        # self._current_status_report(depth)
 
-        if not self.robot_allows_crawling(url) or depth > MAX_DEPTH:
-            self.logger.warning(f"Robot prevents crawling into: {url}")
+        if not self.robot.allows_crawling(url) or depth > MAX_DEPTH:
             self.skipped += 1
             return
 
