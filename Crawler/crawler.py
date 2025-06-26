@@ -15,8 +15,8 @@ from dotenv import load_dotenv
 from pika.exceptions import AMQPConnectionError
 from ratelimit import limits, sleep_and_retry
 from .init_logging import setup_logging
-from db.engine import SessionLocal
-from db_models.models import Page, Link, CrawlStatus
+from database.engine import SessionLocal
+from database.db_models.models import Page, Link, CrawlStatus
 from config import (SEED_URL, ROBOTS_TXT, BASE_HEADERS, MAX_DEPTH,
                     R_VISITED, R_ENQUEUED, CRAWL_QNAME, PARSE_QNAME)
 

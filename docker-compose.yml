@@ -51,11 +51,12 @@ services:
     container_name: db_init
     build:
       context: .
-      dockerfile: db_init/Dockerfile
+      dockerfile: database/db_init/Dockerfile
     depends_on:
       - postgres
     env_file: .env # Only used in local dev
-    command: [ "python", "-m", "db_init.db_init" ]
+    # command: [ "python", "-m", "db_init.db_init" ]
+    command: [ "python", "-m", "database.db_init.db_init" ]
 
   # California Proxies
   crawler_la:

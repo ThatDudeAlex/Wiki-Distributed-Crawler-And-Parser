@@ -2,7 +2,7 @@ import os
 import time
 import sys
 from dotenv import load_dotenv
-from db.engine import init_db, engine
+from database.engine import init_db, engine
 from sqlalchemy.exc import OperationalError
 
 load_dotenv()
