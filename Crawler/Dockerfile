@@ -4,7 +4,6 @@ WORKDIR /app
 
 # shared code
 COPY requirements-common.txt  ./requirements-common.txt
-COPY utilities/     ./utilities/
 COPY database/      ./database/
 COPY shared/        ./shared/
 

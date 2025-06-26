@@ -2,7 +2,7 @@ import logging
 import os
 import gzip
 from typing import Tuple
-from utilities.utils import create_hash
+from shared.utils import create_hash
 
 
 class DownloadHandler:

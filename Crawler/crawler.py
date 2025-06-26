@@ -3,7 +3,7 @@ import os
 import platform
 import requests
 import json
-from utilities import utils
+from shared import utils
 from shared.queue_service import QueueService
 from .cache_service import CacheService
 from .robot_hander import RobotHandler
