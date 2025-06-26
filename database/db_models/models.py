@@ -1,6 +1,7 @@
 from enum import Enum as PyEnum
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import (
+    JSON,
     BigInteger,
     Boolean,
     DateTime,
@@ -10,6 +11,7 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
+    Text,
     func,
 )
 
@@ -108,3 +110,37 @@ class Link(Base):
     __table_args__ = (
         Index("idx_source_page_id", "source_page_id"),
     )
+
+
+class PageContent(Base):
+    __tablename__ = 'page_content'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+
+    # FK relationship to the Page table
+    page_id = Column(BigInteger, ForeignKey(
+        'pages.id', ondelete="CASCADE"), nullable=False, unique=True)
+
+    title = Column(String(512), nullable=True)
+
+    # the first paragraph in an article page (under title)
+    summary = Column(Text, nullable=True)
+    infobox = Column(JSON, nullable=True)
+
+    # The entire main article content (#bodyContent)
+    content = Column(Text, nullable=True)
+
+    # List of article page categories/tags
+    categories = Column(JSON, nullable=True)
+
+    parsed_at = Column(DateTime(timezone=True),
+                       server_default=func.now(), nullable=False)
+
+    created_at = Column(DateTime(timezone=True),
+                        server_default=func.now(), nullable=False)
+
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(
+    ), onupdate=func.now(), nullable=False)
+
+    # ORM relationship back to Page
+    page = relationship("Page", backref="parsed_page", uselist=False)
