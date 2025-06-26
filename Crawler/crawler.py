@@ -10,6 +10,7 @@ import gzip
 import hashlib
 import urllib.robotparser
 from utilities import utils
+from shared.queue_service import QueueService
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from pika.exceptions import AMQPConnectionError
@@ -30,8 +31,15 @@ class WebCrawler:
         # rabbitMQ setup
         self.crawl_queue_name = CRAWL_QNAME
         self.parse_queue_name = PARSE_QNAME
-        self._wait_for_rabbit()
-        self._setup_rabbit_connection()
+
+        self.queue = QueueService(
+            self.crawl_queue_name, self.parse_queue_name, self.logger)
+
+        self.queue.channel.basic_consume(
+            queue=self.crawl_queue_name,
+            on_message_callback=self._consume_rabbit_message,
+            auto_ack=False
+        )
 
         # redis setup
         self.redis = redis.Redis(
@@ -60,43 +68,42 @@ class WebCrawler:
 
     """" === RabiitMQ Methods === """
 
-    def _setup_rabbit_connection(self):
-        # self.connection = self._get_rabbit_connection()
-        creds = pika.PlainCredentials(
-            os.environ["RABBITMQ_USER"],
-            os.environ["RABBITMQ_PASSWORD"],
-        )
-        # connection = self._get_rabbit_connection()
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters("rabbitmq", port=5672, credentials=creds))
-        self.channel = self.connection.channel()
-        self.channel.basic_qos(prefetch_count=1)
-        self.channel.queue_declare(queue=self.crawl_queue_name, durable=True)
-        self.channel.queue_declare(queue=self.parse_queue_name, durable=True)
-        self.channel.basic_consume(
-            queue=self.crawl_queue_name,
-            on_message_callback=self._consume_rabbit_message,
-            auto_ack=False
-        )
-
-    def _publish(self, queue_name, payload):
-        body = json.dumps(payload)
-        self.channel.basic_publish(
-            exchange='',
-            routing_key=queue_name,
-            body=body,
-            properties=pika.BasicProperties(delivery_mode=2)
-        )
+    # def _setup_rabbit_connection(self):
+    # self.connection = self._get_rabbit_connection()
+    # creds = pika.PlainCredentials(
+    #     os.environ["RABBITMQ_USER"],
+    #     os.environ["RABBITMQ_PASSWORD"],
+    # )
+    # # connection = self._get_rabbit_connection()
+    # self.connection = pika.BlockingConnection(
+    #     pika.ConnectionParameters("rabbitmq", port=5672, credentials=creds))
+    # self.channel = self.connection.channel()
+    # self.channel.basic_qos(prefetch_count=1)
+    # self.channel.queue_declare(queue=self.crawl_queue_name, durable=True)
+    # self.channel.queue_declare(queue=self.parse_queue_name, durable=True)
+    # self.channel.basic_consume(
+    #     queue=self.crawl_queue_name,
+    #     on_message_callback=self._consume_rabbit_message,
+    #     auto_ack=False
+    # )
+    # queue = QueueService(self.crawl_queue_name,
+    #                      self.parse_queue_name, self.logger)
+    # queue.channel.basic_consume(
+    #     queue=self.crawl_queue_name,
+    #     on_message_callback=self._consume_rabbit_message,
+    #     auto_ack=False
+    # )
+    # return queue
 
     def _add_to_crawl_queue(self, payload):
         try:
-            self._publish(self.crawl_queue_name, payload)
+            self.queue.publish(self.crawl_queue_name, payload)
         except Exception as e:
             self.logger.error(f"Issue adding to the crawler queue: {e}")
 
     def _add_to_parse_queue(self, payload):
         try:
-            self._publish(self.parse_queue_name, payload)
+            self.queue.publish(self.parse_queue_name, payload)
         except Exception as e:
             self.logger.error(f"Issue adding to the parser queue: {e}")
 
@@ -116,39 +123,6 @@ class WebCrawler:
             self.logger.error(f"Failed to process message: {str(e)}")
             # Optionally reject the message (without requeue)
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-
-    # TODO: debug why using this method is not returning the connection
-    def _get_rabbit_connection(self):
-        try:
-            creds = pika.PlainCredentials(
-                os.environ["RABBITMQ_USER"],
-                os.environ["RABBITMQ_PASSWORD"],
-            )
-            return pika.BlockingConnection(
-                pika.ConnectionParameters("rabbitmq", port=5672, credentials=creds))
-        except AMQPConnectionError as e:
-            self.logger.error(
-                f"Error establishing a connection to RabbitMQ: {e}")
-
-    def _wait_for_rabbit(self, max_retries=10, delay=10):
-        for attempt in range(max_retries):
-            try:
-                creds = pika.PlainCredentials(
-                    os.environ["RABBITMQ_USER"],
-                    os.environ["RABBITMQ_PASSWORD"],
-                )
-                # connection = self._get_rabbit_connection()
-                connection = pika.BlockingConnection(
-                    pika.ConnectionParameters("rabbitmq", port=5672, credentials=creds))
-                connection.close()
-                self.logger.info("RabbitMQ is ready!")
-                return
-            except AMQPConnectionError as e:
-                self.logger.error(
-                    f"Attempt {attempt+1}: RabbitMQ not ready yet, retrying in {delay}s...")
-                time.sleep(delay)
-
-        raise Exception("RabbitMQ not ready after max retries")
 
     """" === Robot.txt Methods === """
 
@@ -321,22 +295,6 @@ class WebCrawler:
 
     """" === Temp Dev Logging Methods === """
 
-    def mullvad(self):
-        try:
-            response = requests.get(
-                'https://am.i.mullvad.net/json', headers=BASE_HEADERS, timeout=10)
-
-            if response.status_code != 200:
-                self.logger.warning(
-                    f"Non-200 response ({response.status_code}) for https://am.i.mullvad.net/json"
-                )
-            self.logger.info(response.text)
-            return response
-        except Exception as e:
-            self.logger.error(
-                f"Request failed for https://am.i.mullvad.net/json: {str(e)}")
-            return None
-
     # TODO: pull this into the python-utility package
     def clear_terminal(self):
         if platform.system() == "Windows":
@@ -353,5 +311,4 @@ class WebCrawler:
 
 if __name__ == "__main__":
     crawler = WebCrawler()
-    # crawler.mullvad()
-    crawler.channel.start_consuming()
+    crawler.queue.channel.start_consuming()
