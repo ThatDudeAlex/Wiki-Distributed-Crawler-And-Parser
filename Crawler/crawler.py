@@ -1,20 +1,17 @@
 
 import os
-import platform
-import requests
 import json
-from shared import utils
-from shared.queue_service import QueueService
 from .cache_service import CacheService
 from .robot_hander import RobotHandler
 from .download_handler import DownloadHandler
 from .fetcher import Fetcher
-from shared.logger import setup_logging
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from ratelimit import limits, sleep_and_retry
-from database.engine import SessionLocal
-from database.db_models.models import Page, Link, CrawlStatus
+from database.db_models.models import CrawlStatus
+from shared import utils
+from shared.queue_service import QueueService
+from shared.db_service import DatabaseService
+from shared.logger import setup_logging
 from shared.config import (
     SEED_URL, BASE_HEADERS, MAX_DEPTH, CRAWL_QNAME, PARSE_QNAME)
 
@@ -22,12 +19,12 @@ from shared.config import (
 class WebCrawler:
     def __init__(self):
         load_dotenv()
-        self.logger = setup_logging(
+        self._logger = setup_logging(
             os.getenv('CRAWL_LOGS', 'logs/crawler.log')
         )
 
         # rabbitMQ setup
-        self.queue = QueueService(CRAWL_QNAME, PARSE_QNAME, self.logger)
+        self.queue = QueueService(CRAWL_QNAME, PARSE_QNAME, self._logger)
         self.queue.channel.basic_consume(
             queue=CRAWL_QNAME,
             on_message_callback=self._consume_rabbit_message,
@@ -35,19 +32,19 @@ class WebCrawler:
         )
 
         # redis setup
-        self.cache = CacheService(self.logger)
+        self.cache = CacheService(self._logger)
 
         # robot.txt setup
-        self.robot = RobotHandler(self.logger)
+        self.robot = RobotHandler(self._logger)
 
         # html downloader setup
-        self.downloader = DownloadHandler(self.logger)
+        self.downloader = DownloadHandler(self._logger)
 
         # http fetcher setup
-        self.fetcher = Fetcher(self.logger, BASE_HEADERS)
+        self.fetcher = Fetcher(self._logger, BASE_HEADERS)
 
         # database setup
-        self.db = SessionLocal()
+        self.db = DatabaseService(self._logger)
 
         # TODO: move into the database
         # self.count = 0  # number of urls navigated to
@@ -61,7 +58,7 @@ class WebCrawler:
             self.cache.add_to_enqueued_set(SEED_URL)
             self._add_to_crawl_queue((SEED_URL, 0))
 
-        self.logger.info('Crawler Initiation Complete')
+        self._logger.info('Crawler Initiation Complete')
 
     """" === RabiitMQ Methods === """
 
@@ -69,43 +66,43 @@ class WebCrawler:
         try:
             self.queue.publish(CRAWL_QNAME, payload)
         except Exception as e:
-            self.logger.error(f"Issue adding to the crawler queue: {e}")
+            self._logger.error(f"Issue adding to the crawler queue: {e}")
 
     def _add_to_parse_queue(self, payload):
         try:
             self.queue.publish(PARSE_QNAME, payload)
         except Exception as e:
-            self.logger.error(f"Issue adding to the parser queue: {e}")
+            self._logger.error(f"Issue adding to the parser queue: {e}")
 
     def _consume_rabbit_message(self, ch, method, properties, body):
         try:
             # Process the message
-            self.logger.info(f"Processing: {body.decode()}")
+            self._logger.info(f"Processing: {body.decode()}")
             url, depth = json.loads(body.decode())
 
-            self.logger.info("Calling page crawl")
+            self._logger.info("Calling page crawl")
             self._crawl_pages(url, depth)
 
             # Acknowledge only after success
             ch.basic_ack(delivery_tag=method.delivery_tag)
 
         except Exception as e:
-            self.logger.error(f"Failed to process message: {str(e)}")
+            self._logger.error(f"Failed to process message: {e}")
             # Optionally reject the message (without requeue)
-            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+            # ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
     """" === Crawling Methods === """
 
     def _crawl_pages(self, url, depth):
 
-        if not self.robot.allows_crawling(url) or depth > MAX_DEPTH:
+        if not self.robot.allows_crawling(url):
             self.skipped += 1
             return
 
         response = self.get_page(url)
 
         if response is None or response.status_code != 200:
-            self.logger.warning(
+            self._logger.warning(
                 f"Failed to get page: {url},  Status Code: {response.status_code}")
             self.skipped += 1
             return
@@ -113,14 +110,14 @@ class WebCrawler:
         links = self.extract_links(response.text, url)
 
         if links is None:
-            self.logger.warning(f"No links extracted from: {url}")
+            self._logger.warning(f"No links extracted from: {url}")
             self.skipped += 1
             return
 
         url_hash, filepath = self.downloader.download_compressed_html_content(
             os.getenv('DL_HTML_PATH'), url, response.text)
 
-        page_id = self.save_page(
+        page_id = self.db.save_page(
             (url, url_hash, filepath, CrawlStatus.CRAWLED_SUCCESS, response.status_code))
 
         new_depth = depth + 1
@@ -128,23 +125,23 @@ class WebCrawler:
         if new_depth <= MAX_DEPTH:
             self.add_links_to_queue(page_id, links, new_depth)
         else:
-            self.logger.info(
+            self._logger.info(
                 f"Skipping links for url: {url} - links exceed the max depth of {MAX_DEPTH}")
 
         # Add url to visited set
         self.cache.add_to_visited_set(url)
-        self.logger.info(f"Crawled URL: {url}")
+        self._logger.info(f"Crawled URL: {url}")
 
     def get_page(self, url):
         try:
             response = self.fetcher.get(url, headers=BASE_HEADERS, timeout=10)
             if response.status_code != 200:
-                self.logger.warning(
+                self._logger.warning(
                     f"Non-200 response ({response.status_code}) for {url}"
                 )
             return response
         except Exception as e:
-            self.logger.error(f"Request failed for {url}: {str(e)}")
+            self._logger.error(f"Request failed for {url}: {e}")
             return None
 
     def extract_links(self, html_text, url):
@@ -152,7 +149,7 @@ class WebCrawler:
             soup = BeautifulSoup(html_text, "lxml")
             return soup.select('#mw-content-text a')
         except Exception as e:
-            self.logger.error(f"Parsing or DB error at {url}: {e}")
+            self._logger.error(f"Parsing or DB error at {url}: {e}")
             return None
 
     def add_links_to_queue(self, page_id, links, new_depth):
@@ -172,10 +169,9 @@ class WebCrawler:
                     self._add_to_crawl_queue((normalized_url, new_depth))
                     self.cache.add_to_enqueued_set(normalized_url)
                     is_internal = not utils.is_external_link(normalized_url)
-                    self.save_link(page_id, normalized_url, is_internal)
-                    # DB.add_link(page_id, normalized_to_url)
+                    self.db.save_link(page_id, normalized_url, is_internal)
         except Exception as e:
-            self.logger.error(f"Enqueue error adding link : {str(e)}")
+            self._logger.error(f"Enqueue error adding link : {e}")
 
     def is_excluded(self, to_url):
         # ignore external urls and link tags with no href
@@ -187,47 +183,14 @@ class WebCrawler:
             return True
         return False
 
-    """" === DB Methods === """
-
-    def save_page(self, crawl_data):
-        url, url_hash, filepath, crawl_status, status_code = crawl_data
-        page = Page(
-            url=url,
-            url_hash=url_hash,
-            last_crawl_status=crawl_status,
-            http_status_code=status_code,
-            compressed_path=filepath)
-        self.db.add(page)
-        self.db.commit()
-        return page.id
-
-    def save_link(self, page_id, target_url, is_internal=False):
-        link = Link(
-            source_page_id=page_id,
-            target_url=target_url,
-            is_internal=is_internal
-        )
-        self.db.add(link)
-        self.db.commit()
-
-    # def _hash_url(self, url):
-    #     # Create a SHA-256 hash object
-    #     hash_object = hashlib.sha256()
-
-    #     # Update the hash object with the bytes of the url string
-    #     hash_object.update(url.encode())
-
-    #     # return the hexadecimal representation of the hash
-    #     return hash_object.hexdigest()
-
     """" === Temp Dev Logging Methods === """
 
     # TODO: pull this into the python-utility package
-    def clear_terminal(self):
-        if platform.system() == "Windows":
-            os.system("cls")
-        else:
-            os.system("clear")
+    # def clear_terminal(self):
+    #     if platform.system() == "Windows":
+    #         os.system("cls")
+    #     else:
+    #         os.system("clear")
 
 
 if __name__ == "__main__":
