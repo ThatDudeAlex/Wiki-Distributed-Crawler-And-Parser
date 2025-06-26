@@ -39,7 +39,7 @@ class Page(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     url = Column(String(2048), unique=True, nullable=False)
     url_hash = Column(String(2048), unique=True, nullable=False)
-    compressed_path = Column(String(2048), unique=True, nullable=False)
+    compressed_path = Column(String(2048), unique=True, nullable=True)
     title = Column(String(512), nullable=True)
 
     last_crawled_at = Column(

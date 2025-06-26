@@ -48,7 +48,7 @@ class WebCrawler:
 
         # TODO: move into the database
         # self.count = 0  # number of urls navigated to
-        self.skipped = 0  # number of urls skipped
+        # self.skipped = 0  # number of urls skipped
 
         # Only becomes true if it doesnt exist - This helps prevent the race condition of
         # multiple instances & allows only 1 instance to make the seed the queue
@@ -96,29 +96,31 @@ class WebCrawler:
     def _crawl_pages(self, url, depth):
 
         if not self.robot.allows_crawling(url):
-            self.skipped += 1
+            self._logger.warning(
+                f"Skipping page: {url} - Robot.txt does not allow crawling it")
+            self.db.save_skipped_page(url, None)
             return
 
         response = self.get_page(url)
 
         if response is None or response.status_code != 200:
-            self._logger.warning(
+            self._logger.error(
                 f"Failed to get page: {url},  Status Code: {response.status_code}")
-            self.skipped += 1
+            self.db.save_failed_page_crawl(url, response.status_code)
             return
 
         links = self.extract_links(response.text, url)
 
-        if links is None:
-            self._logger.warning(f"No links extracted from: {url}")
-            self.skipped += 1
-            return
+        # if links is None:
+        #     self._logger.warning(f"No links extracted from: {url}")
+        #     self.skipped += 1
+        #     return
 
         url_hash, filepath = self.downloader.download_compressed_html_content(
             os.getenv('DL_HTML_PATH'), url, response.text)
 
-        page_id = self.db.save_page(
-            (url, url_hash, filepath, CrawlStatus.CRAWLED_SUCCESS, response.status_code))
+        page_id = self.db.save_crawled_page(
+            (url, url_hash, filepath, response.status_code))
 
         new_depth = depth + 1
 
@@ -135,10 +137,6 @@ class WebCrawler:
     def get_page(self, url):
         try:
             response = self.fetcher.get(url, headers=BASE_HEADERS, timeout=10)
-            if response.status_code != 200:
-                self._logger.warning(
-                    f"Non-200 response ({response.status_code}) for {url}"
-                )
             return response
         except Exception as e:
             self._logger.error(f"Request failed for {url}: {e}")
