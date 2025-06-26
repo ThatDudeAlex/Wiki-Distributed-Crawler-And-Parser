@@ -11,11 +11,11 @@ import hashlib
 import urllib.robotparser
 from utilities import utils
 from shared.queue_service import QueueService
+from shared.logger import setup_logging
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from pika.exceptions import AMQPConnectionError
 from ratelimit import limits, sleep_and_retry
-from .init_logging import setup_logging
 from database.engine import SessionLocal
 from database.db_models.models import Page, Link, CrawlStatus
 from config import (SEED_URL, ROBOTS_TXT, BASE_HEADERS, MAX_DEPTH,

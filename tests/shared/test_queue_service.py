@@ -1,6 +1,5 @@
-from unittest.mock import MagicMock, patch
-
 import pytest
+from unittest.mock import MagicMock, patch
 from shared.queue_service import QueueService
 
 
