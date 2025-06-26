@@ -1,3 +1,4 @@
+import hashlib
 from urllib.parse import urlparse, urljoin, urlunparse
 from shared.config import EXCLUDED_PREFIXES, WIKI_BASE
 
@@ -15,12 +16,12 @@ def normalize_url(href: str) -> str:
     return urlunparse(cleaned)
 
 
-def is_external_link(href):
+def is_external_link(href: str) -> bool:
     parsed = urlparse(href)
     return parsed.scheme in ["http", "https"] and "wikipedia.org" not in parsed.netloc
 
 
-def has_excluded_prefix(href):
+def has_excluded_prefix(href: str) -> bool:
     # strip fragment/query to test path alone
     path = urlparse(href).path
 
@@ -31,6 +32,17 @@ def has_excluded_prefix(href):
     return False
 
 
-def is_home_page(href):
+def is_home_page(href: str) -> bool:
     parsed = urlparse(href)
     return parsed.path.strip("/") == "" and parsed.netloc in ["", "en.wikipedia.org"]
+
+
+def create_hash(content: str) -> str:
+    # Create a SHA-256 hash object
+    hash_object = hashlib.sha256()
+
+    # Update the hash object with the bytes of the url string
+    hash_object.update(content.encode())
+
+    # return the hexadecimal representation of the hash
+    return hash_object.hexdigest()

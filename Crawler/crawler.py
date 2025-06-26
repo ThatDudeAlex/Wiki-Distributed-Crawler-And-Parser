@@ -1,18 +1,13 @@
 
 import os
 import platform
-import time
-import pika
-import redis
 import requests
 import json
-import gzip
-import hashlib
-import urllib.robotparser
 from utilities import utils
 from shared.queue_service import QueueService
 from .cache_service import CacheService
 from .robot_hander import RobotHandler
+from .download_handler import DownloadHandler
 from shared.logger import setup_logging
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -20,7 +15,7 @@ from ratelimit import limits, sleep_and_retry
 from database.engine import SessionLocal
 from database.db_models.models import Page, Link, CrawlStatus
 from shared.config import (
-    SEED_URL, ROBOTS_TXT, BASE_HEADERS, MAX_DEPTH, CRAWL_QNAME, PARSE_QNAME)
+    SEED_URL, BASE_HEADERS, MAX_DEPTH, CRAWL_QNAME, PARSE_QNAME)
 
 
 class WebCrawler:
@@ -43,6 +38,8 @@ class WebCrawler:
 
         # robot.txt setup
         self.robot = RobotHandler(self.logger)
+
+        self.downloader = DownloadHandler(self.logger)
 
         # database setup
         self.db = SessionLocal()
@@ -92,18 +89,6 @@ class WebCrawler:
             # Optionally reject the message (without requeue)
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
-    """" === Robot.txt Methods === """
-
-    def _setup_robot_text(self):
-        self.rp.set_url(ROBOTS_TXT)
-        self.rp.read()
-
-    def robot_allows_crawling(self, url):
-        if not self.rp.can_fetch(BASE_HEADERS['user-agent'], url):
-            self.logger.warning(f"Blocked by robots.txt: {url}")
-            return False
-        return True
-
     """" === Crawling Methods === """
 
     def _crawl_pages(self, url, depth):
@@ -127,7 +112,8 @@ class WebCrawler:
             self.skipped += 1
             return
 
-        url_hash, filepath = self.download_compressed_html(url, response.text)
+        url_hash, filepath = self.downloader.download_compressed_html_content(
+            os.getenv('DL_HTML_PATH'), url, response.text)
 
         page_id = self.save_page(
             (url, url_hash, filepath, CrawlStatus.CRAWLED_SUCCESS, response.status_code))
@@ -198,18 +184,6 @@ class WebCrawler:
             return True
         return False
 
-    def download_compressed_html(self, url, html_content):
-        url_hash = self._hash_url(url)
-        filename = f"{url_hash}.html.gz"
-        filepath = os.path.join(os.getenv('DL_HTML_PATH'), filename)
-
-        with gzip.open(filepath, "wt", encoding="utf-8") as f:
-            f.write(html_content)
-
-        self.logger.info(
-            f"Downloaded compressed HTML for URL: {url} - filepath: {filepath}")
-        return (url_hash, filepath)
-
     """" === DB Methods === """
 
     def save_page(self, crawl_data):
@@ -233,15 +207,15 @@ class WebCrawler:
         self.db.add(link)
         self.db.commit()
 
-    def _hash_url(self, url):
-        # Create a SHA-256 hash object
-        hash_object = hashlib.sha256()
+    # def _hash_url(self, url):
+    #     # Create a SHA-256 hash object
+    #     hash_object = hashlib.sha256()
 
-        # Update the hash object with the bytes of the url string
-        hash_object.update(url.encode())
+    #     # Update the hash object with the bytes of the url string
+    #     hash_object.update(url.encode())
 
-        # return the hexadecimal representation of the hash
-        return hash_object.hexdigest()
+    #     # return the hexadecimal representation of the hash
+    #     return hash_object.hexdigest()
 
     """" === Temp Dev Logging Methods === """
 
