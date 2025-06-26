@@ -15,9 +15,10 @@ def cache_service():
 
         service = CacheService(mock_logger)
 
-        # Optionally expose mock internals for assertions
         yield service, mock_redis_instance, mock_logger
 
+
+# TODO: convert to parametrize test cases
 
 def test_initiate_pass(cache_service):
     service, mock_redis_instance, mock_logger = cache_service
