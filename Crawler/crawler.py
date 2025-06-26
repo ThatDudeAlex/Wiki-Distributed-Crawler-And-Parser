@@ -7,7 +7,6 @@ from .download_handler import DownloadHandler
 from .fetcher import Fetcher
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from database.db_models.models import CrawlStatus
 from shared import utils
 from shared.queue_service import QueueService
 from shared.db_service import DatabaseService
@@ -45,10 +44,6 @@ class WebCrawler:
 
         # database setup
         self.db = DatabaseService(self._logger)
-
-        # TODO: move into the database
-        # self.count = 0  # number of urls navigated to
-        # self.skipped = 0  # number of urls skipped
 
         # Only becomes true if it doesnt exist - This helps prevent the race condition of
         # multiple instances & allows only 1 instance to make the seed the queue
@@ -88,8 +83,6 @@ class WebCrawler:
 
         except Exception as e:
             self._logger.error(f"Failed to process message: {e}")
-            # Optionally reject the message (without requeue)
-            # ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
     """" === Crawling Methods === """
 
@@ -110,11 +103,6 @@ class WebCrawler:
             return
 
         links = self.extract_links(response.text, url)
-
-        # if links is None:
-        #     self._logger.warning(f"No links extracted from: {url}")
-        #     self.skipped += 1
-        #     return
 
         url_hash, filepath = self.downloader.download_compressed_html_content(
             os.getenv('DL_HTML_PATH'), url, response.text)
