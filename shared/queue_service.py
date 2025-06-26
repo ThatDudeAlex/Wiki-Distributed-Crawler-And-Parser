@@ -38,7 +38,7 @@ class QueueService:
                 self.channel.queue_declare(
                     queue=self.parse_queue_name, durable=True)
 
-                self.logger.info("RabbitMQ connection established.")
+                self.logger.info("RabbitMQ connection established")
                 return
             except AMQPConnectionError as e:
                 retries += 1
@@ -46,7 +46,7 @@ class QueueService:
                     f"RabbitMQ not available yet (retry {retries}/{self.max_retries}): {e}")
                 time.sleep(self.retry_interval)
 
-        raise RuntimeError("RabbitMQ not reachable after multiple retries.")
+        raise RuntimeError("RabbitMQ not reachable after multiple retries")
 
     def publish(self, queue_name, message):
         self.channel.basic_publish(
