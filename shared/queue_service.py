@@ -19,6 +19,15 @@ class QueueService:
 
         self._wait_for_rabbit()
 
+    # TODO: test if using this method is better than doing it from directly from the parent class
+    # def configure_basic_consume(self, queue_name, callback_function, auto_ack):
+    #     self.channel.basic_consume(
+    #         queue=queue_name,
+    #         on_message_callback=callback_function,
+    #         auto_ack=auto_ack
+    #     )
+    #     return
+
     def _wait_for_rabbit(self):
         retries = 0
         while retries < self._max_retries:

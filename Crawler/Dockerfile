@@ -7,8 +7,6 @@ COPY requirements-common.txt  ./requirements-common.txt
 COPY database/      ./database/
 COPY shared/        ./shared/
 
-COPY config.py    ./config.py
-
 # service-specific code
 COPY crawler/     ./crawler/
 
