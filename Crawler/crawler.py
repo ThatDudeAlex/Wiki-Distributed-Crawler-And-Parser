@@ -11,6 +11,7 @@ import hashlib
 import urllib.robotparser
 from utilities import utils
 from shared.queue_service import QueueService
+from .cache_service import CacheService
 from shared.logger import setup_logging
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -18,8 +19,8 @@ from pika.exceptions import AMQPConnectionError
 from ratelimit import limits, sleep_and_retry
 from database.engine import SessionLocal
 from database.db_models.models import Page, Link, CrawlStatus
-from config import (SEED_URL, ROBOTS_TXT, BASE_HEADERS, MAX_DEPTH,
-                    R_VISITED, R_ENQUEUED, CRAWL_QNAME, PARSE_QNAME)
+from shared.config import (SEED_URL, ROBOTS_TXT, BASE_HEADERS, MAX_DEPTH,
+                           R_VISITED, R_ENQUEUED, CRAWL_QNAME, PARSE_QNAME)
 
 
 class WebCrawler:
@@ -28,6 +29,7 @@ class WebCrawler:
         self.logger = setup_logging(
             os.getenv('CRAWL_LOGS', 'logs/crawler.log')
         )
+
         # rabbitMQ setup
         self.crawl_queue_name = CRAWL_QNAME
         self.parse_queue_name = PARSE_QNAME
@@ -42,8 +44,7 @@ class WebCrawler:
         )
 
         # redis setup
-        self.redis = redis.Redis(
-            host='redis', port=6379, decode_responses=True)
+        self.cache = CacheService(self.logger)
 
         # robot.txt setup
         self.rp = urllib.robotparser.RobotFileParser()
@@ -58,42 +59,15 @@ class WebCrawler:
 
         # Only becomes true if it doesnt exist - This helps prevent the race condition of
         # multiple instances & allows only 1 instance to make the seed the queue
-        queue_is_seeded = self.redis.set(f"enqueued:{SEED_URL}", 1, nx=True)
+        queue_is_seeded = self.cache.set_if_not_existing(SEED_URL)
 
         if queue_is_seeded:
-            self.redis.sadd(R_ENQUEUED, SEED_URL)
+            self.cache.add_to_enqueued_set(SEED_URL)
             self._add_to_crawl_queue((SEED_URL, 0))
 
         self.logger.info('Crawler Initiation Complete')
 
     """" === RabiitMQ Methods === """
-
-    # def _setup_rabbit_connection(self):
-    # self.connection = self._get_rabbit_connection()
-    # creds = pika.PlainCredentials(
-    #     os.environ["RABBITMQ_USER"],
-    #     os.environ["RABBITMQ_PASSWORD"],
-    # )
-    # # connection = self._get_rabbit_connection()
-    # self.connection = pika.BlockingConnection(
-    #     pika.ConnectionParameters("rabbitmq", port=5672, credentials=creds))
-    # self.channel = self.connection.channel()
-    # self.channel.basic_qos(prefetch_count=1)
-    # self.channel.queue_declare(queue=self.crawl_queue_name, durable=True)
-    # self.channel.queue_declare(queue=self.parse_queue_name, durable=True)
-    # self.channel.basic_consume(
-    #     queue=self.crawl_queue_name,
-    #     on_message_callback=self._consume_rabbit_message,
-    #     auto_ack=False
-    # )
-    # queue = QueueService(self.crawl_queue_name,
-    #                      self.parse_queue_name, self.logger)
-    # queue.channel.basic_consume(
-    #     queue=self.crawl_queue_name,
-    #     on_message_callback=self._consume_rabbit_message,
-    #     auto_ack=False
-    # )
-    # return queue
 
     def _add_to_crawl_queue(self, payload):
         try:
@@ -176,7 +150,7 @@ class WebCrawler:
                 f"Skipping links for url: {url} - links exceed the max depth of {MAX_DEPTH}")
 
         # Add url to visited set
-        self.redis.sadd(R_VISITED, url)
+        self.cache.add_to_visited_set(url)
         self.logger.info(f"Crawled URL: {url}")
 
     @sleep_and_retry
@@ -214,15 +188,9 @@ class WebCrawler:
                 if self.is_excluded(to_url):
                     continue
 
-                # TODO: Add url into queue and enqueued set
-                if self.is_queueable(normalized_url):
+                if self.cache.is_queueable(normalized_url):
                     self._add_to_crawl_queue((normalized_url, new_depth))
-                    self.redis.sadd(R_ENQUEUED, normalized_url)
-                    # TODO: cleanup after successful implementation
-                    # queue.add((normalized_to_url, depth + 1))
-                    # enqueued_set.add(normalized_to_url)
-
-                    # TODO: add normalized URL to the DB
+                    self.cache.add_to_enqueued_set(normalized_url)
                     is_internal = not utils.is_external_link(normalized_url)
                     self.save_link(page_id, normalized_url, is_internal)
                     # DB.add_link(page_id, normalized_to_url)
@@ -238,15 +206,6 @@ class WebCrawler:
         ):
             return True
         return False
-
-    # TODO: Once redis is implemented updated if statement to use redis for the sets
-    def is_queueable(self, normalized_url):
-        in_visited = self.redis.sismember(R_VISITED, normalized_url)
-        in_enqueued = self.redis.sismember(R_ENQUEUED, normalized_url)
-
-        if in_visited or in_enqueued:
-            return False
-        return True
 
     def download_compressed_html(self, url, html_content):
         url_hash = self._hash_url(url)
