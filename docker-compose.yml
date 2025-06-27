@@ -29,12 +29,14 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
-  redis:
-    image: redis:alpine
-    container_name: redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
+  seeder:
+    container_name: queue_seeder
+    build:
+      context: .
+      dockerfile: seeder/Dockerfile
+    env_file: .env
+    depends_on:
+      - rabbitmq
 
   postgres:
     image: postgres:16
@@ -59,12 +61,12 @@ services:
     env_file: .env # Only used in local dev
     command: [ "python", "-m", "database.db_init.db_init" ]
 
-  seeder:
-    container_name: queue_seeder
-    build: ./seeder
-    depends_on:
-      - rabbitmq
-
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
   crawler_noproxy:
     <<: *crawler-common
   # California Proxies
