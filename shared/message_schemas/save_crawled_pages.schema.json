@@ -2,6 +2,7 @@
     "type": "object",
     "required": [
         "url",
+        "url_hash",
         "status_code",
         "compressed_path",
         "crawl_time"

@@ -1,11 +1,15 @@
 {
     "type": "object",
     "required": [
+        "source_page_id",
         "source_url",
         "depth",
         "links"
     ],
     "properties": {
+        "source_page_id": {
+            "type": "integer"
+        },
         "source_url": {
             "type": "string",
             "format": "uri"

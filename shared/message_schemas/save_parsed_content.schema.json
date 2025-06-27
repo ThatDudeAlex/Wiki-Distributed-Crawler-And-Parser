@@ -2,20 +2,28 @@
     "type": "object",
     "required": [
         "url",
+        "page_id",
         "title",
-        "body",
+        "summary",
+        "content",
         "categories",
-        "infobox"
+        "parse_time"
     ],
     "properties": {
         "url": {
             "type": "string",
             "format": "uri"
         },
+        "page_id": {
+            "type": "integer"
+        },
         "title": {
             "type": "string"
         },
-        "body": {
+        "summary": {
+            "type": "string"
+        },
+        "content": {
             "type": "string"
         },
         "categories": {
@@ -24,11 +32,9 @@
                 "type": "string"
             }
         },
-        "infobox": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "string"
-            }
+        "parse_time": {
+            "type": "string",
+            "format": "date-time"
         }
     },
     "additionalProperties": false
