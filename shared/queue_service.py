@@ -1,3 +1,4 @@
+import logging
 import pika
 import time
 import os
@@ -8,7 +9,7 @@ from dotenv import load_dotenv
 
 
 class QueueService:
-    def __init__(self, logger, retry_interval=10, max_retries=6):
+    def __init__(self, logger: logging.Logger, retry_interval: int = 10, max_retries: int = 6):
         load_dotenv()
         self._logger = logger
         self._retry_interval = retry_interval
@@ -35,7 +36,7 @@ class QueueService:
         retries = 0
         while retries < self._max_retries:
             try:
-                self._logger.info("Attempting RabbitMQ connection...")
+                self._logger.debug("Attempting RabbitMQ connection...")
 
                 creds = pika.PlainCredentials(
                     os.environ["RABBITMQ_USER"],
@@ -47,10 +48,6 @@ class QueueService:
                 self.channel.basic_qos(prefetch_count=1)
                 self._declare_queues(
                     [*RABBIT_QUEUES, CRAWL_QNAME, PARSE_QNAME])
-                # self.channel.queue_declare(
-                #     queue=self._crawl_queue_name, durable=True)
-                # self.channel.queue_declare(
-                #     queue=self._parse_queue_name, durable=True)
 
                 self._logger.info("RabbitMQ connection established")
                 return
