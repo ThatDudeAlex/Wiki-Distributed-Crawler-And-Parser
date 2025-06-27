@@ -1,6 +1,6 @@
 import logging
 import redis
-from shared.config import R_VISITED, R_ENQUEUED
+from shared.config import RedisSets
 
 
 class CacheService:
@@ -19,7 +19,7 @@ class CacheService:
         Returns ``True`` if it successfully adds the ``URL`` else returns ``False``
         """
         if url:
-            self._redis.sadd(R_ENQUEUED, url)
+            self._redis.sadd(RedisSets.ENQUEUED.value, url)
             self._logger.info(f"Added to enqueued set: {url}")
             return True
         return False
@@ -31,7 +31,7 @@ class CacheService:
         Returns ``True`` if it successfully adds the ``URL`` else returns ``False``
         """
         if url:
-            self._redis.sadd(R_VISITED, url)
+            self._redis.sadd(RedisSets.VISITED.value, url)
             self._logger.info(f"Added to visited set: {url}")
             return True
         return False
@@ -48,8 +48,8 @@ class CacheService:
         return is_seeded
 
     def is_queueable(self, url: str) -> bool:
-        in_visited = self._redis.sismember(R_VISITED, url)
-        in_enqueued = self._redis.sismember(R_ENQUEUED, url)
+        in_visited = self._redis.sismember(RedisSets.VISITED.value, url)
+        in_enqueued = self._redis.sismember(RedisSets.ENQUEUED.value, url)
 
         if in_visited or in_enqueued:
             return False

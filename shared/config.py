@@ -1,3 +1,5 @@
+from enum import Enum
+
 WIKI_BASE = "https://en.wikipedia.org"
 
 SEED_URL = 'https://en.wikipedia.org/wiki/Computer_science'
@@ -31,22 +33,32 @@ EXCLUDED_PREFIXES = [
     "/wiki/Main_Page",
 ]
 
-# Redis sets
-R_VISITED = "visited"
-R_ENQUEUED = "enqueued"
+# Redis Configs
 
-# RabbitMQ queues
-RABBIT_QUEUES = [
-    'crawl_tasks',
-    'parse_tasks',
-    'save_crawled_pages',
-    'save_parsed_content',
-    'enqueue_links',
-]
 
-CRAWL_QNAME = 'crawler'
-PARSE_QNAME = 'parser'
-# RABIT_CREDS = pika.PlainCredentials(
-#     os.environ["RABBITMQ_USER"],
-#     os.environ["RABBITMQ_PASSWORD"],
-# )
+class RedisSets(Enum):
+    VISITED = 'visited'
+    ENQUEUED = 'enqueued'
+
+# RabbitMQ Configs
+
+
+class QueueNames(Enum):
+    CRAWL = 'crawl_tasks'
+    SAVE_PAGE = 'save_crawled_pages'
+    PARSE = 'parse_tasks'
+    SAVE_CONTENT = 'save_parsed_content'
+    ENQUEUE_LINKS = 'enqueue_links'
+
+
+CRAWLER_QUEUE_CHANNELS = {
+    'listen': QueueNames.CRAWL.value,
+    'parsejobs': QueueNames.PARSE.value,
+    'savepage': QueueNames.SAVE_PAGE.value,
+}
+
+PARSER_QUEUE_CHANNELS = {
+    'listen': QueueNames.PARSE.value,
+    'savecontent': QueueNames.SAVE_CONTENT.value,
+    'enqueuelinks': QueueNames.ENQUEUE_LINKS.value
+}

@@ -11,8 +11,7 @@ from shared import utils
 from shared.queue_service import QueueService
 from shared.db_service import DatabaseService
 from shared.logger import setup_logging
-from shared.config import (
-    SEED_URL, BASE_HEADERS, MAX_DEPTH, CRAWL_QNAME, PARSE_QNAME)
+from shared.config import BASE_HEADERS, MAX_DEPTH, CRAWLER_QUEUE_CHANNELS
 
 
 class WebCrawler:
@@ -25,7 +24,7 @@ class WebCrawler:
         # rabbitMQ setup
         self.queue = QueueService(self._logger)
         self.queue.channel.basic_consume(
-            queue=CRAWL_QNAME,
+            queue=CRAWLER_QUEUE_CHANNELS['listen'],
             on_message_callback=self._consume_rabbit_message,
             auto_ack=False
         )
@@ -45,27 +44,19 @@ class WebCrawler:
         # database setup
         self.db = DatabaseService(self._logger)
 
-        # Only becomes true if it doesnt exist - This helps prevent the race condition of
-        # multiple instances & allows only 1 instance to make the seed the queue
-        queue_is_seeded = self.cache.set_if_not_existing(SEED_URL)
-
-        if queue_is_seeded:
-            self.cache.add_to_enqueued_set(SEED_URL)
-            self._add_to_crawl_queue((SEED_URL, 0))
-
         self._logger.info('Crawler Initiation Complete')
 
     """" === RabiitMQ Methods === """
 
     def _add_to_crawl_queue(self, payload):
         try:
-            self.queue.publish(CRAWL_QNAME, payload)
+            self.queue.publish(CRAWLER_QUEUE_CHANNELS['savepage'], payload)
         except Exception as e:
             self._logger.error(f"Issue adding to the crawler queue: {e}")
 
     def _add_to_parse_queue(self, payload):
         try:
-            self.queue.publish(PARSE_QNAME, payload)
+            self.queue.publish(CRAWLER_QUEUE_CHANNELS['parsejobs'], payload)
         except Exception as e:
             self._logger.error(f"Issue adding to the parser queue: {e}")
 

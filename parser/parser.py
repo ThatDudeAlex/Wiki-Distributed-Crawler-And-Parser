@@ -6,7 +6,7 @@ from shared import utils
 from shared.logger import setup_logging
 from shared.queue_service import QueueService
 from shared.db_service import DatabaseService
-from shared.config import PARSE_QNAME
+from shared.config import PARSER_QUEUE_CHANNELS
 from .compress_html_handler import CompressFileHandler
 
 
@@ -19,7 +19,7 @@ class HtmlParser:
         # rabbitMQ setup
         self.queue = QueueService(self._logger)
         self.queue.channel.basic_consume(
-            queue=PARSE_QNAME,
+            queue=PARSER_QUEUE_CHANNELS['listen'],
             on_message_callback=self._consume_rabbit_message,
             auto_ack=False
         )
