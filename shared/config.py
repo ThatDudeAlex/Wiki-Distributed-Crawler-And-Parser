@@ -61,13 +61,3 @@ PARSER_QUEUE_CHANNELS = {
     'savecontent': QueueNames.SAVE_CONTENT.value,
     'enqueuelinks': QueueNames.ENQUEUE_LINKS.value
 }
-
-CRAWLER_PUBLISH_SCHEMA = {
-    "url": "string",
-    "properties": {
-        "id": {"type": "integer"},
-        "type": {"type": "string"},
-        "payload": {"type": "object"}
-    },
-    "required": ["id", "type", "payload"]
-}
