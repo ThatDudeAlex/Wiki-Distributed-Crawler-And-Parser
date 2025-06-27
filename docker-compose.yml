@@ -26,6 +26,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}"
       RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
 
   redis:
     image: redis:alpine
@@ -124,6 +126,18 @@ services:
   #   environment:
   #     - HTTP_PROXY=${VA_RESTON1_PROXY}
   #     - HTTPS_PROXY=${VA_RESTON1_PROXY}
+  parser:
+    build:
+      context: .
+      dockerfile: parser/Dockerfile
+    depends_on:
+      - postgres
+      - db_init
+      - rabbitmq
+    env_file: .env # common env
+    command: [ "python", "-m", "parser.parser" ]
+    volumes:
+      - compressed_html_data:${DL_HTML_PATH}
   # ===========================================
   # Testing services for proxies/vpn services
   # ===========================================
@@ -142,5 +156,5 @@ services:
 volumes:
   pg_data:
   compressed_html_data:
-
-
+  rabbitmq_data:
+    driver: local

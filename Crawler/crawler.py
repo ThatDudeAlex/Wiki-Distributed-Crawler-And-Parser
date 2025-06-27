@@ -110,6 +110,8 @@ class WebCrawler:
         page_id = self.db.save_crawled_page(
             (url, url_hash, filepath, response.status_code))
 
+        self._add_to_parse_queue((page_id, filepath))
+
         new_depth = depth + 1
 
         if new_depth <= MAX_DEPTH:

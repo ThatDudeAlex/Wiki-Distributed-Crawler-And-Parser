@@ -13,7 +13,7 @@ class DatabaseService:
 
         :param crawl_data: Tuple containing ``(url, url_hash, filepath, status_code)``
         """
-        if len(crawl_data) != 5:
+        if len(crawl_data) != 4:
             raise ValueError(
                 f"Expected 4 items, got {len(crawl_data)}: {crawl_data}")
 

@@ -22,8 +22,8 @@ class DownloadHandler:
             comment.extract()
 
         # Remove potential ads or tracking elements
-        for tag in soup.select("[class*='ad'], [id*='ad'], [class*='tracking'], [id*='tracking']"):
-            tag.decompose()
+        # for tag in soup.select("[class*='ad'], [id*='ad'], [class*='tracking'], [id*='tracking']"):
+        #     tag.decompose()
 
         return str(soup)
 

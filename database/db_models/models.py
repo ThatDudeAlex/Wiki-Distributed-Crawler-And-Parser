@@ -81,7 +81,6 @@ class Page(Base):
 
     __table_args__ = (
         Index("idx_pages_url", "url"),
-        Index("idx_pages_title", "title"),
         Index("idx_last_crawled", "last_crawled_at"),
         Index("idx_next_crawl", "next_crawl_at"),
         Index("idx_last_crawl_status", "last_crawl_status"),
@@ -111,6 +110,18 @@ class Link(Base):
     __table_args__ = (
         Index("idx_source_page_id", "source_page_id"),
     )
+
+
+# Association table for many-to-many relationship
+page_category_association = Table(
+    'page_categories',
+    Base.metadata,
+    Column('page_id', Integer, ForeignKey(
+        'page_content.id', ondelete="CASCADE"), primary_key=True),
+    Column('category_id', Integer, ForeignKey(
+        'categories.id', ondelete="CASCADE"), primary_key=True),
+    UniqueConstraint('page_id', 'category_id', name='uix_page_category')
+)
 
 
 class PageContent(Base):
@@ -146,17 +157,11 @@ class PageContent(Base):
     # ORM relationship back to Page
     page = relationship("Page", backref="parsed_page", uselist=False)
 
-
-# Association table for many-to-many relationship
-page_category_association = Table(
-    'page_categories',
-    Base.metadata,
-    Column('page_id', Integer, ForeignKey(
-        'page_content.id', ondelete="CASCADE"), primary_key=True),
-    Column('category_id', Integer, ForeignKey(
-        'categories.id', ondelete="CASCADE"), primary_key=True),
-    UniqueConstraint('page_id', 'category_id', name='uix_page_category')
-)
+    categories = relationship(
+        "Category",
+        secondary=page_category_association,
+        back_populates="pages"
+    )
 
 
 class Category(Base):

@@ -42,9 +42,9 @@ class HtmlParser:
 
             # Acknowledge only after success
             ch.basic_ack(delivery_tag=method.delivery_tag)
-
         except Exception as e:
             self._logger.error(f"Failed to process message: {e}")
+            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
     def _parse_pages(self, page_id: int, filepath: str):
         html_content = self.cmp_handler.load_compressed_html(filepath)
@@ -60,14 +60,18 @@ class HtmlParser:
     def _extract_page_content(self, html_content: str, page_id: int):
         soup = BeautifulSoup(html_content, "lxml")
         title = self._extract_title(soup, page_id)
+        self._logger.critical(f"title: {title}")
         summary = self._extract_summary(soup, page_id)
         categories = self._extract_categories(soup, page_id)
-        content = self._extract_page_content(soup, page_id)
+        content = self._extract_content(soup, page_id)
         return (title, summary, categories, content)
+        # return (title, summary, None, None)
 
     def _extract_title(self, soup: BeautifulSoup, page_id: int) -> str:
         try:
-            return soup.find(id='firstHeading')
+            title = soup.find(id='firstHeading')
+            self._logger.info(f"Found title for page_id: {page_id}")
+            return title.get_text(strip=True)
         except Exception as e:
             self._logger.error(
                 f"Error parsing title for page_id: {page_id}  -  error: {e}")
@@ -78,6 +82,8 @@ class HtmlParser:
 
             # Get all paragraph elements under #mw-content-text
             paragraphs = soup.select('#mw-content-text p')
+
+            self._logger.info(f"\n\Paragraphs: {paragraphs}\n\n")
 
             first_paragraph = None
 
@@ -91,10 +97,10 @@ class HtmlParser:
             if first_paragraph:
                 self._logger.info(
                     f"Found page summary: {first_paragraph.text.strip()}")
-            else:
-                self._logger.warning(
-                    f"Did not find summary for page_id: {page_id}")
+                return first_paragraph.get_text(strip=True)
 
+            self._logger.warning(
+                f"Did not find summary for page_id: {page_id}")
             return first_paragraph
         except Exception as e:
             self._logger.error(
@@ -183,3 +189,8 @@ class HtmlParser:
             self._logger.error(
                 f"Error parsing summary for page_id: {page_id}  -  error: {e}")
             return None
+
+
+if __name__ == "__main__":
+    parser = HtmlParser()
+    parser.queue.channel.start_consuming()
