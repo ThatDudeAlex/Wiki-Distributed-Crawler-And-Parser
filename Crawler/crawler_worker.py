@@ -41,24 +41,24 @@ class WebCrawler:
         # http fetcher setup
         self.fetcher = Fetcher(self._logger, BASE_HEADERS)
 
-        # database setup
-        self.db = DatabaseService(self._logger)
+        # TODO: refactored db calls into messages to parser
+        # self.db = DatabaseService(self._logger)
 
         self._logger.info('Crawler Initiation Complete')
 
     """" === RabiitMQ Methods === """
 
-    def _add_to_crawl_queue(self, payload):
-        try:
-            self.queue.publish(CRAWLER_QUEUE_CHANNELS['savepage'], payload)
-        except Exception as e:
-            self._logger.error(f"Issue adding to the crawler queue: {e}")
+    # def _add_to_crawl_queue(self, payload):
+    #     try:
+    #         self.queue.publish(CRAWLER_QUEUE_CHANNELS['savepage'], payload)
+    #     except Exception as e:
+    #         self._logger.error(f"Issue adding to the crawler queue: {e}")
 
-    def _add_to_parse_queue(self, payload):
-        try:
-            self.queue.publish(CRAWLER_QUEUE_CHANNELS['parsejobs'], payload)
-        except Exception as e:
-            self._logger.error(f"Issue adding to the parser queue: {e}")
+    # def _add_to_parse_queue(self, payload):
+    #     try:
+    #         self.queue.publish(CRAWLER_QUEUE_CHANNELS['parsejobs'], payload)
+    #     except Exception as e:
+    #         self._logger.error(f"Issue adding to the parser queue: {e}")
 
     def _publish(self):
         pass
@@ -85,7 +85,7 @@ class WebCrawler:
         if not self.robot.allows_crawling(url):
             self._logger.warning(
                 f"Skipping page: {url} - Robot.txt does not allow crawling it")
-            self.db.save_skipped_page(url, None)
+            # self.db.save_skipped_page(url, None)
             return
 
         response = self.get_page(url)
@@ -93,26 +93,28 @@ class WebCrawler:
         if response is None or response.status_code != 200:
             self._logger.error(
                 f"Failed to get page: {url},  Status Code: {response.status_code}")
-            self.db.save_failed_page_crawl(url, response.status_code)
+            # self.db.save_failed_page_crawl(url, response.status_code)
             return
 
-        links = self.extract_links(response.text, url)
+        # links = self.extract_links(response.text, url)
 
         url_hash, filepath = self.downloader.download_compressed_html_content(
             os.getenv('DL_HTML_PATH'), url, response.text)
 
-        page_id = self.db.save_crawled_page(
-            (url, url_hash, filepath, response.status_code))
+        self._publish()
 
-        self._add_to_parse_queue((page_id, filepath))
+        # page_id =  self.db.save_crawled_page(
+        #     (url, url_hash, filepath, response.status_code))
 
-        new_depth = depth + 1
+        # self._add_to_parse_queue((page_id, filepath))
 
-        if new_depth <= MAX_DEPTH:
-            self.add_links_to_queue(page_id, links, new_depth)
-        else:
-            self._logger.info(
-                f"Skipping links for url: {url} - links exceed the max depth of {MAX_DEPTH}")
+        # new_depth = depth + 1
+
+        # if new_depth <= MAX_DEPTH:
+        #     self.add_links_to_queue(page_id, links, new_depth)
+        # else:
+        #     self._logger.info(
+        #         f"Skipping links for url: {url} - links exceed the max depth of {MAX_DEPTH}")
 
         # Add url to visited set
         self.cache.add_to_visited_set(url)
@@ -126,13 +128,13 @@ class WebCrawler:
             self._logger.error(f"Request failed for {url}: {e}")
             return None
 
-    def extract_links(self, html_text, url):
-        try:
-            soup = BeautifulSoup(html_text, "lxml")
-            return soup.select('#mw-content-text a')
-        except Exception as e:
-            self._logger.error(f"Parsing or DB error at {url}: {e}")
-            return None
+    # def extract_links(self, html_text, url):
+    #     try:
+    #         soup = BeautifulSoup(html_text, "lxml")
+    #         return soup.select('#mw-content-text a')
+    #     except Exception as e:
+    #         self._logger.error(f"Parsing or DB error at {url}: {e}")
+    #         return None
 
     def add_links_to_queue(self, page_id, links, new_depth):
         try:
@@ -147,11 +149,12 @@ class WebCrawler:
                 if self.is_excluded(to_url):
                     continue
 
-                if self.cache.is_queueable(normalized_url):
-                    self._add_to_crawl_queue((normalized_url, new_depth))
-                    self.cache.add_to_enqueued_set(normalized_url)
-                    is_internal = not utils.is_external_link(normalized_url)
-                    self.db.save_link(page_id, normalized_url, is_internal)
+                # TODO: clean up
+                # if self.cache.is_queueable(normalized_url):
+                    # self._add_to_crawl_queue((normalized_url, new_depth))
+                    # self.cache.add_to_enqueued_set(normalized_url)
+                    # is_internal= not utils.is_external_link(normalized_url)
+                    # self.db.save_link(page_id, normalized_url, is_internal)
         except Exception as e:
             self._logger.error(f"Enqueue error adding link : {e}")
 

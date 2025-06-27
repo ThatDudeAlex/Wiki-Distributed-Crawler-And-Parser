@@ -48,16 +48,19 @@ class QueueNames(Enum):
     PARSE = 'parse_tasks'
     SAVE_CONTENT = 'save_parsed_content'
     ENQUEUE_LINKS = 'enqueue_links'
+    FAILED_TASK = 'save_failed_tasks'
 
 
 CRAWLER_QUEUE_CHANNELS = {
     'listen': QueueNames.CRAWL.value,
     'parsejobs': QueueNames.PARSE.value,
     'savepage': QueueNames.SAVE_PAGE.value,
+    'failed': QueueNames.FAILED_TASK.value
 }
 
 PARSER_QUEUE_CHANNELS = {
     'listen': QueueNames.PARSE.value,
     'savecontent': QueueNames.SAVE_CONTENT.value,
-    'enqueuelinks': QueueNames.ENQUEUE_LINKS.value
+    'enqueuelinks': QueueNames.ENQUEUE_LINKS.value,
+    'failed': QueueNames.FAILED_TASK.value
 }

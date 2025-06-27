@@ -12,6 +12,9 @@
             "type": "string",
             "format": "uri"
         },
+        "url_hash": {
+            "type": "string"
+        },
         "status_code": {
             "type": "integer",
             "minimum": 100,

@@ -1,0 +1,36 @@
+{
+    "type": "object",
+    "required": [
+        "url",
+        "stage",
+        "error_message",
+        "timestamp"
+    ],
+    "properties": {
+        "url": {
+            "type": "string",
+            "format": "uri"
+        },
+        "stage": {
+            "type": "string",
+            "enum": [
+                "crawl",
+                "parse",
+                "save",
+                "enqueue"
+            ]
+        },
+        "error_message": {
+            "type": "string"
+        },
+        "timestamp": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "meta": {
+            "type": "object",
+            "additionalProperties": true
+        }
+    },
+    "additionalProperties": false
+}
