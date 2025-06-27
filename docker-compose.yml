@@ -8,7 +8,7 @@ x-crawler-common: &crawler-common
     - rabbitmq
     - redis
   env_file: .env # common env
-  command: [ "python", "-m", "crawler.crawler" ]
+  command: [ "python", "-m", "crawler.crawler_worker" ]
   volumes:
     - compressed_html_data:${DL_HTML_PATH}
   environment:

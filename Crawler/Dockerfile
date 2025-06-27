@@ -12,4 +12,4 @@ COPY crawler/     ./crawler/
 
 RUN pip install --no-cache-dir -r crawler/requirements.txt
 
-CMD ["python", "-m", "crawler.crawler"]
+CMD ["python", "-m", "crawler.crawler_worker"]

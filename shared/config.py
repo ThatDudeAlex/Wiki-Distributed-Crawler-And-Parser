@@ -40,9 +40,8 @@ class RedisSets(Enum):
     VISITED = 'visited'
     ENQUEUED = 'enqueued'
 
+
 # RabbitMQ Configs
-
-
 class QueueNames(Enum):
     CRAWL = 'crawl_tasks'
     SAVE_PAGE = 'save_crawled_pages'
@@ -61,4 +60,14 @@ PARSER_QUEUE_CHANNELS = {
     'listen': QueueNames.PARSE.value,
     'savecontent': QueueNames.SAVE_CONTENT.value,
     'enqueuelinks': QueueNames.ENQUEUE_LINKS.value
+}
+
+CRAWLER_PUBLISH_SCHEMA = {
+    "url": "string",
+    "properties": {
+        "id": {"type": "integer"},
+        "type": {"type": "string"},
+        "payload": {"type": "object"}
+    },
+    "required": ["id", "type", "payload"]
 }

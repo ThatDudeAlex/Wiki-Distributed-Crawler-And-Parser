@@ -1,0 +1,17 @@
+{
+    "type": "object",
+    "required": [
+        "url",
+        "compressed_path"
+    ],
+    "properties": {
+        "url": {
+            "type": "string",
+            "format": "uri"
+        },
+        "compressed_path": {
+            "type": "string"
+        }
+    },
+    "additionalProperties": false
+}

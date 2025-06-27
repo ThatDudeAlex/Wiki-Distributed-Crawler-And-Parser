@@ -25,7 +25,7 @@ class WebCrawler:
         self.queue = QueueService(self._logger)
         self.queue.channel.basic_consume(
             queue=CRAWLER_QUEUE_CHANNELS['listen'],
-            on_message_callback=self._consume_rabbit_message,
+            on_message_callback=self._consume_queue_message,
             auto_ack=False
         )
 
@@ -60,7 +60,10 @@ class WebCrawler:
         except Exception as e:
             self._logger.error(f"Issue adding to the parser queue: {e}")
 
-    def _consume_rabbit_message(self, ch, method, properties, body):
+    def _publish(self):
+        pass
+
+    def _consume_queue_message(self, ch, method, properties, body):
         try:
             # Process the message
             self._logger.info(f"Processing: {body.decode()}")

@@ -1,0 +1,28 @@
+{
+    "type": "object",
+    "required": [
+        "url",
+        "status_code",
+        "compressed_path",
+        "crawl_time"
+    ],
+    "properties": {
+        "url": {
+            "type": "string",
+            "format": "uri"
+        },
+        "status_code": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 599
+        },
+        "compressed_path": {
+            "type": "string"
+        },
+        "crawl_time": {
+            "type": "string",
+            "format": "date-time"
+        }
+    },
+    "additionalProperties": false
+}

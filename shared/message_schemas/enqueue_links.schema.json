@@ -1,0 +1,26 @@
+{
+    "type": "object",
+    "required": [
+        "source_url",
+        "depth",
+        "links"
+    ],
+    "properties": {
+        "source_url": {
+            "type": "string",
+            "format": "uri"
+        },
+        "depth": {
+            "type": "integer",
+            "minimum": 0
+        },
+        "links": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "uri"
+            }
+        }
+    },
+    "additionalProperties": false
+}
