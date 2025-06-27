@@ -6,7 +6,7 @@ from shared import utils
 from shared.logger import setup_logging
 from shared.queue_service import QueueService
 from shared.db_service import DatabaseService
-from shared.config import CRAWL_QNAME, PARSE_QNAME
+from shared.config import PARSE_QNAME
 from .compress_html_handler import CompressFileHandler
 
 
@@ -17,7 +17,7 @@ class HtmlParser:
             os.getenv('PARSE_LOGS', 'logs/parser.log')
         )
         # rabbitMQ setup
-        self.queue = QueueService(CRAWL_QNAME, PARSE_QNAME, self._logger)
+        self.queue = QueueService(self._logger)
         self.queue.channel.basic_consume(
             queue=PARSE_QNAME,
             on_message_callback=self._consume_rabbit_message,

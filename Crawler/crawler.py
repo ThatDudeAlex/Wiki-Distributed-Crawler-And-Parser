@@ -23,7 +23,7 @@ class WebCrawler:
         )
 
         # rabbitMQ setup
-        self.queue = QueueService(CRAWL_QNAME, PARSE_QNAME, self._logger)
+        self.queue = QueueService(self._logger)
         self.queue.channel.basic_consume(
             queue=CRAWL_QNAME,
             on_message_callback=self._consume_rabbit_message,

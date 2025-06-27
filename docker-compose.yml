@@ -59,6 +59,12 @@ services:
     env_file: .env # Only used in local dev
     command: [ "python", "-m", "database.db_init.db_init" ]
 
+  seeder:
+    container_name: queue_seeder
+    build: ./seeder
+    depends_on:
+      - rabbitmq
+
   crawler_noproxy:
     <<: *crawler-common
   # California Proxies

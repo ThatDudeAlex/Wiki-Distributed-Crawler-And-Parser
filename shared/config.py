@@ -36,6 +36,14 @@ R_VISITED = "visited"
 R_ENQUEUED = "enqueued"
 
 # RabbitMQ queues
+RABBIT_QUEUES = [
+    'crawl_tasks',
+    'parse_tasks',
+    'save_crawled_pages',
+    'save_parsed_content',
+    'enqueue_links',
+]
+
 CRAWL_QNAME = 'crawler'
 PARSE_QNAME = 'parser'
 # RABIT_CREDS = pika.PlainCredentials(

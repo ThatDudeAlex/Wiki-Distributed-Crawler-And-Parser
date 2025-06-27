@@ -2,15 +2,14 @@ import pika
 import time
 import os
 import json
+from shared.config import RABBIT_QUEUES, CRAWL_QNAME, PARSE_QNAME
 from pika.exceptions import AMQPConnectionError
 from dotenv import load_dotenv
 
 
 class QueueService:
-    def __init__(self, crawl_queue_name, parse_queue_name, logger, retry_interval=10, max_retries=6):
+    def __init__(self, logger, retry_interval=10, max_retries=6):
         load_dotenv()
-        self._crawl_queue_name = crawl_queue_name
-        self._parse_queue_name = parse_queue_name
         self._logger = logger
         self._retry_interval = retry_interval
         self._max_retries = max_retries
@@ -28,6 +27,10 @@ class QueueService:
     #     )
     #     return
 
+    def _declare_queues(self, names: list[str]):
+        for name in names:
+            self.channel.queue_declare(queue=name, durable=True)
+
     def _wait_for_rabbit(self):
         retries = 0
         while retries < self._max_retries:
@@ -42,10 +45,12 @@ class QueueService:
                     pika.ConnectionParameters("rabbitmq", port=5672, credentials=creds))
                 self.channel = self._connection.channel()
                 self.channel.basic_qos(prefetch_count=1)
-                self.channel.queue_declare(
-                    queue=self._crawl_queue_name, durable=True)
-                self.channel.queue_declare(
-                    queue=self._parse_queue_name, durable=True)
+                self._declare_queues(
+                    [*RABBIT_QUEUES, CRAWL_QNAME, PARSE_QNAME])
+                # self.channel.queue_declare(
+                #     queue=self._crawl_queue_name, durable=True)
+                # self.channel.queue_declare(
+                #     queue=self._parse_queue_name, durable=True)
 
                 self._logger.info("RabbitMQ connection established")
                 return
