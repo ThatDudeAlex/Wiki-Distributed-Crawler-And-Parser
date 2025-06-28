@@ -1,14 +1,11 @@
+from datetime import datetime
 import hashlib
-import logging
 from typing import Any, Dict
 from urllib.parse import urlparse, urljoin, urlunparse
+from zoneinfo import ZoneInfo
 from shared.config import EXCLUDED_PREFIXES, WIKI_BASE
 from jsonschema.exceptions import ValidationError
 import jsonschema
-# from logger import setup_logging
-
-
-# LOGGER: logging.Logger = setup_logging(__name__)
 
 # TODO: pull any common utility function into the
 # my python-utilities package
@@ -54,6 +51,11 @@ def create_hash(content: str) -> str:
 
     # return the hexadecimal representation of the hash
     return hash_object.hexdigest()
+
+
+def get_timestamp_eastern_time():
+    """Returns an isoformat timestamp in timezone: America/New_York"""
+    return datetime.now(ZoneInfo("America/New_York")).isoformat()
 
 
 def validate_param(value, name, expected_type):

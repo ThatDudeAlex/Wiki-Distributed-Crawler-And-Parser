@@ -42,7 +42,7 @@ class Page(Base):
     __tablename__ = 'pages'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     url = Column(String(2048), unique=True, nullable=False)
-    url_hash = Column(String(2048), unique=True, nullable=False)
+    url_hash = Column(String(2048), unique=True, nullable=True)
     compressed_path = Column(String(2048), unique=True, nullable=True)
 
     last_crawled_at = Column(

@@ -60,7 +60,7 @@ ALL_QUEUE_CHANNELS = [
 
 CRAWLER_QUEUE_CHANNELS = {
     'listen': QueueNames.CRAWL.value,
-    'parsejobs': QueueNames.PARSE.value,
+    'parsetask': QueueNames.PARSE.value,
     'savepage': QueueNames.SAVE_PAGE.value,
     'failed': QueueNames.FAILED_TASK.value
 }

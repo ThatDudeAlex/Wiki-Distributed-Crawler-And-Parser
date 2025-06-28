@@ -1,4 +1,5 @@
 import logging
+from pydantic import HttpUrl
 import requests
 import urllib.robotparser
 
@@ -13,12 +14,14 @@ ROBOT_PARSER.read()
 
 def _generate_crawler_response(
     success: bool,
+    url: HttpUrl,
     crawl_status: CrawlStatus,
     data: ResponseData,
     error: dict
 ) -> CrawlerResponse:
     return {
         'success': success,
+        'url': url,
         'crawl_status': crawl_status,
         'data': data,
         'error': error
@@ -45,10 +48,10 @@ def _fetch(url: str) -> requests.Response:
 def crawl(url: str, logger: logging.Logger) -> CrawlerResponse:
     try:
         if _robot_allows_crawling(url):
-            return _generate_crawler_response(False, CrawlStatus.SKIPPED, None, None)
+            return _generate_crawler_response(False, url, CrawlStatus.SKIPPED, None, None)
 
         response = _fetch(url)
-        crawler_res = _generate_crawler_response(True, CrawlStatus.CRAWLED_SUCCESS,
+        crawler_res = _generate_crawler_response(True, url, CrawlStatus.CRAWLED_SUCCESS,
                                                  {
                                                      'status_code': response.status_code,
                                                      'headers': response.headers,
@@ -60,15 +63,17 @@ def crawl(url: str, logger: logging.Logger) -> CrawlerResponse:
         logger.error(
             f"HTTPError while crawling '{url}' - StatusCode: {e.response.status_code} - {e}"
         )
-        return _generate_crawler_response(False, CrawlStatus.CRAWL_FAILED, None, {
-            'type': e.__class__.__name__,
-            'message': str(e)
-        })
+        return _generate_crawler_response(False, url, CrawlStatus.CRAWL_FAILED,
+                                          e.response.status_code,
+                                          {
+                                              'type': e.__class__.__name__,
+                                              'message': str(e)
+                                          })
     except requests.RequestException as e:
         logger.error(
             f"Error while crawling '{url}' - {e}"
         )
-        return _generate_crawler_response(False, CrawlStatus.CRAWL_FAILED, None, {
+        return _generate_crawler_response(False, url, CrawlStatus.CRAWL_FAILED, None, {
             'type': e.__class__.__name__,
             'message': str(e)
         })

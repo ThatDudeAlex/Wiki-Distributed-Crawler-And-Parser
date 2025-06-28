@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from crawler.robot_hander import RobotHandler
-from crawler.download_handler import DownloadHandler
+from services.crawler.infrastructure.download_handler import download_compressed_html_content
 from crawler.fetcher import Fetcher
 from dotenv import load_dotenv
 from shared import utils
@@ -37,9 +37,6 @@ class WebCrawler:
 
         # robot.txt setup
         self.robot = RobotHandler(self._logger)
-
-        # html downloader setup
-        self.downloader = DownloadHandler(self._logger)
 
         # http fetcher setup
         self.fetcher = Fetcher(self._logger, BASE_HEADERS)
@@ -129,8 +126,8 @@ class WebCrawler:
 
         # links = self.extract_links(response.text, url)
 
-        url_hash, filepath = self.downloader.download_compressed_html_content(
-            os.getenv('DL_HTML_PATH'), url, response.text)
+        url_hash, filepath = download_compressed_html_content(
+            os.getenv('DL_HTML_PATH'), url, response.text, self._logger)
 
         crawl_time = datetime.now(ZoneInfo("America/New_York")).isoformat()
 
