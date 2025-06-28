@@ -1,0 +1,8 @@
+-r ../requirements-common.txt
+redis
+pika
+requests
+ratelimit
+bs4
+lxml
+pydantic

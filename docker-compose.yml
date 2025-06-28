@@ -1,3 +1,4 @@
+# TODO: adjust after crawler refactoring
 x-crawler-common: &crawler-common
   build:
     context: .

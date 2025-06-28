@@ -2,7 +2,6 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# TODO: adjust this after crawler refactoring!
 # shared code
 COPY requirements-common.txt  ./requirements-common.txt
 COPY database/      ./database/
