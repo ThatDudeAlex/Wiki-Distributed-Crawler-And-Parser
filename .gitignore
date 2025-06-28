@@ -22,6 +22,7 @@ __pycache__/
 *.egg-info/
 *.egg
 .env
+.coverage
 
 # Logs
 logs/
