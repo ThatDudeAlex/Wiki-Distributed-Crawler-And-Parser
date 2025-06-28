@@ -63,7 +63,7 @@ class WebCrawler:
     #     except Exception as e:
     #         self._logger.error(f"Issue adding to the parser queue: {e}")
 
-    def _publish_crawled_page(self, page_data):
+    def _publish_save_page_msg(self, page_data):
         try:
             url, url_hash, status_code, filepath, crawl_time = page_data
             payload = {
@@ -78,6 +78,19 @@ class WebCrawler:
         except Exception as e:
             self._logger.error(
                 f"Error publishing to {CRAWLER_QUEUE_CHANNELS['savepage']} - {e}"
+            )
+
+    def _publish_parse_content_msg(self, page_url, compressed_path):
+        try:
+            payload = {
+                "page_url": page_url,
+                "compressed_path": compressed_path,
+            }
+            self.queue.publish(CRAWLER_QUEUE_CHANNELS['parsejobs'], payload)
+            self._logger.debug(f"Published to parse page")
+        except Exception as e:
+            self._logger.error(
+                f"Error publishing to {CRAWLER_QUEUE_CHANNELS['parsejobs']} - {e}"
             )
 
     def _consume_queue_message(self, ch, method, properties, body):
@@ -121,9 +134,11 @@ class WebCrawler:
 
         crawl_time = datetime.now(ZoneInfo("America/New_York")).isoformat()
 
-        self._publish_crawled_page(
+        self._publish_save_page_msg(
             (url, url_hash, status_code, filepath, crawl_time)
         )
+
+        self._publish_parse_content_msg(url, filepath)
 
         # page_id =  self.db.save_crawled_page(
         #     (url, url_hash, filepath, status_code))

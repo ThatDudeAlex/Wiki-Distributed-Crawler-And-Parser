@@ -15,8 +15,12 @@ class HtmlParser:
         self._logger = setup_logging(
             os.getenv('PARSE_LOGS', 'logs/parser.log')
         )
+
         # rabbitMQ setup
-        self.queue = QueueService(self._logger)
+        self.queue = QueueService(
+            self._logger,
+            list(PARSER_QUEUE_CHANNELS.values())
+        )
         self.queue.channel.basic_consume(
             queue=PARSER_QUEUE_CHANNELS['listen'],
             on_message_callback=self._consume_rabbit_message,
@@ -33,11 +37,8 @@ class HtmlParser:
     def _consume_rabbit_message(self, ch, method, properties, body):
         try:
             # Process the message
-            self._logger.info(f"Processing: {body.decode()}")
-            page_url, filepath = json.loads(body.decode())
-
-            self._logger.info("Calling html parser")
-            self._parse_pages(page_url, filepath)
+            message = json.loads(body.decode())
+            self._parse_pages(message['page_url'], message['compressed_path'])
 
             # Acknowledge only after success
             ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -57,8 +58,8 @@ class HtmlParser:
         self.queue.publish(PARSER_QUEUE_CHANNELS['savecontent'], payload)
         self._logger.debug(f"Published to save parsed content")
 
-    def _parse_pages(self, page_url: str, filepath: str):
-        html_content = self.cmp_handler.load_compressed_html(filepath)
+    def _parse_pages(self, page_url: str, compressed_path: str):
+        html_content = self.cmp_handler.load_compressed_html(compressed_path)
         page_content = self._extract_page_content(html_content, page_url)
 
         title, summary, categories, content = page_content
@@ -66,10 +67,10 @@ class HtmlParser:
         self._publish_parsed_content(
             (page_url, title, summary, categories, content))
 
-        self.db.save_parsed_page(page_url, title, summary, content)
+        # self.db.save_parsed_page(page_url, title, summary, content)
 
-        for category in categories:
-            self.db.save_category(category)
+        # for category in categories:
+        #     self.db.save_category(category)
 
     def _extract_page_content(self, html_content: str, page_url: str):
         soup = BeautifulSoup(html_content, "lxml")
