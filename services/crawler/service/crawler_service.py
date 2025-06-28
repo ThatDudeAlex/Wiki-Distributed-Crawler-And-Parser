@@ -14,7 +14,10 @@ from shared.utils import get_timestamp_eastern_time
 
 class CrawlerService:
     def __init__(self, queue_service: QueueService, logger: logging.Logger, max_depth: int):
+
+        # TODO: Use a config_service instead of using load_dotenv()
         load_dotenv()
+
         self.max_depth = max_depth
 
         # logger setup
