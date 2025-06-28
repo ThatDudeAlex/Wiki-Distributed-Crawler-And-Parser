@@ -47,10 +47,11 @@ class CacheService:
             self._logger.info(f"Set initiating seed key for: {url}")
         return is_seeded
 
-    def is_queueable(self, url: str) -> bool:
-        in_visited = self._redis.sismember(RedisSets.VISITED.value, url)
-        in_enqueued = self._redis.sismember(RedisSets.ENQUEUED.value, url)
+    def is_in_visited(self, url: str) -> bool:
+        return self._redis.sismember(RedisSets.VISITED.value, url)
 
-        if in_visited or in_enqueued:
-            return False
-        return True
+    def is_in_enqueued(self, url: str) -> bool:
+        return self._redis.sismember(RedisSets.ENQUEUED.value, url)
+
+    def is_queueable(self, url: str) -> bool:
+        return (self.is_in_visited(url) or self.is_in_enqueued(url))

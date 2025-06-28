@@ -2,15 +2,15 @@ import pytest
 import requests
 from database.db_models.models import CrawlStatus
 import services.crawler.domain.crawler as crawler
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 from shared.config import BASE_HEADERS
 
 
 @patch('services.crawler.domain.crawler.requests.get')
 def test_fetch(mock_get):
     # Setup
-    mock_response = Mock()
-    mock_response.raise_for_status = Mock()
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
     mock_response.status_code = 200
     mock_get.return_value = mock_response
 
@@ -29,7 +29,7 @@ def test_fetch(mock_get):
 @patch('services.crawler.domain.crawler.requests.get')
 def test_fetch_throws_http_error(mock_get):
     # Setup
-    mock_response = Mock()
+    mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = requests.HTTPError("Testing")
     mock_get.return_value = mock_response
 
@@ -44,7 +44,7 @@ def test_fetch_throws_http_error(mock_get):
 def test_robot_allows_crawling(mock_robot_parser):
     # Setup
     mock_robot_parser.can_fetch.return_value = True
-    logger = Mock()
+    logger = MagicMock()
 
     # Act
     allowed = crawler._robot_allows_crawling("http://example.com", logger)
@@ -58,7 +58,7 @@ def test_robot_allows_crawling(mock_robot_parser):
 def test_robot_disallows_crawling(mock_parser):
     # Setup
     mock_parser.can_fetch.return_value = False
-    logger = Mock()
+    logger = MagicMock()
 
     # Act
     allowed = crawler._robot_allows_crawling("http://example.com", logger)
@@ -94,11 +94,11 @@ def test_generate_crawler_response():
 @patch('services.crawler.domain.crawler._robot_allows_crawling')
 @patch('services.crawler.domain.crawler._fetch')
 def test_crawl_fetch_success(mock_fetch, mock_robot_check, mock_generate):
-    logger = Mock()
+    logger = MagicMock()
     mock_robot_check.return_value = False
 
     # Setup
-    mock_response = Mock()
+    mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.headers = BASE_HEADERS
     mock_response.text = "mock_response_text"
@@ -141,7 +141,7 @@ def test_crawl_robot_blocks(mock_generate, mock_robot_check):
     # Setup
     mock_robot_check.return_value = True
     mock_generate.return_value = "mocked_response"
-    logger = Mock()
+    logger = MagicMock()
 
     # Act
     got = crawler.crawl("http://example.com", logger)
@@ -157,13 +157,13 @@ def test_crawl_robot_blocks(mock_generate, mock_robot_check):
 @patch('services.crawler.domain.crawler._robot_allows_crawling')
 def test_crawl_http_error(mock_robot_check, mock_fetch, mock_generate):
     url = "http://example.com"
-    logger = Mock()
+    logger = MagicMock()
 
     # Setup
     mock_robot_check.return_value = False    # allow crawling
 
     # simulate _fetch raising HTTPError with a response
-    mock_response = Mock()
+    mock_response = MagicMock()
     mock_response.status_code = 404
     http_error = requests.HTTPError("Not Found")
     http_error.response = mock_response
@@ -205,7 +205,7 @@ def test_crawl_http_error(mock_robot_check, mock_fetch, mock_generate):
 def test_crawl_request_exception(mock_robot_check, mock_fetch, mock_generate):
     # Setup
     url = "http://example.com"
-    logger = Mock()
+    logger = MagicMock()
 
     mock_robot_check.return_value = False   # Allow crawling
 

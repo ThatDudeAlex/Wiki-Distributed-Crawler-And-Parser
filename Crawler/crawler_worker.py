@@ -3,12 +3,12 @@ import os
 import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from .cache_service import CacheService
-from .robot_hander import RobotHandler
-from .download_handler import DownloadHandler
-from .fetcher import Fetcher
+from crawler.robot_hander import RobotHandler
+from crawler.download_handler import DownloadHandler
+from crawler.fetcher import Fetcher
 from dotenv import load_dotenv
 from shared import utils
+from shared.cache_service import CacheService
 from shared.queue_service import QueueService
 from shared.logger import setup_logging
 from shared.config import BASE_HEADERS, CRAWLER_QUEUE_CHANNELS
