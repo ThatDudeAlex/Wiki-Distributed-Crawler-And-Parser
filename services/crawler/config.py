@@ -2,7 +2,7 @@ from shared.config import QueueNames
 
 CRAWLER_SEED_URL = 'https://en.wikipedia.org/wiki/Computer_science'
 
-MAX_CRAWL_DEPTH = 2
+MAX_DEPTH = 2
 
 ROBOTS_TXT = 'https://en.wikipedia.org/robots.txt'
 
