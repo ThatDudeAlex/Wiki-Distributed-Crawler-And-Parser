@@ -3,13 +3,18 @@ import pika
 import time
 import os
 import json
-from shared.config import RABBIT_QUEUES, CRAWL_QNAME, PARSE_QNAME
 from pika.exceptions import AMQPConnectionError
 from dotenv import load_dotenv
 
 
 class QueueService:
-    def __init__(self, logger: logging.Logger, retry_interval: int = 10, max_retries: int = 6):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        queue_names: list,
+        retry_interval: int = 10,
+        max_retries: int = 6
+    ):
         load_dotenv()
         self._logger = logger
         self._retry_interval = retry_interval
@@ -17,7 +22,7 @@ class QueueService:
         self._connection = None
         self.channel = None
 
-        self._wait_for_rabbit()
+        self._wait_for_rabbit(queue_names)
 
     # TODO: test if using this method is better than doing it from directly from the parent class
     # def configure_basic_consume(self, queue_name, callback_function, auto_ack):
@@ -32,7 +37,7 @@ class QueueService:
         for name in names:
             self.channel.queue_declare(queue=name, durable=True)
 
-    def _wait_for_rabbit(self):
+    def _wait_for_rabbit(self, queue_names: list):
         retries = 0
         while retries < self._max_retries:
             try:
@@ -46,8 +51,7 @@ class QueueService:
                     pika.ConnectionParameters("rabbitmq", port=5672, credentials=creds))
                 self.channel = self._connection.channel()
                 self.channel.basic_qos(prefetch_count=1)
-                self._declare_queues(
-                    [*RABBIT_QUEUES, CRAWL_QNAME, PARSE_QNAME])
+                self._declare_queues(queue_names)
 
                 self._logger.info("RabbitMQ connection established")
                 return

@@ -1,17 +1,17 @@
 
 import os
 import json
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from .cache_service import CacheService
 from .robot_hander import RobotHandler
 from .download_handler import DownloadHandler
 from .fetcher import Fetcher
-from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from shared import utils
 from shared.queue_service import QueueService
-from shared.db_service import DatabaseService
 from shared.logger import setup_logging
-from shared.config import BASE_HEADERS, MAX_DEPTH, CRAWLER_QUEUE_CHANNELS
+from shared.config import BASE_HEADERS, CRAWLER_QUEUE_CHANNELS
 
 
 class WebCrawler:
@@ -22,7 +22,10 @@ class WebCrawler:
         )
 
         # rabbitMQ setup
-        self.queue = QueueService(self._logger)
+        self.queue = QueueService(
+            self._logger,
+            list(CRAWLER_QUEUE_CHANNELS.values())
+        )
         self.queue.channel.basic_consume(
             queue=CRAWLER_QUEUE_CHANNELS['listen'],
             on_message_callback=self._consume_queue_message,
@@ -60,17 +63,31 @@ class WebCrawler:
     #     except Exception as e:
     #         self._logger.error(f"Issue adding to the parser queue: {e}")
 
-    def _publish(self):
-        pass
+    def _publish_crawled_page(self, page_data):
+        try:
+            url, url_hash, status_code, filepath, crawl_time = page_data
+            payload = {
+                "page_url": url,
+                "url_hash": url_hash,
+                "status_code": status_code,
+                "compressed_path": filepath,
+                "crawl_time": crawl_time
+            }
+            self.queue.publish(CRAWLER_QUEUE_CHANNELS['savepage'], payload)
+            self._logger.debug(f"Published to save page '{url}'")
+        except Exception as e:
+            self._logger.error(
+                f"Error publishing to {CRAWLER_QUEUE_CHANNELS['savepage']} - {e}"
+            )
 
     def _consume_queue_message(self, ch, method, properties, body):
         try:
             # Process the message
             self._logger.info(f"Processing: {body.decode()}")
-            url, depth = json.loads(body.decode())
+            message = json.loads(body.decode())
 
             self._logger.info("Calling page crawl")
-            self._crawl_pages(url, depth)
+            self._crawl_pages(message['url'], message['depth'])
 
             # Acknowledge only after success
             ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -89,11 +106,12 @@ class WebCrawler:
             return
 
         response = self.get_page(url)
+        status_code = response.status_code
 
-        if response is None or response.status_code != 200:
+        if response is None or status_code != 200:
             self._logger.error(
-                f"Failed to get page: {url},  Status Code: {response.status_code}")
-            # self.db.save_failed_page_crawl(url, response.status_code)
+                f"Failed to get page: {url},  Status Code: {status_code}")
+            # self.db.save_failed_page_crawl(url, status_code)
             return
 
         # links = self.extract_links(response.text, url)
@@ -101,10 +119,14 @@ class WebCrawler:
         url_hash, filepath = self.downloader.download_compressed_html_content(
             os.getenv('DL_HTML_PATH'), url, response.text)
 
-        self._publish()
+        crawl_time = datetime.now(ZoneInfo("America/New_York")).isoformat()
+
+        self._publish_crawled_page(
+            (url, url_hash, status_code, filepath, crawl_time)
+        )
 
         # page_id =  self.db.save_crawled_page(
-        #     (url, url_hash, filepath, response.status_code))
+        #     (url, url_hash, filepath, status_code))
 
         # self._add_to_parse_queue((page_id, filepath))
 

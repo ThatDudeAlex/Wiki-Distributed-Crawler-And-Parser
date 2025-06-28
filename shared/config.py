@@ -15,7 +15,7 @@ BASE_HEADERS = {
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36'
 }
 
-# Wikimedia namespaces & home page
+# Excluded Wikimedia namespaces & home page
 EXCLUDED_PREFIXES = [
     "/wiki/Special:",
     "/wiki/Help:",
@@ -33,15 +33,12 @@ EXCLUDED_PREFIXES = [
     "/wiki/Main_Page",
 ]
 
-# Redis Configs
-
 
 class RedisSets(Enum):
     VISITED = 'visited'
     ENQUEUED = 'enqueued'
 
 
-# RabbitMQ Configs
 class QueueNames(Enum):
     CRAWL = 'crawl_tasks'
     SAVE_PAGE = 'save_crawled_pages'
@@ -51,6 +48,16 @@ class QueueNames(Enum):
     FAILED_TASK = 'save_failed_tasks'
 
 
+ALL_QUEUE_CHANNELS = [
+    QueueNames.CRAWL.value,
+    QueueNames.SAVE_PAGE.value,
+    QueueNames.PARSE.value,
+    QueueNames.SAVE_CONTENT.value,
+    QueueNames.ENQUEUE_LINKS.value,
+    QueueNames.FAILED_TASK.value,
+]
+
+
 CRAWLER_QUEUE_CHANNELS = {
     'listen': QueueNames.CRAWL.value,
     'parsejobs': QueueNames.PARSE.value,
@@ -58,9 +65,17 @@ CRAWLER_QUEUE_CHANNELS = {
     'failed': QueueNames.FAILED_TASK.value
 }
 
+
 PARSER_QUEUE_CHANNELS = {
     'listen': QueueNames.PARSE.value,
     'savecontent': QueueNames.SAVE_CONTENT.value,
     'enqueuelinks': QueueNames.ENQUEUE_LINKS.value,
     'failed': QueueNames.FAILED_TASK.value
+}
+
+
+DB_SERVICE_QUEUE_CHANNELS = {
+    'savepage': QueueNames.SAVE_PAGE.value,
+    'savecontent': QueueNames.SAVE_CONTENT.value,
+    'failedtask': QueueNames.FAILED_TASK.value
 }

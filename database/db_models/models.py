@@ -116,11 +116,11 @@ class Link(Base):
 page_category_association = Table(
     'page_categories',
     Base.metadata,
-    Column('page_id', Integer, ForeignKey(
+    Column('page_url', Integer, ForeignKey(
         'page_content.id', ondelete="CASCADE"), primary_key=True),
     Column('category_id', Integer, ForeignKey(
         'categories.id', ondelete="CASCADE"), primary_key=True),
-    UniqueConstraint('page_id', 'category_id', name='uix_page_category')
+    UniqueConstraint('page_url', 'category_id', name='uix_page_category')
 )
 
 
@@ -130,8 +130,8 @@ class PageContent(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
 
     # FK relationship to the Page table
-    page_id = Column(BigInteger, ForeignKey(
-        'pages.id', ondelete="CASCADE"), nullable=False, unique=True)
+    page_url = Column(String(2048), ForeignKey(
+        'pages.url', ondelete="CASCADE"), nullable=False, unique=True)
 
     title = Column(String(512), nullable=True)
 

@@ -2,7 +2,6 @@ import json
 import os
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from shared import utils
 from shared.logger import setup_logging
 from shared.queue_service import QueueService
 from shared.db_service import DatabaseService
@@ -35,10 +34,10 @@ class HtmlParser:
         try:
             # Process the message
             self._logger.info(f"Processing: {body.decode()}")
-            page_id, filepath = json.loads(body.decode())
+            page_url, filepath = json.loads(body.decode())
 
             self._logger.info("Calling html parser")
-            self._parse_pages(page_id, filepath)
+            self._parse_pages(page_url, filepath)
 
             # Acknowledge only after success
             ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -46,45 +45,56 @@ class HtmlParser:
             self._logger.error(f"Failed to process message: {e}")
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
-    def _parse_pages(self, page_id: int, filepath: str):
+    def _publish_parsed_content(self, parsed_data):
+        page_url, title, summary, categories, content = parsed_data
+
+        payload = {
+            "page_url": page_url,
+            "title": title,
+            "summary": summary,
+            "content": content,
+        }
+        self.queue.publish(PARSER_QUEUE_CHANNELS['savecontent'], payload)
+        self._logger.debug(f"Published to save parsed content")
+
+    def _parse_pages(self, page_url: str, filepath: str):
         html_content = self.cmp_handler.load_compressed_html(filepath)
-        page_content = self._extract_page_content(html_content, page_id)
+        page_content = self._extract_page_content(html_content, page_url)
 
         title, summary, categories, content = page_content
 
-        self.db.save_parsed_page(page_id, title, summary, content)
+        self._publish_parsed_content(
+            (page_url, title, summary, categories, content))
+
+        self.db.save_parsed_page(page_url, title, summary, content)
 
         for category in categories:
             self.db.save_category(category)
 
-    def _extract_page_content(self, html_content: str, page_id: int):
+    def _extract_page_content(self, html_content: str, page_url: str):
         soup = BeautifulSoup(html_content, "lxml")
-        title = self._extract_title(soup, page_id)
+        title = self._extract_title(soup, page_url)
         self._logger.critical(f"title: {title}")
-        summary = self._extract_summary(soup, page_id)
-        categories = self._extract_categories(soup, page_id)
-        content = self._extract_content(soup, page_id)
+        summary = self._extract_summary(soup, page_url)
+        categories = self._extract_categories(soup, page_url)
+        content = self._extract_content(soup, page_url)
         return (title, summary, categories, content)
-        # return (title, summary, None, None)
 
-    def _extract_title(self, soup: BeautifulSoup, page_id: int) -> str:
+    def _extract_title(self, soup: BeautifulSoup, page_url: str) -> str:
         try:
             title = soup.find(id='firstHeading')
-            self._logger.info(f"Found title for page_id: {page_id}")
+            self._logger.info(f"Found title for url: {page_url}")
             return title.get_text(strip=True)
         except Exception as e:
             self._logger.error(
-                f"Error parsing title for page_id: {page_id}  -  error: {e}")
+                f"Error parsing title for url: {page_url}  -  error: {e}")
             return None
 
-    def _extract_summary(self, soup: BeautifulSoup, page_id: int) -> str:
+    def _extract_summary(self, soup: BeautifulSoup, page_url: str) -> str:
         try:
 
             # Get all paragraph elements under #mw-content-text
             paragraphs = soup.select('#mw-content-text p')
-
-            self._logger.info(f"\n\Paragraphs: {paragraphs}\n\n")
-
             first_paragraph = None
 
             for p in paragraphs:
@@ -100,14 +110,14 @@ class HtmlParser:
                 return first_paragraph.get_text(strip=True)
 
             self._logger.warning(
-                f"Did not find summary for page_id: {page_id}")
+                f"Did not find summary for url: {page_url}")
             return first_paragraph
         except Exception as e:
             self._logger.error(
-                f"Error parsing summary for page_id: {page_id}  -  error: {e}")
+                f"Error parsing summary for url: {page_url}  -  error: {e}")
             return None
 
-    def _extract_categories(self, soup: BeautifulSoup, page_id: int) -> list[str]:
+    def _extract_categories(self, soup: BeautifulSoup, page_url: str) -> list[str]:
         try:
 
             # Get all paragraph elements under #mw-content-text
@@ -121,24 +131,24 @@ class HtmlParser:
 
             if not category_texts:
                 self._logger.warning(
-                    f"Did not find categories for page_id {page_id}")
+                    f"Did not find categories for url {page_url}")
                 return None
 
             self._logger.info("Found the list of categories")
             return category_texts
         except Exception as e:
             self._logger.error(
-                f"Error parsing summary for page_id: {page_id}  -  error: {e}")
+                f"Error parsing summary for url: {page_url}  -  error: {e}")
             return None
 
-    def _extract_content(self, soup: BeautifulSoup, page_id: int) -> str:
+    def _extract_content(self, soup: BeautifulSoup, page_url: str) -> str:
         try:
 
             content_div = soup.find('div', id='mw-content-text')
 
             if not content_div:
                 self._logger.warning(
-                    f"Main content div ('#mw-content-text') not found at - page_id: {page_id}")
+                    f"Main content div ('#mw-content-text') not found at - url: {page_url}")
                 return None
 
             # Elements that are typically NOT part of the main text
@@ -187,7 +197,7 @@ class HtmlParser:
 
         except Exception as e:
             self._logger.error(
-                f"Error parsing summary for page_id: {page_id}  -  error: {e}")
+                f"Error parsing summary for url: {page_url}  -  error: {e}")
             return None
 
 

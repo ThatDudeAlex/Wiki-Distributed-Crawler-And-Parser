@@ -5,10 +5,10 @@ from urllib.parse import urlparse, urljoin, urlunparse
 from shared.config import EXCLUDED_PREFIXES, WIKI_BASE
 from jsonschema.exceptions import ValidationError
 import jsonschema
-from logger import setup_logger
+# from logger import setup_logging
 
 
-LOGGER: logging.Logger = setup_logger(__name__)
+# LOGGER: logging.Logger = setup_logging(__name__)
 
 # TODO: pull any common utility function into the
 # my python-utilities package
@@ -67,7 +67,7 @@ def validate_param(value, name, expected_type):
 def validate_message(message: dict, schema: Dict[str, Any]):
     try:
         jsonschema.validate(instance=message, schema=schema)
-        LOGGER.debug("Message is valid.")
+        # LOGGER.debug("Message is valid.")
     except ValidationError as e:
-        LOGGER.error("Message validation failed: ", e.message)
+        # LOGGER.error("Message validation failed: ", e.message)
         raise
