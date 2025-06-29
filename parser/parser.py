@@ -1,8 +1,7 @@
 import json
-import os
+
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
-from shared.logger import setup_logging
+from shared.logging_utils import get_logger
 from shared.queue_service import QueueService
 from shared.db_service import DatabaseService
 from shared.config import PARSER_QUEUE_CHANNELS
@@ -11,10 +10,7 @@ from .compress_html_handler import CompressFileHandler
 
 class HtmlParser:
     def __init__(self):
-        load_dotenv()
-        self._logger = setup_logging(
-            os.getenv('PARSE_LOGS', 'logs/parser.log')
-        )
+        self._logger = get_logger('Parser')
 
         # rabbitMQ setup
         self.queue = QueueService(

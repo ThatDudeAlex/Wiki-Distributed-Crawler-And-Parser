@@ -5,13 +5,11 @@ from services.crawler.config import CRAWLER_QUEUE_CHANNELS, MAX_DEPTH
 from shared.queue_service import QueueService
 from service.crawler_service import CrawlerService
 from message_handler import start_crawl_listener
-from shared.logger import setup_logging
+from shared.logging_utils import get_logger
 
 
 def main():
-    logger = setup_logging(
-        os.getenv('CRAWL_LOGS', 'logs/crawler.log')
-    )
+    logger = get_logger('Crawler')
 
     queue_service = QueueService(logger, list(CRAWLER_QUEUE_CHANNELS.values()))
 

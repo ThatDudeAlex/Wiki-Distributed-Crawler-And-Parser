@@ -1,11 +1,9 @@
 import os
 from shared.config import SEED_URL, ALL_QUEUE_CHANNELS, QueueNames
-from shared.logger import setup_logging
+from shared.logging_utils import get_logger
 from shared.queue_service import QueueService
 
-logger = setup_logging(
-    os.getenv('SEEDER_LOGS', 'logs/seeder.log')
-)
+logger = get_logger('Seeder')
 
 queue = QueueService(logger, ALL_QUEUE_CHANNELS)
 

@@ -1,11 +1,9 @@
 import json
-import logging
-import os
 
 from dotenv import load_dotenv
 from database.db_models.models import Page, Link, PageContent, Category, CrawlStatus
 from database.engine import SessionLocal
-from shared.logger import setup_logging
+from shared.logging_utils import get_logger
 from shared.queue_service import QueueService
 from shared.config import DB_SERVICE_QUEUE_CHANNELS
 
@@ -15,9 +13,7 @@ MAX_RETRIES = 3
 class DatabaseService:
     def __init__(self):
         load_dotenv()
-        self._logger = setup_logging(
-            os.getenv('DB_SERVICE_LOGS', 'logs/db_service.log')
-        )
+        self._logger = get_logger('DB_Service')
 
         # DB connection setup
         self._db = SessionLocal()
