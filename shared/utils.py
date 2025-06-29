@@ -55,7 +55,7 @@ def create_hash(content: str) -> str:
 
 def get_timestamp_eastern_time():
     """Returns an isoformat timestamp in timezone: America/New_York"""
-    return datetime.now(ZoneInfo("America/New_York")).isoformat()
+    return datetime.now(ZoneInfo("America/New_York"))
 
 
 def validate_param(value, name, expected_type):

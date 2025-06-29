@@ -6,8 +6,6 @@ from components.crawler.services.crawler_service import CrawlerService
 from shared.queue_service import QueueService
 from shared.config import CRAWLER_QUEUE_CHANNELS
 
-logger = logging.getLogger("message_handler")
-
 
 def handle_message(ch, method, properties, body, crawler_service: CrawlerService, logger: logging.Logger):
     try:

@@ -48,11 +48,11 @@ class FailedCrawlTask(BaseModel):
 
 class SavePageTask(BaseModel):
     url: HttpUrl
-    url_hash: str
-    crawl_status: CrawlStatus
-    compressed_path: FilePath
+    url_hash: Optional[str]
     crawl_time: str
-    status_code: int
+    crawl_status: CrawlStatus
+    status_code: Optional[int]
+    compressed_path: Optional[FilePath]
 
 
 class ParseDonwloadedPageTask(BaseModel):

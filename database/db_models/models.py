@@ -142,6 +142,9 @@ class PageContent(Base):
     # The entire main article content (#bodyContent)
     content = Column(Text, nullable=True)
 
+    # A hash of the entire page to help detect changes in the page content
+    content_hash = Column(Text, nullable=True)
+
     # List of article page categories/tags
     # categories = Column(JSON, nullable=True)
 
