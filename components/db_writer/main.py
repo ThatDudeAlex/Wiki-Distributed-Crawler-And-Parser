@@ -1,6 +1,7 @@
 from shared.logging_utils import get_logger
 from shared.queue_service import QueueService
 from shared.config import DB_SERVICE_QUEUE_CHANNELS
+from components.db_writer.message_handler import start_db_writer_listener
 
 
 def run():
@@ -10,8 +11,7 @@ def run():
         list(DB_SERVICE_QUEUE_CHANNELS.values())
     )
 
-    queue_service.channel.basic_consume(..., ...)
-    queue_service.channel.start_consuming()
+    start_db_writer_listener(queue_service, logger)
 
 
 if __name__ == "__main__":

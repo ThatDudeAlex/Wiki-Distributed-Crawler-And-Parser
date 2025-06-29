@@ -47,7 +47,7 @@ def handle_save_parsed_content_message(ch, method, properties, body, logger: log
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
-def start_crawl_listener(queue_service: QueueService, logger: logging.Logger):
+def start_db_writer_listener(queue_service: QueueService, logger: logging.Logger):
     # Partial allows us to inject the value of a param into a function
     # This allows me to inject the logger while still complying with
     # the RabbitMQ api for listening to messages
