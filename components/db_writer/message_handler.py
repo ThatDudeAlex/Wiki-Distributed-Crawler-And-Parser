@@ -38,7 +38,7 @@ def handle_save_parsed_content_message(ch, method, properties, body, logger: log
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)
     except ValueError as e:
-        logger.error("Message Skipped - Invalid task message: %s", e.json())
+        logger.error(f"Message Skipped - Invalid task message: {e}")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
     except Exception as e:
         # TODO: look into if retrying could help the situation

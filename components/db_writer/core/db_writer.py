@@ -10,8 +10,9 @@ from components.db_writer.configs.app_configs import MAX_RETRIES
 
 
 @contextmanager
-def get_db():
-    db = SessionLocal()
+def get_db(session_factory=None):
+    session_factory = session_factory or SessionLocal
+    db = session_factory()
     try:
         yield db
         db.commit()
@@ -22,7 +23,7 @@ def get_db():
         db.close()
 
 
-def save_crawled_page(page_data: dict, logger: logging.Logger) -> bool:
+def save_crawled_page(page_data: dict, logger: logging.Logger, session_factory=None) -> bool:
     """
     Inserts a new Page or updates crawl metadata if it already exists.
 
@@ -33,7 +34,7 @@ def save_crawled_page(page_data: dict, logger: logging.Logger) -> bool:
     """
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            with get_db() as db:
+            with get_db(session_factory=session_factory) as db:
 
                 # Try finding an existing page by URL
                 existing = db.query(Page).filter_by(
@@ -57,7 +58,6 @@ def save_crawled_page(page_data: dict, logger: logging.Logger) -> bool:
                     http_status_code=page_data['status_code'],
                     compressed_path=page_data['compressed_path'],
                     last_crawled_at=page_data['crawl_time'],
-                    crawl_attempts=1
                 )
                 db.add(new_page)
 
@@ -82,7 +82,7 @@ def save_crawled_page(page_data: dict, logger: logging.Logger) -> bool:
     return False
 
 
-def save_parsed_page_content(parsed_data: dict, logger: logging.Logger) -> bool:
+def save_parsed_page_content(parsed_data: dict, logger: logging.Logger, session_factory=None) -> bool:
     """
     Inserts or updates parsed page content in the database.
 
@@ -91,7 +91,7 @@ def save_parsed_page_content(parsed_data: dict, logger: logging.Logger) -> bool:
     """
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            with get_db() as db:
+            with get_db(session_factory=session_factory) as db:
                 existing = db.query(PageContent).filter_by(
                     page_url=parsed_data['page_url']).first()
 
