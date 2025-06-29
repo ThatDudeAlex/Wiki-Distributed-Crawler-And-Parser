@@ -16,51 +16,51 @@ x-crawler-common: &crawler-common
     - NO_PROXY=localhost,127.0.0.1,rabbitmq,redis,postgres,192.168.0.0/16
 
 services:
-  # rabbitmq:
-  #   image: rabbitmq:3-management
-  #   container_name: rabbitmq
-  #   restart: unless-stopped
-  #   env_file: .env
-  #   ports:
-  #     - "15672:15672"
-  #     - "5672:5672"
-  #   environment:
-  #     RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}"
-  #     RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
-  #   volumes:
-  #     - rabbitmq_data:/var/lib/rabbitmq
-
-  # seeder:
-  #   container_name: queue_seeder
-  #   build:
-  #     context: .
-  #     dockerfile: seeder/Dockerfile
-  #   env_file: .env
-  #   depends_on:
-  #     - rabbitmq
-
-  postgres:
-    image: postgres:16
-    container_name: postgres
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
     restart: unless-stopped
-    environment:
-      POSTGRES_DB: "${POSTGRES_DB}"
-      POSTGRES_USER: "${POSTGRES_USER}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-    volumes:
-      - pg_data:/var/lib/postgresql/data
+    env_file: .env
     ports:
-      - "5432:5432"
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
 
-  postgres_initiator:
-    container_name: postgres_initiator
+  rabbitmq_seeder:
+    container_name: rabbitmq_seeder
     build:
       context: .
-      dockerfile: components/postgres_initiator/Dockerfile
+      dockerfile: components/rabbitmq_seeder/Dockerfile
+    env_file: .env
     depends_on:
-      - postgres
-    env_file: .env # Only used in local dev
-    command: [ "python", "-m", "components.postgres_initiator.main" ]
+      - rabbitmq
+    command: [ "python", "-m", "components.rabbitmq_seeder.main" ]
+  # postgres:
+  #   image: postgres:16
+  #   container_name: postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: "${POSTGRES_DB}"
+  #     POSTGRES_USER: "${POSTGRES_USER}"
+  #     POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+  #   volumes:
+  #     - pg_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+
+  # postgres_initiator:
+  #   container_name: postgres_initiator
+  #   build:
+  #     context: .
+  #     dockerfile: components/postgres_initiator/Dockerfile
+  #   depends_on:
+  #     - postgres
+  #   env_file: .env # Only used in local dev
+  #   command: [ "python", "-m", "components.postgres_initiator.main" ]
   # redis:
   #   image: redis:alpine
   #   container_name: redis
@@ -169,7 +169,6 @@ services:
   #   - NO_PROXY=localhost,127.0.0.1,rabbitmq,redis,postgres,192.168.0.0/16
   # command: [ "curl", "-sS", "https://am.i.mullvad.net/json" ]
   # command: [ "curl", "-sS", "http://192.168.86.15:15672/" ]
-
 
 volumes:
   pg_data:
