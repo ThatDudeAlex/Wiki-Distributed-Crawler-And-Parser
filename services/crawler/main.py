@@ -1,6 +1,5 @@
 # TODO: Use Pydantic BaseSettings to configure settings in main.py
 # TODO: Use my logger package to setup the logger
-import os
 from services.crawler.config import CRAWLER_QUEUE_CHANNELS, MAX_DEPTH
 from shared.queue_service import QueueService
 from service.crawler_service import CrawlerService

@@ -1,4 +1,3 @@
-import os
 from shared.config import SEED_URL, ALL_QUEUE_CHANNELS, QueueNames
 from shared.logging_utils import get_logger
 from shared.queue_service import QueueService
