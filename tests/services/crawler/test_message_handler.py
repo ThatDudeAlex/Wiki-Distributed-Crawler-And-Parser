@@ -1,8 +1,6 @@
 import json
 from pydantic import HttpUrl
-import pytest
 from unittest.mock import MagicMock, patch
-from services.crawler.domain.types import CrawlTask
 from services.crawler import message_handler
 
 
