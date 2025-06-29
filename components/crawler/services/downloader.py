@@ -31,5 +31,5 @@ def download_compressed_html_content(download_path: str, url: str, html_content:
         f.write(cleaned_html)
 
     logger.info(
-        f"Downloaded compressed HTML for URL: {url} - filepath: {filepath}")
+        f"Downloaded compressed HTML file for URL: {url} - filepath: {filepath}")
     return (url_hash, filepath)

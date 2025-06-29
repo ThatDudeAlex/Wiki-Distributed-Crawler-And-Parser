@@ -1,5 +1,4 @@
 import logging
-from pydantic import HttpUrl
 import requests
 import urllib.robotparser
 
@@ -7,25 +6,21 @@ from components.crawler.configs.types import CrawlerResponse, ResponseData
 from database.db_models.models import CrawlStatus
 from components.crawler.configs.app_configs import ROBOTS_TXT, BASE_HEADERS
 
-ROBOT_PARSER = urllib.robotparser.RobotFileParser()
-ROBOT_PARSER.set_url(ROBOTS_TXT)
-ROBOT_PARSER.read()
-
 
 def _generate_crawler_response(
     success: bool,
-    url: HttpUrl,
+    url: str,
     crawl_status: CrawlStatus,
     data: ResponseData,
     error: dict
 ) -> CrawlerResponse:
-    return {
-        'success': success,
-        'url': url,
-        'crawl_status': crawl_status,
-        'data': data,
-        'error': error
-    }
+    return CrawlerResponse(
+        success=success,
+        url=url,
+        crawl_status=crawl_status,
+        data=data,
+        error=error
+    )
 
 
 def _robot_allows_crawling(url: str, logger: logging.Logger) -> bool:
@@ -33,7 +28,11 @@ def _robot_allows_crawling(url: str, logger: logging.Logger) -> bool:
     Returns ``True`` if robot.txt allows crawling the ``URL`` else
     returns ``False``
     """
-    if not ROBOT_PARSER.can_fetch(BASE_HEADERS['user-agent'], url):
+    rp = urllib.robotparser.RobotFileParser()
+    rp.set_url(ROBOTS_TXT)
+    rp.read()
+
+    if not rp.can_fetch(BASE_HEADERS['user-agent'], url):
         logger.warning(f"robots.txt blocked crawling: {url}")
         return False
     return True
@@ -47,10 +46,14 @@ def _fetch(url: str) -> requests.Response:
 
 def crawl(url: str, logger: logging.Logger) -> CrawlerResponse:
     try:
-        if _robot_allows_crawling(url):
+        logger.info('Verifying that robot.txt allows crawling URL: %s', url)
+
+        if not _robot_allows_crawling(url, logger):
             return _generate_crawler_response(False, url, CrawlStatus.SKIPPED, None, None)
 
         response = _fetch(url)
+        logger.info('Successfully Fetched URL: %s', url)
+
         crawler_res = _generate_crawler_response(True, url, CrawlStatus.CRAWLED_SUCCESS,
                                                  {
                                                      'status_code': response.status_code,

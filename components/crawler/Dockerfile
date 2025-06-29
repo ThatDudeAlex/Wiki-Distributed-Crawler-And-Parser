@@ -8,8 +8,8 @@ COPY database/      ./database/
 COPY shared/        ./shared/
 
 # service-specific code
-COPY crawler/     ./crawler/
+COPY components/crawler/     ./components/crawler/
 
-RUN pip install --no-cache-dir -r crawler/requirements.txt
+RUN pip install --no-cache-dir -r components/crawler/requirements.txt
 
-CMD ["python", "-m", "crawler.crawler_worker"]
+CMD ["python", "-m", "components.crawler.main"]

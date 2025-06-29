@@ -1,5 +1,6 @@
 # TODO: cleanup these comments when done
 # pydantic throws ValidationError when failed
+from datetime import datetime
 from pydantic import BaseModel, Field, HttpUrl, FilePath
 from typing import Literal, Optional, TypedDict
 from database.db_models.models import CrawlStatus
@@ -28,7 +29,7 @@ class CrawlError(TypedDict):
 
 class CrawlerResponse(BaseModel):
     success: bool
-    url: HttpUrl
+    url: str
     crawl_status: CrawlStatus
     data: Optional[ResponseData]
     error: Optional[CrawlError]
@@ -49,7 +50,7 @@ class FailedCrawlTask(BaseModel):
 class SavePageTask(BaseModel):
     url: HttpUrl
     url_hash: Optional[str]
-    crawl_time: str
+    crawl_time: datetime
     crawl_status: CrawlStatus
     status_code: Optional[int]
     compressed_path: Optional[FilePath]

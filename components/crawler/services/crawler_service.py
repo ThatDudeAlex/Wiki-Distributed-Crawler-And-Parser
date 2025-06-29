@@ -3,8 +3,7 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from pydantic import FilePath
-from components.crawler.configs.types import CrawlerResponse, FailedCrawlTask, ParseDonwloadedPageTask, SavePageTask
+from components.crawler.configs.types import CrawlerResponse
 from components.crawler.services.downloader import download_compressed_html_content
 from components.crawler.core.crawler import crawl
 from shared.queue_service import QueueService
@@ -35,77 +34,75 @@ class CrawlerService:
     def run(self, url: str, depth: int):
         # skip task if it exceeds the max depth
         if depth > self.max_depth:
-            self._logger.debug(
+            self._logger.info(
                 f"Current Depth '{depth}' Exceeded Max Depth '{self.max_depth}' - Skipping '{url}'"
             )
             return
 
-        crawler_response: CrawlerResponse = crawl(url)
+        self._logger.info('STAGE 1: Fetch URL: %s', url)
+        crawler_response: CrawlerResponse = crawl(url, self._logger)
 
         # if crawl failed or was skipped due to robot.txt
         if not crawler_response.success:
             self._publish_failed_crawl(crawler_response)
             return
 
-        # download compressed html file
+        # TODO: Implement try/catch with retry for download
+        self._logger.info('STAGE 2: Download Compressed Html File')
+
         url_hash, compressed_path = download_compressed_html_content(
             os.getenv('DL_HTML_PATH'), url, crawler_response.data.text, self._logger)
 
         # get timestamp of when crawling finished
         crawl_time = get_timestamp_eastern_time()
 
-        # publish message to store page into db
+        self._logger.info('STAGE 3: Tell DB_Service to store the page data')
+
         self._publish_save_page(
             crawler_response, url_hash, compressed_path, crawl_time
         )
 
-        # publish message to begin a parsing task for the downloaded page
+        self._logger.info('STAGE 4: Tell Parsers to extract page content')
+
         self._publish_parse_downloaded_page(url, compressed_path)
 
-    def _publish_failed_crawl(self, crawler_response: CrawlerResponse):
-        message = FailedCrawlTask(
-            url=crawler_response.url,
-            crawl_status=crawler_response.crawl_status,
-            status_code=None if not crawler_response.data else crawler_response.data.status_code,
-            error_message=crawler_response.error['message']
-        )
-        self.queue_service.publish(
-            CRAWLER_QUEUE_CHANNELS['failed'], message.model_dump()
-        )
-        self._logger.debug(
-            f"Published - Failed Task: {message.model_dump_json()}"
-        )
+        self._logger.info('Crawl Task Successfully Completed!')
 
+    def _publish_failed_crawl(self, crawler_response: CrawlerResponse):
+        message = {
+            "url": crawler_response.url,
+            "crawl_status": crawler_response.crawl_status,
+            "status_code": crawler_response.data.status_code if crawler_response.data else None,
+            "error_message": crawler_response.error["message"] if crawler_response.error else None
+        }
+        self.queue_service.publish(CRAWLER_QUEUE_CHANNELS['failed'], message)
+        self._logger.debug(f"Published - Failed Task: {message}")
+
+    # TODO: Implement retry mechanism and dead-letter
     def _publish_save_page(
             self,
             crawler_response: CrawlerResponse,
             url_hash: str,
-            compressed_path: FilePath,
+            compressed_path: str,
             crawl_time: str
     ):
-        message = SavePageTask(
-            url=crawler_response.url,
-            url_hash=url_hash,
-            crawl_status=crawler_response.crawl_status,
-            compressed_path=compressed_path,
-            crawl_time=crawl_time,
-            status_code=crawler_response.data.status_code
-        )
-        self.queue_service.publish(
-            CRAWLER_QUEUE_CHANNELS['savepage'], message.model_dump()
-        )
-        self._logger.debug(
-            f"Published - Save Page Task: {message.model_dump_json()}"
-        )
+        message = {
+            "url": crawler_response.url,
+            "url_hash": url_hash,
+            "crawl_status": crawler_response.crawl_status.value,
+            "compressed_path": compressed_path,
+            "crawl_time": crawl_time,
+            "status_code": crawler_response.data.status_code
+        }
+        self.queue_service.publish(CRAWLER_QUEUE_CHANNELS['savepage'], message)
+        self._logger.debug(f"Published - Save Page Task: {message}")
 
-    def _publish_parse_downloaded_page(self, url: str, compressed_path: FilePath):
-        message = ParseDonwloadedPageTask(
-            url=url,
-            compressed_path=compressed_path
-        )
+    def _publish_parse_downloaded_page(self, url: str, compressed_path: str):
+        message = {
+            "url": str(url),
+            "compressed_path": compressed_path
+        }
         self.queue_service.publish(
-            CRAWLER_QUEUE_CHANNELS['parsetask'], message.model_dump()
+            CRAWLER_QUEUE_CHANNELS['parsetask'], message
         )
-        self._logger.debug(
-            f"Published - Parse Downloaded Page Task: {message.model_dump_json()}"
-        )
+        self._logger.debug(f"Published - Parse Page Task: {message}")

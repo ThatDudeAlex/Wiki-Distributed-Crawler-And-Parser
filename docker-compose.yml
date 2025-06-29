@@ -2,14 +2,15 @@
 x-crawler-common: &crawler-common
   build:
     context: .
-    dockerfile: crawler/Dockerfile
+    dockerfile: components/crawler/Dockerfile
   depends_on:
     - postgres
-    - db_init
+    - postgres_initiator
     - rabbitmq
+    - rabbitmq_seeder
     - redis
   env_file: .env
-  command: [ "python", "-m", "crawler.crawler_worker" ]
+  command: [ "python", "-m", "components.crawler.main" ]
   volumes:
     - compressed_html_data:${DL_HTML_PATH}
   environment:
@@ -39,36 +40,38 @@ services:
     depends_on:
       - rabbitmq
     command: [ "python", "-m", "components.rabbitmq_seeder.main" ]
-  # postgres:
-  #   image: postgres:16
-  #   container_name: postgres
-  #   restart: unless-stopped
-  #   environment:
-  #     POSTGRES_DB: "${POSTGRES_DB}"
-  #     POSTGRES_USER: "${POSTGRES_USER}"
-  #     POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-  #   volumes:
-  #     - pg_data:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
 
-  # postgres_initiator:
-  #   container_name: postgres_initiator
-  #   build:
-  #     context: .
-  #     dockerfile: components/postgres_initiator/Dockerfile
-  #   depends_on:
-  #     - postgres
-  #   env_file: .env # Only used in local dev
-  #   command: [ "python", "-m", "components.postgres_initiator.main" ]
-  # redis:
-  #   image: redis:alpine
-  #   container_name: redis
-  #   restart: unless-stopped
-  #   ports:
-  #     - "6379:6379"
-  # crawler_noproxy:
-  #   <<: *crawler-common
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  postgres_initiator:
+    container_name: postgres_initiator
+    build:
+      context: .
+      dockerfile: components/postgres_initiator/Dockerfile
+    depends_on:
+      - postgres
+    env_file: .env # Only used in local dev
+    command: [ "python", "-m", "components.postgres_initiator.main" ]
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+  crawler_noproxy:
+    <<: *crawler-common
   # California Proxies
   # crawler_la:
   #   <<: *crawler-common
@@ -134,18 +137,21 @@ services:
   #   environment:
   #     - HTTP_PROXY=${VA_RESTON1_PROXY}
   #     - HTTPS_PROXY=${VA_RESTON1_PROXY}
+
+
   # parser:
   #   build:
   #     context: .
   #     dockerfile: parser/Dockerfile
   #   depends_on:
   #     - postgres
-  #     - db_init
+  #     - postgres_initiator
   #     - rabbitmq
   #   env_file: .env
   #   command: [ "python", "-m", "parser.parser" ]
   #   volumes:
   #     - compressed_html_data:${DL_HTML_PATH}
+
 
   # db_service:
   #   build:

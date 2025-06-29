@@ -4,17 +4,19 @@ import logging
 from components.crawler.configs.types import CrawlTask
 from components.crawler.services.crawler_service import CrawlerService
 from shared.queue_service import QueueService
-from shared.config import CRAWLER_QUEUE_CHANNELS
+from components.crawler.configs.app_configs import CRAWLER_QUEUE_CHANNELS
 
 
 def handle_message(ch, method, properties, body, crawler_service: CrawlerService, logger: logging.Logger):
     try:
-        logger.debug("Received message: %s", body)
         message = json.loads(body.decode())
         task = CrawlTask(**message)
 
+        logger.info("Initiating crawl for URL: %s", task.url)
+
         # run crawler service
-        crawler_service.run(task.url, task.depth)
+        # IMPORTANT: url must be converted to a string to avoid potential type errors
+        crawler_service.run(str(task.url), task.depth)
 
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -31,13 +33,13 @@ def start_crawl_listener(queue_service: QueueService, crawler_service: CrawlerSe
     # Partial allows us to inject the value of a param into a function
     # This allows me to inject the crawler & logger while still complying with
     # the RabbitMQ api for listening to messages
-    handler = partial(
+    handle_message_partial = partial(
         handle_message, crawler_service=crawler_service, logger=logger
     )
 
     queue_service.channel.basic_consume(
         queue=CRAWLER_QUEUE_CHANNELS['listen'],
-        on_message_callback=handler,
+        on_message_callback=handle_message_partial,
         auto_ack=False
     )
 
