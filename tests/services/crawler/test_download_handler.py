@@ -17,7 +17,7 @@ def test_download_compressed_html_content_with_real_html():
     # Use temp directory for the download
     with tempfile.TemporaryDirectory() as tmpdir:
         # Mock hash and logger
-        with patch("services.crawler.infrastructure.download_handler.create_hash",
+        with patch("components.crawler.services.downloader.create_hash",
                    return_value="dummyhash123") as mock_hash:
             mock_logger = MagicMock()
 

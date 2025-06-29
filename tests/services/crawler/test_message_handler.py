@@ -42,7 +42,7 @@ def test_handle_message_invalid_json(monkeypatch):
     class DummyValidationError(ValueError):
         def json(self): return "Mocked validation error"
 
-    with patch("services.crawler.message_handler.CrawlTask", side_effect=DummyValidationError()):
+    with patch("components.crawler.message_handler.CrawlTask", side_effect=DummyValidationError()):
         message_handler.handle_message(
             ch, method, properties, body, crawler_service, logger)
 

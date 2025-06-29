@@ -1,12 +1,13 @@
 import pytest
 import requests
 from database.db_models.models import CrawlStatus
-import services.crawler.domain.crawler as crawler
+
+import components.crawler.core.crawler as crawler
 from unittest.mock import MagicMock, patch
 from shared.config import BASE_HEADERS
 
 
-@patch('services.crawler.domain.crawler.requests.get')
+@patch('components.crawler.core.crawler.requests.get')
 def test_fetch_success(mock_get):
     mock_response = MagicMock()
     mock_response.raise_for_status = MagicMock()
@@ -17,7 +18,7 @@ def test_fetch_success(mock_get):
     assert got.status_code == 200
 
 
-@patch('services.crawler.domain.crawler.requests.get')
+@patch('components.crawler.core.crawler.requests.get')
 def test_fetch_raises_http_error(mock_get):
     mock_response = MagicMock()
     mock_response.raise_for_status.side_effect = requests.HTTPError("Testing")
@@ -28,14 +29,14 @@ def test_fetch_raises_http_error(mock_get):
     assert str(raised_error.value) == "Testing"
 
 
-@patch('services.crawler.domain.crawler.ROBOT_PARSER')
+@patch('components.crawler.core.crawler.ROBOT_PARSER')
 def test_robot_allows_crawling_true(mock_robot_parser):
     mock_robot_parser.can_fetch.return_value = True
     logger = MagicMock()
     assert crawler._robot_allows_crawling("http://example.com", logger) is True
 
 
-@patch('services.crawler.domain.crawler.ROBOT_PARSER')
+@patch('components.crawler.core.crawler.ROBOT_PARSER')
 def test_robot_allows_crawling_false(mock_robot_parser):
     mock_robot_parser.can_fetch.return_value = False
     logger = MagicMock()
@@ -59,8 +60,8 @@ def test_generate_crawler_response():
     assert got['error'] is None
 
 
-@patch('services.crawler.domain.crawler._fetch')
-@patch('services.crawler.domain.crawler._robot_allows_crawling')
+@patch('components.crawler.core.crawler._fetch')
+@patch('components.crawler.core.crawler._robot_allows_crawling')
 def test_crawl_success(mock_robot_check, mock_fetch):
     url = "http://example.com"
     logger = MagicMock()
@@ -80,7 +81,7 @@ def test_crawl_success(mock_robot_check, mock_fetch):
     assert got['error'] is None
 
 
-@patch('services.crawler.domain.crawler._robot_allows_crawling')
+@patch('components.crawler.core.crawler._robot_allows_crawling')
 def test_crawl_robot_blocks(mock_robot_check):
     url = "http://example.com"
     logger = MagicMock()
@@ -93,8 +94,8 @@ def test_crawl_robot_blocks(mock_robot_check):
     assert got['error'] is None
 
 
-@patch('services.crawler.domain.crawler._fetch')
-@patch('services.crawler.domain.crawler._robot_allows_crawling')
+@patch('components.crawler.core.crawler._fetch')
+@patch('components.crawler.core.crawler._robot_allows_crawling')
 def test_crawl_http_error(mock_robot_check, mock_fetch):
     url = "http://example.com"
     logger = MagicMock()
@@ -113,8 +114,8 @@ def test_crawl_http_error(mock_robot_check, mock_fetch):
     assert got['error']['message'] == 'Not Found'
 
 
-@patch('services.crawler.domain.crawler._fetch')
-@patch('services.crawler.domain.crawler._robot_allows_crawling')
+@patch('components.crawler.core.crawler._fetch')
+@patch('components.crawler.core.crawler._robot_allows_crawling')
 def test_crawl_request_exception(mock_robot_check, mock_fetch):
     url = "http://example.com"
     logger = MagicMock()

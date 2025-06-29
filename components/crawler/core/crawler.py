@@ -3,7 +3,7 @@ from pydantic import HttpUrl
 import requests
 import urllib.robotparser
 
-from .types import CrawlerResponse, ResponseData
+from components.crawler.configs.types import CrawlerResponse, ResponseData
 from database.db_models.models import CrawlStatus
 from components.crawler.configs.app_configs import ROBOTS_TXT, BASE_HEADERS
 
