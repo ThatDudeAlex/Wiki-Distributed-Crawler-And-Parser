@@ -1,8 +1,8 @@
 from functools import partial
 import json
 import logging
-from services.crawler.domain.types import CrawlTask
-from services.crawler.service.crawler_service import CrawlerService
+from components.crawler.domain.types import CrawlTask
+from components.crawler.service.crawler_service import CrawlerService
 from shared.queue_service import QueueService
 from shared.config import CRAWLER_QUEUE_CHANNELS
 

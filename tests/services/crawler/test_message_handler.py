@@ -1,7 +1,7 @@
 import json
 from pydantic import HttpUrl
 from unittest.mock import MagicMock, patch
-from services.crawler import message_handler
+from components.crawler import message_handler
 
 
 def test_handle_message_valid():

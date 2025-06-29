@@ -4,7 +4,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, HttpUrl, FilePath
 from typing import Literal, Optional, TypedDict
 from database.db_models.models import CrawlStatus
-from services.crawler.config import MAX_DEPTH
+from components.crawler.config import MAX_DEPTH
 
 CrawlerErrorType = Literal[
     "HTTPError",
