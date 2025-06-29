@@ -5,7 +5,7 @@ import urllib.robotparser
 
 from .types import CrawlerResponse, ResponseData
 from database.db_models.models import CrawlStatus
-from components.crawler.config import ROBOTS_TXT, BASE_HEADERS
+from components.crawler.configs.app_configs import ROBOTS_TXT, BASE_HEADERS
 
 ROBOT_PARSER = urllib.robotparser.RobotFileParser()
 ROBOT_PARSER.set_url(ROBOTS_TXT)

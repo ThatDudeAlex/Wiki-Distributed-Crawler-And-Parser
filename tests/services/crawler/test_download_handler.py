@@ -2,8 +2,8 @@ import os
 import tempfile
 
 from unittest.mock import patch, MagicMock
-from components.crawler.config import CRAWLER_SEED_URL
-from components.crawler.infrastructure.download_handler import download_compressed_html_content
+from components.crawler.configs.app_configs import CRAWLER_SEED_URL
+from components.crawler.services.downloader import download_compressed_html_content
 
 
 def test_download_compressed_html_content_with_real_html():

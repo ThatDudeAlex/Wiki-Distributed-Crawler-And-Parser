@@ -4,11 +4,11 @@ import os
 
 from dotenv import load_dotenv
 from pydantic import FilePath
-from components.crawler.domain.types import CrawlerResponse, FailedCrawlTask, ParseDonwloadedPageTask, SavePageTask
-from components.crawler.infrastructure.download_handler import download_compressed_html_content
-from components.crawler.domain.crawler import crawl
+from components.crawler.configs.types import CrawlerResponse, FailedCrawlTask, ParseDonwloadedPageTask, SavePageTask
+from components.crawler.services.downloader import download_compressed_html_content
+from components.crawler.core.crawler import crawl
 from shared.queue_service import QueueService
-from components.crawler.config import CRAWLER_QUEUE_CHANNELS
+from components.crawler.configs.app_configs import CRAWLER_QUEUE_CHANNELS
 from shared.utils import get_timestamp_eastern_time
 
 
