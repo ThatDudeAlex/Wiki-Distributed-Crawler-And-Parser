@@ -54,7 +54,7 @@ def test_only_scripts_and_styles(logger):
 
 
 def test_no_removable_elements(logger):
-    html = "<div><p>Clean text remains.</p></div>"
+    html = "<div><p>Clean text remains</p></div>"
     soup = BeautifulSoup(html, "lxml")
     cleaned = clean_wiki_html_content(soup.div, logger)
     assert cleaned == "Clean text remains"

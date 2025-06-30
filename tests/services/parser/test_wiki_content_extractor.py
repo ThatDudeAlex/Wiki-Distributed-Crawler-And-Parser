@@ -15,12 +15,14 @@ SAMPLE_HTML = """
       </ul>
     </div>
     <div id="mw-content-text">
-      <p>This is the summary paragraph.</p>
-      <p>This is the body paragraph.</p>
+      <p>This is the summary paragraph</p>
+      <p>This is the body paragraph</p>
     </div>
   </body>
 </html>
 """
+
+TEST_URL = "http://www.example.com"
 
 
 @pytest.fixture
@@ -38,7 +40,7 @@ def test_extract_wiki_page_content(mock_clean, mock_hash, logger):
     # Set that as the return value of the mock
     mock_clean.return_value = mock_cleaned_soup
 
-    result = extract_wiki_page_content(SAMPLE_HTML, logger)
+    result = extract_wiki_page_content(TEST_URL, SAMPLE_HTML, logger)
 
     assert result.title == "Test Page"
     assert result.categories == ["Category 1", "Category 2"]
@@ -51,7 +53,7 @@ def test_extract_wiki_page_content(mock_clean, mock_hash, logger):
 @patch("components.parser.core.wiki_content_extractor.clean_wiki_html_content")
 def test_no_main_content(mock_clean, mock_hash, logger):
     html = "<html><body><h1 id='firstHeading'>Title</h1></body></html>"
-    result = extract_wiki_page_content(html, logger)
+    result = extract_wiki_page_content(TEST_URL, html, logger)
 
     assert result.summary is None
     assert result.text_content is None
@@ -76,7 +78,7 @@ def test_no_categories(mock_hash, mock_clean, logger):
     mock_clean.return_value = mock_soup
     mock_hash.return_value = "mocked_hash_string"  # 🔧 fix here
 
-    result = extract_wiki_page_content(html, logger)
+    result = extract_wiki_page_content(TEST_URL, html, logger)
 
     assert result.categories == []
     assert result.text_content_hash == "mocked_hash_string"
@@ -97,7 +99,7 @@ def test_single_paragraph_summary(mock_clean, mock_hash, logger):
     mock_soup.get_text.return_value = "Only paragraph available"
     mock_clean.return_value = mock_soup
 
-    result = extract_wiki_page_content(html, logger)
+    result = extract_wiki_page_content(TEST_URL, html, logger)
     assert result.summary == "Only paragraph available"
     assert result.text_content == "Only paragraph available"
     assert result.text_content_hash == "hash123"

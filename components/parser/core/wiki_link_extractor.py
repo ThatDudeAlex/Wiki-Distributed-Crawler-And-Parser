@@ -12,7 +12,7 @@ class _WikipediaLinkExtractor:
     def __init__(self, logger: logging.Logger):
         self.logger = logger
 
-    def extract(self, page_url: str, html_content: str) -> List[LinkData]:
+    def extract(self, page_url: str, html_content: str) -> LinkData:
         """
         Parses a Wikipedia HTML page and returns structured data for links within the main body.
         """
@@ -49,9 +49,9 @@ class _WikipediaLinkExtractor:
             return None
 
         try:
-            norm = normalize_url(href)
-            is_int = not is_external_link(norm)
-            text = tag.get_text(strip=True)
+            normalized_href = normalize_url(href)
+            is_internal = not is_external_link(normalized_href)
+            text_content = tag.get_text(strip=True)
 
             attrs = {
                 'title': tag.get('title'),
@@ -61,14 +61,14 @@ class _WikipediaLinkExtractor:
             }
 
             link_type = self._determine_type(
-                is_int, norm, href, attrs['rel'], text
+                is_internal, normalized_href, href, attrs['rel'], text_content
             )
 
             return LinkData(
                 original_href=href,
-                to_url=norm,
-                anchor_text=text,
-                is_internal=is_int,
+                to_url=normalized_href,
+                anchor_text=text_content,
+                is_internal=is_internal,
                 link_type=link_type,
                 **attrs
             )
@@ -111,7 +111,7 @@ class _WikipediaLinkExtractor:
             return 'error_determining_type'
 
 
-def extract_wiki_page_links(page_url: str, html_content: str, logger: logging.Logger) -> LinkData:
+def extract_wiki_page_links(page_url: str, html_content: str, logger: logging.Logger) -> List[LinkData]:
     """
     Extracts and classifies anchor links from the main body of a Wikipedia page.
     """

@@ -15,7 +15,7 @@ class LinkData(BaseModel):
 
 
 class PageContent(BaseModel):
-    url: HttpUrl
+    page_url: HttpUrl
     title: Optional[str]
     categories: Optional[List[str]] = Field(default_factory=list)
     summary: Optional[str]

@@ -76,7 +76,7 @@ class CrawlerService:
             "error_message": crawler_response.error["message"] if crawler_response.error else None
         }
         self.queue_service.publish(CRAWLER_QUEUE_CHANNELS['failed'], message)
-        self._logger.debug(f"Published - Failed Task: {message}")
+        self._logger.debug(f"Task Published - Save Failed Crawl: {message}")
 
     # TODO: Implement retry mechanism and dead-letter
     def _publish_save_page(
@@ -95,7 +95,8 @@ class CrawlerService:
             "status_code": crawler_response.data.status_code
         }
         self.queue_service.publish(CRAWLER_QUEUE_CHANNELS['savepage'], message)
-        self._logger.debug(f"Published - Save Page Task: {message}")
+        self._logger.debug(
+            f"Task Published - Save Successful Crawl: {message}")
 
     def _publish_parse_downloaded_page(self, url: str, compressed_path: str):
         message = {
@@ -105,4 +106,4 @@ class CrawlerService:
         self.queue_service.publish(
             CRAWLER_QUEUE_CHANNELS['parsetask'], message
         )
-        self._logger.debug(f"Published - Parse Page Task: {message}")
+        self._logger.debug(f"Task Published - Parse Html Content: {message}")

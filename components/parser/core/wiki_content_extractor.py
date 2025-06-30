@@ -27,9 +27,8 @@ def extract_wiki_page_content(url: str, html_content: str, logger: logging.Logge
             'Failed To Find Main Content - Skipping Summary & Text_Content')
     else:
         summary = _extract_summary(main_content, logger)
-        clean_main_content = clean_wiki_html_content(main_content, logger)
-        text_content = clean_main_content.get_text()
-        text_content_hash = create_hash(text_content)
+        cleaned_text_content = clean_wiki_html_content(main_content, logger)
+        cleaned_text_content_hash = create_hash(cleaned_text_content)
 
     parsed_at = get_timestamp_eastern_time()
     return PageContent(
@@ -37,8 +36,8 @@ def extract_wiki_page_content(url: str, html_content: str, logger: logging.Logge
         title=title,
         categories=categories,
         summary=summary,
-        text_content=text_content,
-        text_content_hash=text_content_hash,
+        text_content=cleaned_text_content,
+        text_content_hash=cleaned_text_content_hash,
         parsed_at=parsed_at
     )
 
@@ -75,6 +74,8 @@ def _extract_categories(soup: BeautifulSoup, logger: logging.Logger) -> List[str
             category_links = normal_catlinks_div.find_all('a')
             for link in category_links:
                 category_text = link.get_text(strip=True)
+                if category_text == 'Categories':
+                    continue
                 if category_text.startswith("Category:"):
                     categories.append(category_text[len("Category:"):])
                 else:
@@ -92,18 +93,21 @@ def _extract_categories(soup: BeautifulSoup, logger: logging.Logger) -> List[str
 
 def _extract_summary(main_content: Tag, logger: logging.Logger) -> Optional[str]:
     try:
-        paragraphs = main_content.find_all('p', recursive=False)
+        paragraphs = main_content.find_all('p')  # removed recursive=False
         for p in paragraphs:
             paragraph_text = p.get_text(strip=True)
-            if paragraph_text and not (
-                paragraph_text.startswith("Coordinates:") or
-                paragraph_text.startswith("For other uses, see") or
-                paragraph_text.startswith("This article is about") or
-                paragraph_text.startswith("This is a redirect") or
-                paragraph_text.lower().startswith("disambiguation")
-            ):
-                logger.info('Summary Extracted: %s', paragraph_text)
-                return paragraph_text
+            if not paragraph_text:
+                continue
+
+            # Filter out boilerplate but don't be too aggressive
+            if any(paragraph_text.startswith(prefix) for prefix in [
+                "Coordinates:", "For other uses, see", "This is a redirect"
+            ]):
+                continue
+
+            logger.info('Summary Extracted: %s', paragraph_text)
+            return paragraph_text
+
         logger.warning('Missing Page Summary')
         return None
     except Exception as e:
