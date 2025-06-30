@@ -99,5 +99,5 @@ jobs:
           done
 
       - name: Run test suite
-        run: pytest test/
+        run: pytest tests/
         
