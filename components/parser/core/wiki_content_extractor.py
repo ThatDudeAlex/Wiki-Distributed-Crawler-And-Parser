@@ -24,11 +24,11 @@ def extract_wiki_page_content(url: str, html_content: str, logger: logging.Logge
 
     if not main_content:
         logger.warning(
-            'Failed To Find Main Content - Skipping Summary & Text_Content')
+            'Failed to find main content — skipping summary & text_content')
     else:
         summary = _extract_summary(main_content, logger)
-        cleaned_text_content = clean_wiki_html_content(main_content, logger)
-        cleaned_text_content_hash = create_hash(cleaned_text_content)
+        text_content = clean_wiki_html_content(main_content, logger)
+        text_content_hash = create_hash(text_content)
 
     parsed_at = get_timestamp_eastern_time()
     return PageContent(
@@ -36,8 +36,8 @@ def extract_wiki_page_content(url: str, html_content: str, logger: logging.Logge
         title=title,
         categories=categories,
         summary=summary,
-        text_content=cleaned_text_content,
-        text_content_hash=cleaned_text_content_hash,
+        text_content=text_content,
+        text_content_hash=text_content_hash,
         parsed_at=parsed_at
     )
 

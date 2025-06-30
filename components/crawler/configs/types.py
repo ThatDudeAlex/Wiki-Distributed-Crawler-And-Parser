@@ -14,8 +14,8 @@ CrawlerErrorType = Literal[
 
 class ResponseData(BaseModel):
     status_code: int
-    headers: dict
-    text: str
+    headers: Optional[dict]
+    text: Optional[str]
 
 
 class CrawlError(TypedDict):

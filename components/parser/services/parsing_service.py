@@ -1,6 +1,6 @@
 import logging
 from typing import List
-from components.parser.configs.types import LinkData, PageContent
+from components.parser.configs.types import LinkData, PageContentSchema
 from shared.queue_service import QueueService
 from components.parser.core.wiki_content_extractor import extract_wiki_page_content
 from components.parser.core.wiki_link_extractor import extract_wiki_page_links
@@ -49,7 +49,7 @@ class ParsingService:
             return
 
     # TODO: Implement retry mechanism and dead-letter
-    def _publish_save_page_content(self, page_content: PageContent):
+    def _publish_save_page_content(self, page_content: PageContentSchema):
         self._queue_service.publish(
             PARSER_QUEUE_CHANNELS['savecontent'], page_content.model_dump(mode="json"))
 

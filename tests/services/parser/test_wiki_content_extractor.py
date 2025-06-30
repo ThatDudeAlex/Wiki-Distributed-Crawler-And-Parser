@@ -31,15 +31,8 @@ def logger():
 
 
 @patch("components.parser.core.wiki_content_extractor.create_hash", return_value="fakehash123")
-@patch("components.parser.core.wiki_content_extractor.clean_wiki_html_content")
+@patch("components.parser.core.wiki_content_extractor.clean_wiki_html_content", return_value="Cleaned content")
 def test_extract_wiki_page_content(mock_clean, mock_hash, logger):
-    # Create a mock BeautifulSoup object with get_text()
-    mock_cleaned_soup = Mock()
-    mock_cleaned_soup.get_text.return_value = "Cleaned content"
-
-    # Set that as the return value of the mock
-    mock_clean.return_value = mock_cleaned_soup
-
     result = extract_wiki_page_content(TEST_URL, SAMPLE_HTML, logger)
 
     assert result.title == "Test Page"
@@ -85,7 +78,7 @@ def test_no_categories(mock_hash, mock_clean, logger):
 
 
 @patch("components.parser.core.wiki_content_extractor.create_hash", return_value="hash123")
-@patch("components.parser.core.wiki_content_extractor.clean_wiki_html_content")
+@patch("components.parser.core.wiki_content_extractor.clean_wiki_html_content", return_value="Only paragraph available")
 def test_single_paragraph_summary(mock_clean, mock_hash, logger):
     html = """
     <html>
@@ -95,11 +88,9 @@ def test_single_paragraph_summary(mock_clean, mock_hash, logger):
         </div>
     </html>
     """
-    mock_soup = Mock()
-    mock_soup.get_text.return_value = "Only paragraph available"
-    mock_clean.return_value = mock_soup
 
     result = extract_wiki_page_content(TEST_URL, html, logger)
+
     assert result.summary == "Only paragraph available"
     assert result.text_content == "Only paragraph available"
     assert result.text_content_hash == "hash123"

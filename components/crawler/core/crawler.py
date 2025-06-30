@@ -1,4 +1,5 @@
 import logging
+from typing import Optional, Union
 import requests
 import urllib.robotparser
 
@@ -11,72 +12,91 @@ def _generate_crawler_response(
     success: bool,
     url: str,
     crawl_status: CrawlStatus,
-    data: ResponseData,
-    error: dict
+    data: Optional[Union[ResponseData, dict]] = None,
+    error: Optional[Exception] = None
 ) -> CrawlerResponse:
+    """
+    Build a CrawlerResponse, extracting error details and response data if needed.
+    """
+    if not success and error:
+        # If the exception has a response (e.g., HTTPError), extract its data
+        response = getattr(error, "response", None)
+        if response:
+            data = {
+                'status_code': response.status_code,
+                'headers': dict(response.headers),
+                'text': response.text,
+            }
+
+        err = {
+            'type': error.__class__.__name__,
+            'message': str(error),
+        }
+    else:
+        err = None
+
     return CrawlerResponse(
         success=success,
         url=url,
         crawl_status=crawl_status,
         data=data,
-        error=error
+        error=err
     )
 
 
-def _robot_allows_crawling(url: str, logger: logging.Logger) -> bool:
+def _robot_blocks_crawling(url: str, logger: logging.Logger) -> bool:
     """
-    Returns ``True`` if robot.txt allows crawling the ``URL`` else
-    returns ``False``
+    Returns True if robots.txt blocks crawling the URL; otherwise, False.
     """
     rp = urllib.robotparser.RobotFileParser()
     rp.set_url(ROBOTS_TXT)
     rp.read()
 
-    if not rp.can_fetch(BASE_HEADERS['user-agent'], url):
-        logger.warning(f"robots.txt blocked crawling: {url}")
+    if rp.can_fetch(BASE_HEADERS['user-agent'], url):
         return False
-    return True
+    else:
+        logger.warning(f"robots.txt blocked crawling: {url}")
+        return True
 
 
 def _fetch(url: str) -> requests.Response:
+    """
+    Make a GET request to the given URL with default headers.
+    """
     response = requests.get(url, headers=BASE_HEADERS, timeout=10)
     response.raise_for_status()
     return response
 
 
 def crawl(url: str, logger: logging.Logger) -> CrawlerResponse:
+    """
+    Perform a crawl of the specified URL, respecting robots.txt, and return a CrawlerResponse.
+    """
     try:
-        logger.info('Verifying that robot.txt allows crawling URL: %s', url)
+        logger.info('Verifying that robots.txt allows crawling URL: %s', url)
 
-        if not _robot_allows_crawling(url, logger):
-            return _generate_crawler_response(False, url, CrawlStatus.SKIPPED, None, None)
+        if _robot_blocks_crawling(url, logger):
+            return _generate_crawler_response(False, url, CrawlStatus.SKIPPED)
 
         response = _fetch(url)
         logger.info('Successfully Fetched URL: %s', url)
 
-        crawler_res = _generate_crawler_response(True, url, CrawlStatus.CRAWLED_SUCCESS,
-                                                 {
-                                                     'status_code': response.status_code,
-                                                     'headers': response.headers,
-                                                     'text': response.text
-                                                 }, None)
+        return _generate_crawler_response(
+            True,
+            url,
+            CrawlStatus.CRAWLED_SUCCESS,
+            {
+                'status_code': response.status_code,
+                'headers': dict(response.headers),
+                'text': response.text
+            }
+        )
 
-        return crawler_res
     except requests.HTTPError as e:
-        logger.error(
-            f"HTTPError while crawling '{url}' - StatusCode: {e.response.status_code} - {e}"
-        )
-        return _generate_crawler_response(False, url, CrawlStatus.CRAWL_FAILED,
-                                          e.response.status_code,
-                                          {
-                                              'type': e.__class__.__name__,
-                                              'message': str(e)
-                                          })
+        logger.error("HTTPError in '%s' - StatusCode: %s - %s", url,
+                     e.response.status_code if e.response else "N/A", str(e))
+        return _generate_crawler_response(False, url, CrawlStatus.CRAWL_FAILED, error=e)
+
     except requests.RequestException as e:
-        logger.error(
-            f"Error while crawling '{url}' - {e}"
-        )
-        return _generate_crawler_response(False, url, CrawlStatus.CRAWL_FAILED, None, {
-            'type': e.__class__.__name__,
-            'message': str(e)
-        })
+        logger.error(f"RequestException in '{url}' - {e}")
+        return _generate_crawler_response(False, url, CrawlStatus.CRAWL_FAILED, error=e)
