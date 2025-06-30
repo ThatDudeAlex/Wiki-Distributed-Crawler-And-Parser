@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ main, dev ]
 
 jobs:
   lint:
@@ -25,7 +25,7 @@ jobs:
       - name: Check docker-compose syntax
         run: docker compose config
   
-  test:
+  image-build-test:
     runs-on: ubuntu-latest
     env:
       RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
@@ -41,4 +41,36 @@ jobs:
       - name: Build services
         run: |
           docker compose build
+
+  unit-test:
+    runs-on: ubuntu-latest
+    env:
+      RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
+      RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB}}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD}}
+    needs: image-build-test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install root-level dependencies
+        run: pip install -r requirements-common.txt
+
+      - name: Install all component dependencies
+        run: |
+          for d in components/*; do
+            if [ -f "$d/requirements.txt" ]; then
+              pip install -r "$d/requirements.txt"
+            fi
+          done
+
+      - name: Run test suite
+        run: pytest test/
         
