@@ -86,7 +86,6 @@ jobs:
           pip install pytest
           pip install testcontainers
           pip install -r requirements-common.txt
-          pip install -r requirements.txt
 
           for d in components/*; do
             if [ -f "$d/requirements.txt" ]; then
