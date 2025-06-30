@@ -1,0 +1,5 @@
+-r ../../requirements-common.txt
+pika
+bs4
+lxml
+pydantic

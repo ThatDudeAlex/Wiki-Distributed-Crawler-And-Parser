@@ -16,6 +16,7 @@ def handle_message(ch, method, properties, body, crawler_service: CrawlerService
 
         # run crawler service
         # IMPORTANT: url must be converted to a string to avoid potential type errors
+        # TODO: idk how true is the important comment above, experiment with removing str()
         crawler_service.run(str(task.url), task.depth)
 
         # acknowledge success

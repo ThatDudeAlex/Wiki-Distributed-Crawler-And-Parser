@@ -1,6 +1,6 @@
 from pydantic import BaseModel, HttpUrl, FilePath
 
 
-class ParseDonwloadedPageTask(BaseModel):
+class ParsingTask(BaseModel):
     url: HttpUrl
     compressed_path: FilePath
