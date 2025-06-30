@@ -81,6 +81,9 @@ jobs:
         with:
           python-version: '3.13'
 
+      - name: Install pytest
+        run: pip install pytest
+
       - name: Install root-level dependencies
         run: pip install -r requirements-common.txt
 
