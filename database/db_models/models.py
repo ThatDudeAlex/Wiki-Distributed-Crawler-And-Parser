@@ -1,7 +1,6 @@
 from enum import Enum as PyEnum
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import (
-    JSON,
     BigInteger,
     Boolean,
     DateTime,

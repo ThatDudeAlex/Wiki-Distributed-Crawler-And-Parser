@@ -1,7 +1,6 @@
 from pydantic import BaseModel, HttpUrl, FilePath
 from typing import Optional
 from database.db_models.models import CrawlStatus
-from components.crawler.configs.app_configs import MAX_DEPTH
 
 
 class SavePageTask(BaseModel):

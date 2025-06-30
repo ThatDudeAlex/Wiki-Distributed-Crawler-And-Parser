@@ -70,6 +70,6 @@ def validate_message(message: dict, schema: Dict[str, Any]):
     try:
         jsonschema.validate(instance=message, schema=schema)
         # LOGGER.debug("Message is valid.")
-    except ValidationError as e:
+    except ValidationError:
         # LOGGER.error("Message validation failed: ", e.message)
         raise

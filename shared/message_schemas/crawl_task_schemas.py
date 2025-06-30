@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl, FilePath
+from pydantic import BaseModel, Field, HttpUrl
 from typing import Optional
 from database.db_models.models import CrawlStatus
 from components.crawler.configs.app_configs import MAX_DEPTH

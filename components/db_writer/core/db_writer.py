@@ -72,7 +72,7 @@ def save_crawled_page(page_data: dict, logger: logging.Logger, session_factory=N
         except OperationalError as e:
             logger.warning(
                 f"OperationalError while saving page: {page_data['url']} - Attempt {attempt}/{MAX_RETRIES} - {e}")
-        except Exception as e:
+        except Exception:
             logger.exception(
                 f"Unexpected error while saving page: {page_data['url']} - Attempt {attempt}/{MAX_RETRIES}"
             )
@@ -142,7 +142,7 @@ def save_parsed_page_content(parsed_data: dict, logger: logging.Logger, session_
             logger.warning(
                 f"OperationalError on parsed page '{parsed_data['page_url']}' - Attempt {attempt}/{MAX_RETRIES}: {e}"
             )
-        except Exception as e:
+        except Exception:
             logger.exception(
                 f"Unexpected error while saving parsed page contents '{parsed_data['page_url']}' - Attempt {attempt}/{MAX_RETRIES}"
             )

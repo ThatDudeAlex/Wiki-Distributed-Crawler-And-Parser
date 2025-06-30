@@ -1,11 +1,6 @@
-from pathlib import Path
-import tempfile
 import pytest
 from unittest.mock import MagicMock, patch
 from components.crawler.services.crawler_service import CrawlerService
-from database.db_models.models import CrawlStatus
-from components.crawler.configs.types import CrawlerResponse, ResponseData
-import os
 
 
 @pytest.fixture

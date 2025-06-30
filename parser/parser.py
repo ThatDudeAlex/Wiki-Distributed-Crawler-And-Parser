@@ -53,7 +53,7 @@ class HtmlParser:
             "categories": categories
         }
         self.queue.publish(PARSER_QUEUE_CHANNELS['savecontent'], payload)
-        self._logger.debug(f"Published to save parsed content")
+        self._logger.debug("Published to save parsed content")
 
     def _parse_pages(self, page_url: str, compressed_path: str):
         html_content = self.cmp_handler.load_compressed_html(compressed_path)
