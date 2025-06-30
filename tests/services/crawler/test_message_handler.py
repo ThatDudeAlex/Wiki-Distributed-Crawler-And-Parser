@@ -1,5 +1,4 @@
 import json
-from pydantic import HttpUrl
 from unittest.mock import MagicMock, patch
 from components.crawler import message_handler
 
@@ -22,8 +21,7 @@ def test_handle_message_valid():
         ch, method, properties, body, crawler_service, logger)
 
     # Assert
-    crawler_service.run.assert_called_once_with(
-        HttpUrl("https://example.com"), 1)
+    crawler_service.run.assert_called_once_with("https://example.com/", 1)
     ch.basic_ack.assert_called_once_with(delivery_tag="abc")
 
 
