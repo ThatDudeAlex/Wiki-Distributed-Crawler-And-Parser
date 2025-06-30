@@ -75,4 +75,4 @@ class QueueService:
     def close(self):
         if self._connection and self._connection.is_open:
             self._connection.close()
-            self._logger.info("RabbitMQ connection closed.")
+            self._logger.info("RabbitMQ connection closed")

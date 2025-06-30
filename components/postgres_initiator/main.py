@@ -32,7 +32,7 @@ def wait_for_db():
                 f"Database not ready yet (attempt {retries + 1}/{MAX_RETRIES}): {str(e)}")
             time.sleep(DELAY)
             retries += 1
-    logger.error("Exceeded maximum retry attempts. Exiting.")
+    logger.error("Exceeded maximum retry attempts. Exiting")
     sys.exit(1)
 
 

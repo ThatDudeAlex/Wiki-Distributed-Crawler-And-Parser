@@ -12,6 +12,9 @@ import jsonschema
 
 
 def normalize_url(href: str) -> str:
+    """
+    Normalizes a URL by converting to absolute, and removing fragments/query parameters.
+    """
     # Convert relative URL to absolute
     full_url = urljoin(WIKI_BASE, href)
 
@@ -22,8 +25,20 @@ def normalize_url(href: str) -> str:
 
 
 def is_external_link(href: str) -> bool:
+    """
+    Determines if a given href points to an external (non-Wikipedia) link.
+    """
     parsed = urlparse(href)
-    return parsed.scheme in ["http", "https"] and "wikipedia.org" not in parsed.netloc
+    # Check for http/https scheme and ensure it's not a Wikipedia domain
+    # Adding 'wiktionary.org' and other Wikimedia projects for robustness
+    return parsed.scheme in ["http", "https"] and \
+        "wikipedia.org" not in parsed.netloc and \
+        "wiktionary.org" not in parsed.netloc and \
+        "wikibooks.org" not in parsed.netloc and \
+        "wikiquote.org" not in parsed.netloc and \
+        "wikisource.org" not in parsed.netloc and \
+        "wikivoyage.org" not in parsed.netloc and \
+        "commons.wikimedia.org" not in parsed.netloc
 
 
 def has_excluded_prefix(href: str) -> bool:
@@ -69,7 +84,7 @@ def validate_param(value, name, expected_type):
 def validate_message(message: dict, schema: Dict[str, Any]):
     try:
         jsonschema.validate(instance=message, schema=schema)
-        # LOGGER.debug("Message is valid.")
+        # LOGGER.debug("Message is valid")
     except ValidationError:
         # LOGGER.error("Message validation failed: ", e.message)
         raise

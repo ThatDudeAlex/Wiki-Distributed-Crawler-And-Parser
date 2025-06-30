@@ -1,5 +1,10 @@
 import logging
+from components.parser.configs.types import LinkData, PageContent
 from shared.queue_service import QueueService
+from components.parser.core.wiki_content_extractor import extract_wiki_page_content
+from components.parser.core.wiki_link_extractor import extract_wiki_page_links
+from components.parser.services.compressed_html_reader import load_compressed_html
+from components.parser.configs.app_configs import PARSER_QUEUE_CHANNELS
 
 
 class ParsingService:
@@ -9,5 +14,48 @@ class ParsingService:
         pass
 
     def run(self, url: str, compressed_path: str):
-        self._logger.info('Got Told To Run!')
-        pass
+        try:
+            self._logger.info(
+                'STAGE 1: Loading HTML file from: %s', compressed_path
+            )
+            html_content = load_compressed_html(compressed_path)
+
+            if html_content is None:
+                self._logger.error(
+                    "Skipping Parsing Task - Html content did not load"
+                )
+                return
+
+            self._logger.info('STAGE 2: Extracting Page Content')
+            page_content = extract_wiki_page_content(
+                url, html_content, self._logger)
+
+            self._logger.info('STAGE 3: Extracting Links')
+            page_links = extract_wiki_page_links(
+                url, html_content, self._logger)
+
+            self._logger.info('STAGE 4: Extracting Page Content')
+            self._publish_save_page_content(page_content)
+
+            self._logger.info('STAGE 5: Extracting Page Content')
+            self._publish_process_link_data(page_links)
+
+        except Exception as e:
+            exception_type_name = type(e).__name__
+            self._logger.error(
+                f"An exception of type '{exception_type_name}' occurred: {e}")
+            return
+
+    # TODO: Implement retry mechanism and dead-letter
+    def _publish_save_page_content(self, page_content: PageContent):
+        self._queue_service.publish(
+            PARSER_QUEUE_CHANNELS['savecontent'], page_content.model_dump_json())
+
+        self._logger.debug(f"Published - Save Page Content Task")
+
+    # TODO: Implement retry mechanism and dead-letter
+    def _publish_process_link_data(self, page_links: LinkData):
+        self._queue_service.publish(
+            PARSER_QUEUE_CHANNELS['processlinks'], page_links.model_dump_json())
+
+        self._logger.debug(f"Published - Process Links Task")

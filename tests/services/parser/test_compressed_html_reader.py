@@ -37,7 +37,3 @@ class TestLoadCompressedHTML(unittest.TestCase):
         log_contents = self.log_stream.read()
         self.assertIn("Loaded compressed HTML file in filepath", log_contents)
         self.assertIn(self.temp_file.name, log_contents)
-
-
-if __name__ == '__main__':
-    unittest.main()

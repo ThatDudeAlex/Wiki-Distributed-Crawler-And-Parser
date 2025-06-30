@@ -1,9 +1,13 @@
 from shared.config import QueueNames
 
+WIKIPEDIA_MAIN_BODY_ID = 'mw-content-text'
+
+IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.gif', '.svg')
+
 PARSER_QUEUE_CHANNELS = {
     'listen': QueueNames.PARSE.value,
     'savecontent': QueueNames.SAVE_CONTENT.value,
-    'enqueuelinks': QueueNames.ENQUEUE_LINKS.value,
+    'processlinks': QueueNames.PROCESS_LINKS.value,
     'failed': QueueNames.FAILED_TASK.value
 }
 

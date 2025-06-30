@@ -46,7 +46,7 @@ def save_crawled_page(page_data: dict, logger: logging.Logger, session_factory=N
                     existing.crawl_attempts = existing.crawl_attempts + 1
 
                     logger.debug(
-                        f"Updated existing page: '{page_data['url']}' with new crawl metadata."
+                        f"Updated existing page: '{page_data['url']}' with new crawl metadata"
                     )
                     return True
 
@@ -62,7 +62,7 @@ def save_crawled_page(page_data: dict, logger: logging.Logger, session_factory=N
                 db.add(new_page)
 
                 logger.debug(
-                    f"Inserted new page: '{page_data['url']}' into the database.")
+                    f"Inserted new page: '{page_data['url']}' into the database")
                 return True
 
         except (IntegrityError, DataError) as e:
@@ -78,7 +78,7 @@ def save_crawled_page(page_data: dict, logger: logging.Logger, session_factory=N
             )
 
     logger.error(
-        f"Page '{page_data['url']}' failed to be saved after {MAX_RETRIES} attempts.")
+        f"Page '{page_data['url']}' failed to be saved after {MAX_RETRIES} attempts")
     return False
 
 
@@ -148,7 +148,7 @@ def save_parsed_page_content(parsed_data: dict, logger: logging.Logger, session_
             )
 
     logger.error(
-        f"Failed to save parsed page contents: {parsed_data['page_url']} after {MAX_RETRIES} retries.")
+        f"Failed to save parsed page contents: {parsed_data['page_url']} after {MAX_RETRIES} retries")
     return False
 
 
