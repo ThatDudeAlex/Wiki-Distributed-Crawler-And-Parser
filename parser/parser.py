@@ -50,6 +50,7 @@ class HtmlParser:
             "title": title,
             "summary": summary,
             "content": content,
+            "categories": categories
         }
         self.queue.publish(PARSER_QUEUE_CHANNELS['savecontent'], payload)
         self._logger.debug(f"Published to save parsed content")
