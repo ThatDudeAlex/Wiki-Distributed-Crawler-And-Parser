@@ -88,7 +88,10 @@ jobs:
         run: |
           for d in components/*; do
             if [ -f "$d/requirements.txt" ]; then
-              pip install -r "$d/requirements.txt"
+              echo "Installing from $d/requirements.txt"
+              cd "$d"
+              pip install -r requirements.txt
+              cd - > /dev/null
             fi
           done
 
