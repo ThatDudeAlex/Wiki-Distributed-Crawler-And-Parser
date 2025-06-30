@@ -13,6 +13,7 @@ jobs:
       POSTGRES_DB: ${{ secrets.POSTGRES_DB}}
       POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD}}
+      DL_HTML_PATH: ${{ secrets.DL_HTML_PATH }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,6 +34,7 @@ jobs:
       POSTGRES_DB: ${{ secrets.POSTGRES_DB}}
       POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD}}
+      DL_HTML_PATH: ${{ secrets.DL_HTML_PATH }}
     needs: lint
     steps:
       - name: Checkout code
@@ -50,6 +52,7 @@ jobs:
       POSTGRES_DB: ${{ secrets.POSTGRES_DB}}
       POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD}}
+      DL_HTML_PATH: ${{ secrets.DL_HTML_PATH }}
     needs: image-build-test
     steps:
       - name: Checkout code
