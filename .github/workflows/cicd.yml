@@ -81,14 +81,13 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install pytest
-        run: pip install pytest
-
-      - name: Install root-level dependencies
-        run: pip install -r requirements-common.txt
-
-      - name: Install all component dependencies
+      - name: Install dependencies
         run: |
+          pip install pytest
+          pip install testcontainers
+          pip install -r requirements-common.txt
+          pip install -r requirements.txt
+
           for d in components/*; do
             if [ -f "$d/requirements.txt" ]; then
               echo "Installing from $d/requirements.txt"
@@ -97,6 +96,9 @@ jobs:
               cd - > /dev/null
             fi
           done
+
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
 
       - name: Run test suite
         run: pytest tests/
