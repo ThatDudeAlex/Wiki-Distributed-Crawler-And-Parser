@@ -3,14 +3,14 @@ import logging
 from functools import partial
 from components.parser.services.parsing_service import ParsingService
 from shared.queue_service import QueueService
-from shared.message_schemas.parse_task_schemas import ParsingTask
+from shared.message_schemas.parse_task_schemas import ParsingTaskSchema
 from components.parser.configs.app_configs import PARSER_QUEUE_CHANNELS
 
 
 def handle_message(ch, method, properties, body, parsing_service: ParsingService, logger: logging.Logger):
     try:
         message = json.loads(body.decode())
-        task = ParsingTask(**message)
+        task = ParsingTaskSchema(**message)
 
         logger.info("Initiating parsing on file: %s", task.compressed_path)
 

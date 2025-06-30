@@ -3,14 +3,14 @@ import json
 import logging
 from components.crawler.services.crawler_service import CrawlerService
 from shared.queue_service import QueueService
-from shared.message_schemas.crawl_task_schemas import CrawlTask
+from shared.message_schemas.crawl_task_schemas import CrawlTaskSchema
 from components.crawler.configs.app_configs import CRAWLER_QUEUE_CHANNELS
 
 
 def handle_message(ch, method, properties, body, crawler_service: CrawlerService, logger: logging.Logger):
     try:
         message = json.loads(body.decode())
-        task = CrawlTask(**message)
+        task = CrawlTaskSchema(**message)
 
         logger.info("Initiating crawl for URL: %s", task.url)
 

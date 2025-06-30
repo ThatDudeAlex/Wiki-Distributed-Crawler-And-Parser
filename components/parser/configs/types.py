@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, HttpUrl
 from typing import List, Optional
 
 
-class LinkData(BaseModel):
+class LinkDataSchema(BaseModel):
     original_href: str
     to_url: str
     anchor_text: str

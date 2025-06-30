@@ -1,5 +1,6 @@
+from dataclasses import dataclass
 from pydantic import BaseModel
-from typing import Literal, Optional, TypedDict
+from typing import Dict, Literal, Optional, TypedDict
 from database.db_models.models import CrawlStatus
 
 CrawlerErrorType = Literal[
@@ -12,20 +13,23 @@ CrawlerErrorType = Literal[
 ]
 
 
-class ResponseData(BaseModel):
+@dataclass
+class ResponseData:
     status_code: int
-    headers: Optional[dict]
-    text: Optional[str]
+    headers: Optional[Dict] = None
+    text: Optional[str] = None
 
 
-class CrawlError(TypedDict):
+@dataclass
+class CrawlError:
     type: CrawlerErrorType
     message: str
 
 
-class CrawlerResponse(BaseModel):
+@dataclass
+class CrawlerResponse:
     success: bool
     url: str
     crawl_status: CrawlStatus
-    data: Optional[ResponseData]
-    error: Optional[CrawlError]
+    data: Optional[ResponseData] = None
+    error: Optional[CrawlError] = None
