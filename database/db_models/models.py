@@ -1,4 +1,5 @@
 from enum import Enum as PyEnum
+from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import (
     BigInteger,
@@ -19,14 +20,6 @@ from sqlalchemy import (
 Base = declarative_base()
 
 """****  ENUM DEFINITIONS  ****"""
-
-
-class CrawlStatus(PyEnum):
-    PENDING = "PENDING"
-    CRAWLED_SUCCESS = "CRAWLED_SUCCESS"
-    CRAWL_FAILED = "CRAWL_FAILED"
-    SKIPPED = "SKIPPED"
-
 
 crawl_status_enum = SqlEnum(
     CrawlStatus,
@@ -89,7 +82,7 @@ class Page(Base):
     __table_args__ = (
         Index("idx_pages_url", "url"),
         Index("idx_last_crawled", "last_crawled_at"),
-        Index("idx_next_crawl", "next_crawl_at"),
+        # Index("idx_next_crawl", "next_crawl_at"),
         Index("idx_last_crawl_status", "last_crawl_status"),
     )
 

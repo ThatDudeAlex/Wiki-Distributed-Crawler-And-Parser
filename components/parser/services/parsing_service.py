@@ -1,7 +1,7 @@
 import logging
 from typing import List
 from components.parser.configs.types import LinkData, PageContentSchema
-from rabbitmq.queue_service import QueueService
+from shared.rabbitmq.queue_service import QueueService
 from components.parser.core.wiki_content_extractor import extract_wiki_page_content
 from components.parser.core.wiki_link_extractor import extract_wiki_page_links
 from components.parser.services.compressed_html_reader import load_compressed_html

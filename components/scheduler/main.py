@@ -1,5 +1,5 @@
 from shared.logging_utils import get_logger
-from rabbitmq.queue_service import QueueService
+from shared.rabbitmq.queue_service import QueueService
 from components.scheduler.configs.app_configs import SCHEDULER_QUEUE_CHANNELS
 from components.scheduler.message_handler import start_schedule_listener
 

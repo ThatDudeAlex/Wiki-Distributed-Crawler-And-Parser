@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from components.crawler.configs.types import CrawlerResponse
 from components.crawler.services.downloader import download_compressed_html_content
 from components.crawler.core.crawler import crawl
-from rabbitmq.queue_service import QueueService
+from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling_task_schemas import SuccessCrawlReport, FailedCrawlReport
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 from shared.utils import get_timestamp_eastern_time

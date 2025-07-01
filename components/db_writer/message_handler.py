@@ -2,7 +2,7 @@ from functools import partial
 import json
 import logging
 from components.db_writer.core.db_writer import save_crawl_data, save_parsed_data
-from rabbitmq.queue_service import QueueService
+from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import DbWriterQueueChannels
 
 # TODO: implement pydantic types to perform validation on messages received
