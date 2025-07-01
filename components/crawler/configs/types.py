@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Optional
-from database.db_models.models import CrawlStatus
+from shared.rabbitmq.enums.crawl_status import CrawlStatus
 
 # TODO: refactor the @dataclasses since the current
 #       setup is not so great

@@ -119,7 +119,7 @@ class Link(Base):
     source_page = relationship("Page", back_populates="links")
 
     __table_args__ = (
-        Index("idx_source_page_id", "source_page_id"),
+        Index("idx_source_page_id", "source_page_url"),
     )
 
 
