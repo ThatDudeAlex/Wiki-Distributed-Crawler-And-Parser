@@ -97,15 +97,28 @@ class Page(Base):
 class Link(Base):
     __tablename__ = "links"
 
-    source_page_id = Column(
+    source_page_url = Column(
         BigInteger,
-        ForeignKey("pages.id", ondelete="CASCADE"),
+        ForeignKey("pages.url", ondelete="CASCADE"),
         primary_key=True,
     )
-    target_url = Column(String(2048), primary_key=True)
-    link_text = Column(String(512), nullable=True)
-    is_internal = Column(Boolean, nullable=False)
+    url = Column(String(2048), primary_key=True)
+    depth = Column(Integer, nullable=False)
 
+    is_internal = Column(Boolean, nullable=False)
+    anchor_text = Column(String(512), nullable=True)
+
+    id_attribute = Column(String(512), nullable=True)
+    rel_attribute = Column(String(512), nullable=True)
+    title_attribute = Column(String(512), nullable=True)
+
+    link_type = Column(String(512), nullable=True)
+
+    discovered_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),

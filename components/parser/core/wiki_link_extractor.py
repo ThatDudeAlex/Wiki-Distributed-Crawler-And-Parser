@@ -52,10 +52,11 @@ class _WikipediaLinkExtractor:
             normalized_href = normalize_url(href)
             is_internal = not is_external_link(normalized_href)
             text_content = tag.get_text(strip=True)
+            rel_attr = tag.get('rel')
 
             attrs = {
                 'title': tag.get('title'),
-                'rel': tag.get('rel'),
+                'rel': None if not rel_attr else " ".join(rel_attr),
                 'id_attr': tag.get('id'),
                 'classes': tag.get('class'),
             }
@@ -65,8 +66,7 @@ class _WikipediaLinkExtractor:
             )
 
             return LinkData(
-                original_href=href,
-                to_url=normalized_href,
+                url=normalized_href,
                 anchor_text=text_content,
                 is_internal=is_internal,
                 link_type=link_type,
@@ -83,7 +83,7 @@ class _WikipediaLinkExtractor:
         is_internal: bool,
         norm_url: str,
         raw_href: str,
-        rel: List[str],
+        rel: str,
         text: str
     ) -> str:
         """
@@ -102,7 +102,7 @@ class _WikipediaLinkExtractor:
             else:
                 if raw_href.lower().endswith(IMAGE_EXTENSIONS) or text.lower().endswith(IMAGE_EXTENSIONS):
                     return 'external_image_link'
-                if rel and 'nofollow' in rel:
+                if rel and 'nofollow' == rel:
                     return 'external_link_nofollow'
                 return 'external_link'
         except Exception as e:
