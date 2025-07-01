@@ -1,5 +1,3 @@
-from shared.rabbitmq.enums.queue_names import QueueNames
-
 WIKIPEDIA_MAIN_BODY_ID = 'mw-content-text'
 
 IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.gif', '.svg')

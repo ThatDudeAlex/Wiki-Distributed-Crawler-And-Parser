@@ -1,5 +1,3 @@
-from shared.rabbitmq.enums.queue_names import QueueNames
-
 CRAWLER_SEED_URL = 'https://en.wikipedia.org/wiki/Computer_science'
 
 MAX_DEPTH = 2

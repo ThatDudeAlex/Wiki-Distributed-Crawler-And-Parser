@@ -1,5 +1,5 @@
 import pytest
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 from unittest.mock import Mock, patch
 from components.parser.core.wiki_html_content_cleaner import clean_wiki_html_content
 

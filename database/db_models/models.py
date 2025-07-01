@@ -1,4 +1,3 @@
-from enum import Enum as PyEnum
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import (

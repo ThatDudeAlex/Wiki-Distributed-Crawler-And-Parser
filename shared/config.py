@@ -1,5 +1,3 @@
-from enum import Enum
-
 WIKI_BASE = "https://en.wikipedia.org"
 
 SEED_URL = 'https://en.wikipedia.org/wiki/Computer_science'

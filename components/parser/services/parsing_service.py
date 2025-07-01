@@ -53,7 +53,7 @@ class ParsingService:
         self._queue_service.publish(
             ParserQueueChannels.SAVE_PARSED_DATA.value, page_content.model_dump(mode="json"))
 
-        self._logger.debug(f"Task Published - Save Page Content")
+        self._logger.debug("Task Published - Save Page Content")
 
     # TODO: Implement retry mechanism and dead-letter
     def _send_process_links_message(self, page_links: List[LinkData]):
@@ -63,4 +63,4 @@ class ParsingService:
         self._queue_service.publish(
             ParserQueueChannels.PROCESS_LINKS.value, message)
 
-        self._logger.debug(f"Task Published - Process Links")
+        self._logger.debug("Task Published - Process Links")
