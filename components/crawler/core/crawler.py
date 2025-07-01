@@ -4,7 +4,7 @@ import requests
 import urllib.robotparser
 
 from components.crawler.configs.types import CrawlerResponse, ResponseData
-from database.db_models.models import CrawlStatus
+from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from components.crawler.configs.app_configs import ROBOTS_TXT, BASE_HEADERS
 
 

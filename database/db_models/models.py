@@ -38,7 +38,6 @@ class Page(Base):
     last_crawl_status = Column(
         crawl_status_enum,
         nullable=False,
-        server_default=CrawlStatus.PENDING.value,
     )
     http_status_code = Column(Integer, nullable=True)
 

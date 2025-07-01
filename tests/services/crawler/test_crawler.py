@@ -1,6 +1,6 @@
 import pytest
 import requests
-from database.db_models.models import CrawlStatus
+from shared.rabbitmq.enums.crawl_status import CrawlStatus
 
 import components.crawler.core.crawler as crawler
 from unittest.mock import MagicMock, patch
