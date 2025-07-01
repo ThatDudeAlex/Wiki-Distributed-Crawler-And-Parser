@@ -8,11 +8,12 @@ from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from components.crawler.configs.app_configs import ROBOTS_TXT, BASE_HEADERS
 
 
+# TODO: I don't like this function AT ALL! refactor this page
 def _generate_crawler_response(
     success: bool,
     url: str,
     crawl_status: CrawlStatus,
-    data: Optional[Union[ResponseData, dict]] = None,
+    data,
     error: Optional[Exception] = None
 ) -> CrawlerResponse:
     """
