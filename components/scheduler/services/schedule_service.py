@@ -1,7 +1,7 @@
 
 import logging
 from typing import List
-from cache_service import CacheService
+from shared.redis.cache_service import CacheService
 from components.parser.configs.types import LinkData
 from components.scheduler.message_handler import QueueService
 

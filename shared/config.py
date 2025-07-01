@@ -34,11 +34,6 @@ EXCLUDED_PREFIXES = [
 ]
 
 
-class RedisSets(Enum):
-    VISITED = 'visited'
-    SEEN = 'seen'
-
-
 class QueueNames(Enum):
     CRAWL = 'crawl_tasks'
     CRAWL_RESULT = 'crawl_result'
