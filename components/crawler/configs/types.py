@@ -1,35 +1,28 @@
 from dataclasses import dataclass
-from pydantic import BaseModel
-from typing import Dict, Literal, Optional, TypedDict
+from enum import Enum
+from typing import Dict, Optional
 from database.db_models.models import CrawlStatus
 
-CrawlerErrorType = Literal[
-    "HTTPError",
-    "Timeout",
-    "ConnectionError",
-    "TooManyRedirects",
-    "SSLError",
-    "RequestException"
-]
+# TODO: refactor the @dataclasses since the current
+#       setup is not so great
 
 
-@dataclass
-class ResponseData:
-    status_code: int
-    headers: Optional[Dict] = None
-    text: Optional[str] = None
-
-
-@dataclass
-class CrawlError:
-    type: CrawlerErrorType
-    message: str
+class CrawlerErrorType(str, Enum):
+    HTTP_ERROR = "HTTPError"
+    TIMEOUT = "Timeout"
+    CONNECTION_ERROR = "ConnectionError"
+    TOO_MANY_REDIRECTS = "TooManyRedirects"
+    SSL_ERROR = "SSLError"
+    REQUEST_EXCEPTION = "RequestException"
 
 
 @dataclass
 class CrawlerResponse:
     success: bool
     url: str
-    crawl_status: CrawlStatus
-    data: Optional[ResponseData] = None
-    error: Optional[CrawlError] = None
+    crawl_status: Optional[CrawlStatus]
+    status_code: Optional[int] = None
+    headers: Optional[Dict] = None
+    text: Optional[str] = None
+    error_type: Optional[CrawlerErrorType] = None
+    error_message: Optional[str] = None

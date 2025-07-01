@@ -15,7 +15,7 @@ def test_fetch_success(mock_get):
     mock_get.return_value = mock_response
 
     got = crawler._fetch("http://example.com")
-    assert got.status_code == 200
+    assert got['status_code'] == 200
 
 
 @patch('components.crawler.core.crawler.requests.get')
@@ -63,13 +63,13 @@ def test_generate_crawler_response():
         'error': None
     }
     got = crawler._generate_crawler_response(**test_input)
-    assert got.success is True
-    assert got.url == 'http://example.com'
-    assert got.crawl_status == CrawlStatus.CRAWLED_SUCCESS
-    assert got.data.status_code == test_input['data']['status_code']
-    assert got.data.headers == test_input['data']['headers']
-    assert got.data.text == test_input['data']['text']
-    assert got.error is None
+    assert got['success'] is True
+    assert got['url'] == 'http://example.com'
+    assert got['crawl_status'] == CrawlStatus.CRAWLED_SUCCESS
+    assert got['data']['status_code'] == test_input['data']['status_code']
+    assert got['data']['headers'] == test_input['data']['headers']
+    assert got['data']['text'] == test_input['data']['text']
+    assert got['error'] is None
 
 
 @patch('components.crawler.core.crawler._fetch')
@@ -86,11 +86,11 @@ def test_crawl_success(mock_robot_check, mock_fetch):
     mock_fetch.return_value = mock_response
 
     got = crawler.crawl(url, logger)
-    assert got.success is True
-    assert got.crawl_status == CrawlStatus.CRAWLED_SUCCESS
-    assert got.data.status_code == 200
-    assert got.data.text == "mock_text"
-    assert got.error is None
+    assert got['success'] is True
+    assert got['crawl_status'] == CrawlStatus.CRAWLED_SUCCESS
+    assert got['data']['status_code'] == 200
+    assert got['data']['text'] == "mock_text"
+    assert got['error'] is None
 
 
 @patch('components.crawler.core.crawler._robot_blocks_crawling')
@@ -100,10 +100,10 @@ def test_crawl_robot_blocks(mock_robot_check):
     mock_robot_check.return_value = True
 
     got = crawler.crawl(url, logger)
-    assert got.success is False
-    assert got.crawl_status == CrawlStatus.SKIPPED
-    assert got.data is None
-    assert got.error is None
+    assert got['success'] is False
+    assert got['crawl_status'] == CrawlStatus.SKIPPED
+    assert got['data'] is None
+    assert got['error'] is None
 
 
 @patch('components.crawler.core.crawler._fetch')
@@ -126,10 +126,10 @@ def test_crawl_http_error(mock_robot_check, mock_fetch):
 
     got = crawler.crawl(url, logger)
 
-    assert got.success is False
-    assert got.crawl_status == CrawlStatus.CRAWL_FAILED
-    assert got.error['type'] == 'HTTPError'
-    assert got.error['message'] == 'Not Found'
+    assert got['success'] is False
+    assert got['crawl_status'] == CrawlStatus.CRAWL_FAILED
+    assert got['error']['type'] == 'HTTPError'
+    assert got['error']['message'] == 'Not Found'
 
 
 @patch('components.crawler.core.crawler._fetch')
@@ -142,9 +142,9 @@ def test_crawl_request_exception(mock_robot_check, mock_fetch):
 
     got = crawler.crawl(url, logger)
 
-    assert got.success is False
-    assert got.crawl_status == CrawlStatus.CRAWL_FAILED
-    assert got.error is not None
-    assert got.error['type'] == 'Timeout'
-    assert got.error['message'] == 'Request timed out'
-    assert got.data is None
+    assert got['success'] is False
+    assert got['crawl_status'] == CrawlStatus.CRAWL_FAILED
+    assert got['error'] is not None
+    assert got['error']['type'] == 'Timeout'
+    assert got['error']['message'] == 'Request timed out'
+    assert got['data'] is None

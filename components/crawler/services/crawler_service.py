@@ -7,6 +7,7 @@ from components.crawler.configs.types import CrawlerResponse
 from components.crawler.services.downloader import download_compressed_html_content
 from components.crawler.core.crawler import crawl
 from shared.queue_service import QueueService
+from shared.message_schemas.store_into_db_schemas import SavePageTaskSchema
 from components.crawler.configs.app_configs import CRAWLER_QUEUE_CHANNELS
 from shared.utils import get_timestamp_eastern_time
 
@@ -86,15 +87,24 @@ class CrawlerService:
             compressed_path: str,
             crawl_time: str
     ):
-        message = {
-            "url": crawler_response.url,
-            "url_hash": url_hash,
-            "crawl_status": crawler_response.crawl_status.value,
-            "compressed_path": compressed_path,
-            "crawl_time": crawl_time,
-            "status_code": crawler_response.data.status_code
-        }
-        self.queue_service.publish(CRAWLER_QUEUE_CHANNELS['savepage'], message)
+        message = SavePageTaskSchema(
+            url=crawler_response.url,
+            url_hash=url_hash,
+            crawl_status=crawler_response.crawl_status,
+            compressed_path=compressed_path,
+            crawl_time=crawl_time,
+            status_code=crawler_response.data.status_code if crawler_response.data else None
+        ).model_dump_json()
+        # message = {
+        #     "url": crawler_response.url,
+        #     "url_hash": url_hash,
+        #     "crawl_status": crawler_response.crawl_status.value,
+        #     "compressed_path": compressed_path,
+        #     "crawl_time": crawl_time,
+        #     "status_code": crawler_response.data.status_code
+        # }
+        self.queue_service.publish(
+            CRAWLER_QUEUE_CHANNELS['savepage'], message)
         self._logger.debug(
             f"Task Published - Save Successful Crawl: {message}")
 
