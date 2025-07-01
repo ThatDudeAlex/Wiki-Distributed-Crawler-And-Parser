@@ -14,13 +14,13 @@ class ParsingTask(BaseModel):
 
 class ParsedContentsMessage(BaseModel):
     # Requires 'message.model_dump_json()' before publishing to queue
-    parsed_at: datetime
-    page_page_url: HttpUrl
+    source_page_url: HttpUrl
     title: str
-    categories: List[str] | None = None
-    summary: str | None = None
-    text_content: str | None = None
+    summary:           str | None = None
+    text_content:      str | None = None
     text_content_hash: str | None = None
+    categories:  List[str] | None = None
+    parsed_at: datetime
 
 
 # === Process Discovered Links (Parser → Scheduler) ===

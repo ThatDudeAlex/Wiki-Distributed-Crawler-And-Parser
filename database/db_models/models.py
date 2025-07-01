@@ -137,20 +137,19 @@ class PageContent(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
 
     # FK relationship to the Page table
-    page_url = Column(String(2048), ForeignKey(
+    source_page_url = Column(String(2048), ForeignKey(
         'pages.url', ondelete="CASCADE"), nullable=False, unique=True)
 
     title = Column(String(512), nullable=True)
 
     # the first paragraph in an article page (under title)
     summary = Column(Text, nullable=True)
-    # infobox = Column(JSON, nullable=True)
 
-    # The entire main article content (#bodyContent)
-    content = Column(Text, nullable=True)
+    # The entire main article content
+    text_content = Column(Text, nullable=True)
 
     # A hash of the entire page to help detect changes in the page content
-    content_hash = Column(Text, nullable=True)
+    text_content_hash = Column(Text, nullable=True)
 
     # List of article page categories/tags
     # categories = Column(JSON, nullable=True)
