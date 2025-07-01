@@ -1,5 +1,5 @@
 from components.parser.configs.app_configs import PARSER_QUEUE_CHANNELS
-from shared.queue_service import QueueService
+from rabbitmq.queue_service import QueueService
 from components.parser.services.parsing_service import ParsingService
 from components.parser.message_handler import start_parser_listener
 from shared.logging_utils import get_logger

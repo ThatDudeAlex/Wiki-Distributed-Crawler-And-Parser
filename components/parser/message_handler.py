@@ -2,7 +2,7 @@ import json
 import logging
 from functools import partial
 from components.parser.services.parsing_service import ParsingService
-from shared.queue_service import QueueService
+from rabbitmq.queue_service import QueueService
 from shared.message_schemas.parse_task_schemas import ParsingTaskSchema
 from components.parser.configs.app_configs import PARSER_QUEUE_CHANNELS
 

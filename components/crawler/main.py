@@ -1,7 +1,7 @@
 # TODO: Use Pydantic BaseSettings to configure settings in main.py
 # TODO: Use my logger package to setup the logger
 from components.crawler.configs.app_configs import CRAWLER_QUEUE_CHANNELS, MAX_DEPTH
-from shared.queue_service import QueueService
+from rabbitmq.queue_service import QueueService
 from components.crawler.services.crawler_service import CrawlerService
 from components.crawler.message_handler import start_crawl_listener
 from shared.logging_utils import get_logger

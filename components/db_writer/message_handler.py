@@ -2,7 +2,7 @@ from functools import partial
 import json
 import logging
 from components.db_writer.core.db_writer import save_crawled_page, save_parsed_page_content
-from shared.queue_service import QueueService
+from rabbitmq.queue_service import QueueService
 from shared.config import DB_SERVICE_QUEUE_CHANNELS
 
 # TODO: implement pydantic types to perform validation on messages received

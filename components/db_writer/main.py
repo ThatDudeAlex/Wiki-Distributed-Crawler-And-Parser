@@ -1,5 +1,5 @@
 from shared.logging_utils import get_logger
-from shared.queue_service import QueueService
+from rabbitmq.queue_service import QueueService
 from shared.config import DB_SERVICE_QUEUE_CHANNELS
 from components.db_writer.message_handler import start_db_writer_listener
 

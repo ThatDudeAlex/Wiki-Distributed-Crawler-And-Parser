@@ -2,7 +2,7 @@ from functools import partial
 import json
 import logging
 from components.crawler.services.crawler_service import CrawlerService
-from shared.queue_service import QueueService
+from rabbitmq.queue_service import QueueService
 from shared.message_schemas.crawl_task_schemas import CrawlTaskSchema
 from components.crawler.configs.app_configs import CRAWLER_QUEUE_CHANNELS
 

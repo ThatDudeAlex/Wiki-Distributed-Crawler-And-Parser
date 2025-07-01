@@ -24,15 +24,6 @@ class QueueService:
 
         self._wait_for_rabbit(queue_names)
 
-    # TODO: test if using this method is better than doing it from directly from the parent class
-    # def configure_basic_consume(self, queue_name, callback_function, auto_ack):
-    #     self.channel.basic_consume(
-    #         queue=queue_name,
-    #         on_message_callback=callback_function,
-    #         auto_ack=auto_ack
-    #     )
-    #     return
-
     def _declare_queues(self, names: list[str]):
         for name in names:
             self.channel.queue_declare(queue=name, durable=True)

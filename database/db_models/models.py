@@ -40,24 +40,32 @@ crawl_status_enum = SqlEnum(
 class Page(Base):
     __tablename__ = 'pages'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
+
     url = Column(String(2048), unique=True, nullable=False)
-    url_hash = Column(String(2048), unique=True, nullable=True)
-    compressed_path = Column(String(2048), unique=True, nullable=True)
-
-    last_crawled_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False,
-    )
-    next_crawl_at = Column(DateTime(timezone=True), nullable=True)
-
     last_crawl_status = Column(
         crawl_status_enum,
         nullable=False,
         server_default=CrawlStatus.PENDING.value,
     )
     http_status_code = Column(Integer, nullable=True)
-    crawl_attempts = Column(Integer, nullable=False, default=1)
+
+    # Hashes and filepath are all unique
+    url_hash = Column(String(2048), unique=True, nullable=True)
+    content_hash = Column(String(2048), unique=True, nullable=True)
+    compressed_filepath = Column(String(2048), unique=True, nullable=True)
+
+    last_crawled_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    # TODO: see if this column is needed or if i can do it without it
+    # next_crawl_at = Column(DateTime(timezone=True), nullable=True)
+
+    total_crawl_attempts = Column(Integer, nullable=False, default=1)
+    failed_crawl_attempts = Column(Integer, nullable=False, default=0)
+
+    last_error_seen = Column(String(2048), nullable=True)
 
     created_at = Column(
         DateTime(timezone=True),

@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from shared.queue_service import QueueService
+from rabbitmq.queue_service import QueueService
 
 
 @pytest.fixture

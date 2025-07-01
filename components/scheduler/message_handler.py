@@ -1,7 +1,7 @@
 from functools import partial
 import json
 import logging
-from shared.queue_service import QueueService
+from rabbitmq.queue_service import QueueService
 from components.scheduler.configs.app_configs import SCHEDULER_QUEUE_CHANNELS
 
 # TODO: implement pydantic types to perform validation on messages received
