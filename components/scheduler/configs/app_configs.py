@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass
-from shared.config import QueueNames
+from shared.rabbitmq.enums.queue_names import QueueNames
 
 # SCHEDULER_QUEUE_CHANNELS = {
 #     # consumes

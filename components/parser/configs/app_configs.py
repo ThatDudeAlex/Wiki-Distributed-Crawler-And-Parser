@@ -1,4 +1,4 @@
-from shared.config import QueueNames
+from shared.rabbitmq.enums.queue_names import QueueNames
 
 WIKIPEDIA_MAIN_BODY_ID = 'mw-content-text'
 
