@@ -2,10 +2,69 @@ from enum import Enum
 
 
 class QueueNames(str, Enum):
-    CRAWL = 'crawl_tasks'
-    CRAWL_RESULT = 'crawl_result'
-    SAVE_PAGE = 'save_crawled_pages'
-    PARSE = 'parse_tasks'
-    SAVE_CONTENT = 'save_parsed_content'
-    PROCESS_LINKS = 'enqueue_links'
-    FAILED_TASK = 'save_failed_tasks'
+    # Queues For 'Crawling Task'
+    CRAWL_TASK = 'crawl_tasks'
+    CRAWL_REPORT = 'crawl_report'
+    SAVE_CRAWL_DATA = 'save_crawl_data'
+
+    # Queues For 'Parsing Task'
+    PARSE_TASK = 'parse_tasks'
+    SAVE_PARSED_DATA = 'save_parsed_text_content'
+    PROCESS_LINKS = 'process_links'
+
+    # Queues For 'Link Processing Task'
+    SAVE_PROCESSED_LINKS = 'save_processed_links'
+
+
+class EnumCommonMethods:
+    """
+    Class to provide common methods for Enums
+    """
+    @classmethod
+    def get_values(cls):
+        """
+        Returns a list of all values defined in the enum
+        """
+        return [member.value for member in cls]
+
+    @classmethod
+    def get_names(cls):
+        """
+        Returns a list of all names defined in the enum
+        """
+        return [member.name for member in cls]
+
+    @classmethod
+    def get_members(cls):
+        """
+        Returns a list of all enum members
+        """
+        return list(cls)
+
+
+# Crawler queue channels
+class CrawlerQueueChannels(EnumCommonMethods, str, Enum):
+    LISTEN = QueueNames.CRAWL_TASK.value,
+    REPORT = QueueNames.CRAWL_REPORT.value,
+    PARSE = QueueNames.PARSE_TASK.value
+
+
+# Parser queue channels
+class ParserQueueChannels(EnumCommonMethods, str, Enum):
+    LISTEN = QueueNames.PARSE_TASK.value,
+    SAVE_PARSED_DATA = QueueNames.SAVE_PARSED_DATA.value,
+    PROCESS_LINKS = QueueNames.PROCESS_LINKS.value
+
+
+# DB Writer queue channels
+class DbWriterQueueChannels(EnumCommonMethods, str, Enum):
+    SAVE_CRAWL_DATA = QueueNames.SAVE_CRAWL_DATA.value,
+    SAVE_PARSED_DATA = QueueNames.SAVE_PARSED_DATA.value,
+    SAVE_PROCESSED_LINKS = QueueNames.SAVE_PROCESSED_LINKS.value
+
+
+# Scheduler queue channels
+class SchedulerQueueChannels(EnumCommonMethods, str, Enum):
+    PROCESS_LINKS = QueueNames.PROCESS_LINKS.value,
+    SAVE_CRAWL_DATA = QueueNames.SAVE_CRAWL_DATA.value,
+    SAVE_PROCESSED_LINKS = QueueNames.SAVE_PROCESSED_LINKS.value

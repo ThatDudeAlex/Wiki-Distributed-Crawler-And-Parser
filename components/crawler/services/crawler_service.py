@@ -7,8 +7,8 @@ from components.crawler.configs.types import CrawlerResponse
 from components.crawler.services.downloader import download_compressed_html_content
 from components.crawler.core.crawler import crawl
 from rabbitmq.queue_service import QueueService
-from shared.message_schemas.store_into_db_schemas import SavePageTaskSchema
-from components.crawler.configs.app_configs import CRAWLER_QUEUE_CHANNELS
+from shared.rabbitmq.schemas.crawling_task_schemas import SuccessCrawlReport, FailedCrawlReport
+from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 from shared.utils import get_timestamp_eastern_time
 
 
@@ -45,7 +45,7 @@ class CrawlerService:
 
         # if crawl failed or was skipped due to robot.txt
         if not crawler_response.success:
-            self._publish_failed_crawl(crawler_response)
+            self._send_failed_report_message(crawler_response)
             return
 
         # TODO: Implement try/catch with retry for download
@@ -59,7 +59,7 @@ class CrawlerService:
 
         self._logger.info('STAGE 3: Tell DB_Service to store the page data')
 
-        self._publish_save_page(
+        self._send_sucess_report_message(
             crawler_response, url_hash, compressed_path, crawl_time
         )
 
@@ -69,25 +69,25 @@ class CrawlerService:
 
         self._logger.info('Crawl Task Successfully Completed!')
 
-    def _publish_failed_crawl(self, crawler_response: CrawlerResponse):
+    def _send_failed_report_message(self, crawler_response: CrawlerResponse):
         message = {
             "url": crawler_response.url,
             "crawl_status": crawler_response.crawl_status,
             "status_code": crawler_response.data.status_code if crawler_response.data else None,
             "error_message": crawler_response.error["message"] if crawler_response.error else None
         }
-        self.queue_service.publish(CRAWLER_QUEUE_CHANNELS['failed'], message)
+        self.queue_service.publish(CrawlerQueueChannels.REPORT.value, message)
         self._logger.debug(f"Task Published - Save Failed Crawl: {message}")
 
     # TODO: Implement retry mechanism and dead-letter
-    def _publish_save_page(
+    def _send_sucess_report_message(
             self,
             crawler_response: CrawlerResponse,
             url_hash: str,
             compressed_path: str,
             crawl_time: str
     ):
-        message = SavePageTaskSchema(
+        message = SuccessCrawlReport(
             url=crawler_response.url,
             url_hash=url_hash,
             crawl_status=crawler_response.crawl_status,
@@ -104,7 +104,7 @@ class CrawlerService:
         #     "status_code": crawler_response.data.status_code
         # }
         self.queue_service.publish(
-            CRAWLER_QUEUE_CHANNELS['savepage'], message)
+            CrawlerQueueChannels.REPORT.value, message)
         self._logger.debug(
             f"Task Published - Save Successful Crawl: {message}")
 
@@ -114,6 +114,6 @@ class CrawlerService:
             "compressed_path": compressed_path
         }
         self.queue_service.publish(
-            CRAWLER_QUEUE_CHANNELS['parsetask'], message
+            CrawlerQueueChannels.PARSE.value, message
         )
         self._logger.debug(f"Task Published - Parse Html Content: {message}")

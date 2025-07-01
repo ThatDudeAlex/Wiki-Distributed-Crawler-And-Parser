@@ -3,14 +3,15 @@ import json
 import logging
 from components.crawler.services.crawler_service import CrawlerService
 from rabbitmq.queue_service import QueueService
-from shared.message_schemas.crawl_task_schemas import CrawlTaskSchema
-from components.crawler.configs.app_configs import CRAWLER_QUEUE_CHANNELS
+from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
+from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 
 
 def handle_message(ch, method, properties, body, crawler_service: CrawlerService, logger: logging.Logger):
     try:
         message = json.loads(body.decode())
-        task = CrawlTaskSchema(**message)
+        # model_validate_json(body)
+        task = CrawlTask.model_validate_json(message)
 
         logger.info("Initiating crawl for URL: %s", task.url)
 
@@ -39,7 +40,7 @@ def start_crawl_listener(queue_service: QueueService, crawler_service: CrawlerSe
     )
 
     queue_service.channel.basic_consume(
-        queue=CRAWLER_QUEUE_CHANNELS['listen'],
+        queue=CrawlerQueueChannels.LISTEN.value,
         on_message_callback=handle_message_partial,
         auto_ack=False
     )

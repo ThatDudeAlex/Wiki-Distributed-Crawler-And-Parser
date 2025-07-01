@@ -3,14 +3,14 @@ import logging
 from functools import partial
 from components.parser.services.parsing_service import ParsingService
 from rabbitmq.queue_service import QueueService
-from shared.message_schemas.parse_task_schemas import ParsingTaskSchema
-from components.parser.configs.app_configs import PARSER_QUEUE_CHANNELS
+from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
+from shared.rabbitmq.enums.queue_names import ParserQueueChannels
 
 
 def handle_message(ch, method, properties, body, parsing_service: ParsingService, logger: logging.Logger):
     try:
         message = json.loads(body.decode())
-        task = ParsingTaskSchema(**message)
+        task = ParsingTask.model_validate_json(message)
 
         logger.info("Initiating parsing on file: %s", task.compressed_path)
 
@@ -37,7 +37,7 @@ def start_parser_listener(queue_service: QueueService, parsing_service: ParsingS
     )
 
     queue_service.channel.basic_consume(
-        queue=PARSER_QUEUE_CHANNELS['listen'],
+        queue=ParserQueueChannels.LISTEN.value,
         on_message_callback=handle_message_partial,
         auto_ack=False
     )

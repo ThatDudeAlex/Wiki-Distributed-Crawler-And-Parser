@@ -11,10 +11,3 @@ BASE_HEADERS = {
     'accept-language': 'en-US',
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36'
 }
-
-CRAWLER_QUEUE_CHANNELS = {
-    'listen': QueueNames.CRAWL.value,
-    'parsetask': QueueNames.PARSE.value,
-    'savepage': QueueNames.SAVE_PAGE.value,
-    'failed': QueueNames.FAILED_TASK.value
-}

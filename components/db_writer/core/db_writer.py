@@ -23,7 +23,7 @@ def get_db(session_factory=None):
         db.close()
 
 
-def save_crawled_page(page_data: dict, logger: logging.Logger, session_factory=None) -> bool:
+def save_crawl_data(page_data: dict, logger: logging.Logger, session_factory=None) -> bool:
     """
     Inserts a new Page or updates crawl metadata if it already exists.
 
@@ -82,7 +82,7 @@ def save_crawled_page(page_data: dict, logger: logging.Logger, session_factory=N
     return False
 
 
-def save_parsed_page_content(parsed_data: dict, logger: logging.Logger, session_factory=None) -> bool:
+def save_parsed_data(parsed_data: dict, logger: logging.Logger, session_factory=None) -> bool:
     """
     Inserts or updates parsed page content in the database.
 

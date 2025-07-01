@@ -4,13 +4,6 @@ WIKIPEDIA_MAIN_BODY_ID = 'mw-content-text'
 
 IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.gif', '.svg')
 
-PARSER_QUEUE_CHANNELS = {
-    'listen': QueueNames.PARSE.value,
-    'savecontent': QueueNames.SAVE_CONTENT.value,
-    'processlinks': QueueNames.PROCESS_LINKS.value,
-    'failed': QueueNames.FAILED_TASK.value
-}
-
 
 # Specific Wikipedia boilerplate selectors
 WIKIPEDIA_BOILERPLATE_SELECTORS = [

@@ -15,10 +15,10 @@ from shared.rabbitmq.enums.queue_names import QueueNames
 class SchedulerQueueChannels:
     # consumes
     crawlresult: str = QueueNames.PARSE.value
-    processlinks: str = QueueNames.CRAWL.value
+    processlinks: str = QueueNames.CRAWL_TASK.value
 
     # produces
-    crawl: str = QueueNames.CRAWL.value
+    crawl: str = QueueNames.CRAWL_TASK.value
     storelinks: str = QueueNames.FAILED_TASK.value
 
     def values(self) -> list[str]:

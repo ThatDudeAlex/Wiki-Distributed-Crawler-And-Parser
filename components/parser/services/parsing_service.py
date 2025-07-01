@@ -5,7 +5,7 @@ from rabbitmq.queue_service import QueueService
 from components.parser.core.wiki_content_extractor import extract_wiki_page_content
 from components.parser.core.wiki_link_extractor import extract_wiki_page_links
 from components.parser.services.compressed_html_reader import load_compressed_html
-from components.parser.configs.app_configs import PARSER_QUEUE_CHANNELS
+from shared.rabbitmq.enums.queue_names import ParserQueueChannels
 
 
 class ParsingService:
@@ -36,10 +36,10 @@ class ParsingService:
                 url, html_content, self._logger)
 
             self._logger.info('STAGE 4: Publish Save Page Content')
-            self._publish_save_page_content(page_content)
+            self._send_save_parsed_data_message(page_content)
 
             self._logger.info('STAGE 5: Publish Process Links')
-            self._publish_process_link_data(page_links)
+            self._send_process_links_message(page_links)
 
             self._logger.info('Parsing Task Successfully Completed!')
         except Exception as e:
@@ -49,18 +49,18 @@ class ParsingService:
             return
 
     # TODO: Implement retry mechanism and dead-letter
-    def _publish_save_page_content(self, page_content: PageContentSchema):
+    def _send_save_parsed_data_message(self, page_content: PageContentSchema):
         self._queue_service.publish(
-            PARSER_QUEUE_CHANNELS['savecontent'], page_content.model_dump(mode="json"))
+            ParserQueueChannels.SAVE_PARSED_DATA.value, page_content.model_dump(mode="json"))
 
         self._logger.debug(f"Task Published - Save Page Content")
 
     # TODO: Implement retry mechanism and dead-letter
-    def _publish_process_link_data(self, page_links: List[LinkData]):
+    def _send_process_links_message(self, page_links: List[LinkData]):
 
         message = [link.model_dump(mode="json") for link in page_links]
 
         self._queue_service.publish(
-            PARSER_QUEUE_CHANNELS['processlinks'], message)
+            ParserQueueChannels.PROCESS_LINKS.value, message)
 
         self._logger.debug(f"Task Published - Process Links")

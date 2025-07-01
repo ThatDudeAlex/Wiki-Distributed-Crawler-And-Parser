@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from database.db_models.models import Base, CrawlStatus, Page, PageContent
-from components.db_writer.core.db_writer import save_crawled_page, save_parsed_page_content
+from components.db_writer.core.db_writer import save_crawl_data, save_parsed_data
 
 
 # Set up logger
@@ -31,7 +31,7 @@ def test_save_crawled_page_real_postgres():
         }
 
         # Pass session factory explicitly
-        success = save_crawled_page(
+        success = save_crawl_data(
             test_data, logger, session_factory=TestingSessionLocal)
         assert success is True
 
@@ -75,7 +75,7 @@ def test_save_parsed_page_content_real_postgres():
             "categories": ["Tech", "Python"]
         }
 
-        success = save_parsed_page_content(
+        success = save_parsed_data(
             parsed_data, logger, session_factory=TestingSessionLocal)
         assert success is True
 
