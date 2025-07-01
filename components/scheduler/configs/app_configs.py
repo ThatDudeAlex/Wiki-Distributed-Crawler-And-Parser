@@ -1,0 +1,28 @@
+from dataclasses import asdict, dataclass
+from shared.config import QueueNames
+
+# SCHEDULER_QUEUE_CHANNELS = {
+#     # consumes
+#     'crawlresult': QueueNames.PARSE.value,
+#     'processlinks': QueueNames.CRAWL.value,
+#     # produces
+#     'crawl': QueueNames.CRAWL.value,
+#     'storelinks': QueueNames.FAILED_TASK.value
+# }
+
+
+@dataclass(frozen=True)
+class SchedulerQueueChannels:
+    # consumes
+    crawlresult: str = QueueNames.PARSE.value
+    processlinks: str = QueueNames.CRAWL.value
+
+    # produces
+    crawl: str = QueueNames.CRAWL.value
+    storelinks: str = QueueNames.FAILED_TASK.value
+
+    def values(self) -> list[str]:
+        return list(asdict(self).values())
+
+
+SCHEDULER_QUEUE_CHANNELS = SchedulerQueueChannels()

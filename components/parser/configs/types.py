@@ -29,6 +29,7 @@ class PageContentSchema(BaseModel):
 class LinkData:
     original_href: str
     to_url: str
+    depth: int
     anchor_text: str
     title: Optional[str] = None
     rel: Optional[List[str]] = None

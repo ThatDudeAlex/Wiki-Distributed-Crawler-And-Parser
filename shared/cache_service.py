@@ -19,7 +19,7 @@ class CacheService:
         Returns ``True`` if it successfully adds the ``URL`` else returns ``False``
         """
         if url:
-            self._redis.sadd(RedisSets.ENQUEUED.value, url)
+            self._redis.sadd(RedisSets.SEEN.value, url)
             self._logger.info(f"Added to enqueued set: {url}")
             return True
         return False
@@ -51,7 +51,7 @@ class CacheService:
         return self._redis.sismember(RedisSets.VISITED.value, url)
 
     def is_in_enqueued(self, url: str) -> bool:
-        return self._redis.sismember(RedisSets.ENQUEUED.value, url)
+        return self._redis.sismember(RedisSets.SEEN.value, url)
 
     def is_queueable(self, url: str) -> bool:
-        return (self.is_in_visited(url) or self.is_in_enqueued(url))
+        return not self.is_in_visited(url) and not self.is_in_enqueued(url)

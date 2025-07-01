@@ -36,11 +36,13 @@ EXCLUDED_PREFIXES = [
 
 class RedisSets(Enum):
     VISITED = 'visited'
-    ENQUEUED = 'enqueued'
+    SEEN = 'seen'
 
 
 class QueueNames(Enum):
     CRAWL = 'crawl_tasks'
+    CRAWL_RESULT = 'crawl_result'
+    # TODO: move page save to parser instead of crawler
     SAVE_PAGE = 'save_crawled_pages'
     PARSE = 'parse_tasks'
     SAVE_CONTENT = 'save_parsed_content'

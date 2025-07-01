@@ -25,7 +25,7 @@ def cache_service(mock_logger, mock_redis):
 def test_add_to_enqueued_set(cache_service, mock_redis, mock_logger):
     assert cache_service.add_to_enqueued_set("http://test.com") is True
     mock_redis.sadd.assert_called_with(
-        RedisSets.ENQUEUED.value, "http://test.com")
+        RedisSets.SEEN.value, "http://test.com")
     mock_logger.info.assert_called()
 
 
@@ -67,7 +67,7 @@ def test_is_in_enqueued(cache_service, mock_redis):
     mock_redis.sismember.return_value = True
     assert cache_service.is_in_enqueued("http://test.com") is True
     mock_redis.sismember.assert_called_with(
-        RedisSets.ENQUEUED.value, "http://test.com")
+        RedisSets.SEEN.value, "http://test.com")
 
 
 @pytest.mark.parametrize(
