@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel
 from typing import List, Optional
 
 from shared.rabbitmq.schemas.parsing_task_schemas import DiscoveredLink, ParsedContentsMessage

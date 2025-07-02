@@ -8,7 +8,6 @@ from components.crawler.services.downloader import download_compressed_html_cont
 from components.crawler.services.publisher import PublishingService
 from components.crawler.core.crawler import crawl
 from shared.rabbitmq.queue_service import QueueService
-from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 from shared.utils import get_timestamp_eastern_time, create_hash
 
 

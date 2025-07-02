@@ -1,5 +1,4 @@
 from functools import partial
-import json
 import logging
 from components.crawler.services.crawler_service import CrawlerService
 from shared.rabbitmq.queue_service import QueueService
