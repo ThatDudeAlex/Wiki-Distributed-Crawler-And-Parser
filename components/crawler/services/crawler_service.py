@@ -64,10 +64,10 @@ class CrawlerService:
         fetched_at = get_timestamp_eastern_time()
 
         self._logger.info('STAGE 4: Send Successful Crawl Report To Scheduler')
-        self.publisher.publish_sucess_report(
+        self.publisher.publish_success_report(
             fetched_response, url_hash, html_content_hash, compressed_filepath, fetched_at)
 
         self._logger.info('STAGE 5: Tell Parsers to extract page content')
-        self.publisher.publish_parsing_task(url, compressed_filepath)
+        self.publisher.publish_parsing_task(url, depth, compressed_filepath)
 
         self._logger.info('Crawl Task Successfully Completed!')

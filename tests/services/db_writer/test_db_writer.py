@@ -26,7 +26,7 @@ def test_save_crawled_page_real_postgres():
             "url_hash": "hash123",
             "last_crawl_status": CrawlStatus.CRAWLED_SUCCESS,
             "status_code": 200,
-            "compressed_path": "/path/to/file",
+            "compressed_filepath": "/path/to/file",
             "crawl_time": "2025-01-01T12:00:00"
         }
 
@@ -58,7 +58,7 @@ def test_save_parsed_page_content_real_postgres():
                 url="http://example.com",
                 url_hash="hash123",
                 last_crawled_at="2025-01-01T12:00:00",
-                compressed_path="/path/to/file",
+                compressed_filepath="/path/to/file",
                 http_status_code=200,
                 last_crawl_status=CrawlStatus.CRAWLED_SUCCESS,
                 crawl_attempts=1

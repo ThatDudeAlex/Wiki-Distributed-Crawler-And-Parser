@@ -13,7 +13,7 @@ class PublishingService:
         self._logger = logger
         pass
 
-    def publish_sucess_report(
+    def publish_success_report(
             self,
             fetched_response: FetchResponse,
             url_hash: str,
@@ -54,9 +54,9 @@ class PublishingService:
 
         self._logger.info("Published: Crawl Report - Failed")
 
-    def publish_parsing_task(self, url: str, compressed_filepath: str):
+    def publish_parsing_task(self, url: str, depth: int, compressed_filepath: str):
         message = ParsingTask(
-            url=url, compressed_filepath=compressed_filepath).model_dump_json()
+            url=url, depth=depth, compressed_filepath=compressed_filepath).model_dump_json()
 
         self._queue_service.publish(
             CrawlerQueueChannels.PARSE.value, message

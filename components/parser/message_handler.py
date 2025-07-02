@@ -12,10 +12,11 @@ def handle_message(ch, method, properties, body, parsing_service: ParsingService
         message = json.loads(body.decode())
         task = ParsingTask.model_validate_json(message)
 
-        logger.info("Initiating parsing on file: %s", task.compressed_path)
+        logger.info("Initiating parsing on file: %s", task.compressed_filepath)
 
         # TODO: experiment with removing str()
-        parsing_service.run(str(task.url), task.compressed_path)
+        parsing_service.run(
+            str(task.url), task.depth, task.compressed_filepath)
 
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)

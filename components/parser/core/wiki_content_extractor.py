@@ -32,7 +32,7 @@ def extract_wiki_page_content(url: str, html_content: str, logger: logging.Logge
 
     parsed_at = get_timestamp_eastern_time()
     return PageContent(
-        page_url=url,
+        source_page_url=url,
         title=title,
         categories=categories,
         summary=summary,

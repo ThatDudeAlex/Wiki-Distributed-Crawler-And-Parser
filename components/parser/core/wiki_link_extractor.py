@@ -12,7 +12,7 @@ class _WikipediaLinkExtractor:
     def __init__(self, logger: logging.Logger):
         self.logger = logger
 
-    def extract(self, page_url: str, html_content: str) -> LinkData:
+    def extract(self, page_url: str, html_content: str, depth: int) -> LinkData:
         """
         Parses a Wikipedia HTML page and returns structured data for links within the main body.
         """
@@ -31,7 +31,7 @@ class _WikipediaLinkExtractor:
 
         results: List[LinkData] = []
         for a in main.find_all('a'):
-            data = self._extract_link(a, page_url)
+            data = self._extract_link(a, page_url, depth)
             if data is not None:
                 results.append(data)
 
@@ -40,9 +40,9 @@ class _WikipediaLinkExtractor:
 
         return results
 
-    def _extract_link(self, tag: Tag, page_url: str) -> LinkData:
+    def _extract_link(self, tag: Tag, page_url: str, depth: str) -> LinkData:
         """
-        Extracts metadata from an <a> tag and returns structured LinkData.
+        Extracts metadata from an <a> tag and returns structured LinkData
         """
         href = tag.get('href')
         if not href:
@@ -52,25 +52,25 @@ class _WikipediaLinkExtractor:
             normalized_href = normalize_url(href)
             is_internal = not is_external_link(normalized_href)
             text_content = tag.get_text(strip=True)
-            rel_attr = tag.get('rel')
+            title_attribute = tag.get('title')
+            id_attribute = tag.get('id')
 
-            attrs = {
-                'title': tag.get('title'),
-                'rel': None if not rel_attr else " ".join(rel_attr),
-                'id_attr': tag.get('id'),
-                'classes': tag.get('class'),
-            }
+            rel_list = tag.get('rel')
+            rel_attribute = None if not rel_list else " ".join(rel_list)
 
             link_type = self._determine_type(
-                is_internal, normalized_href, href, attrs['rel'], text_content
+                is_internal, normalized_href, href, rel_attribute, text_content
             )
 
             return LinkData(
                 url=normalized_href,
+                depth=depth,
                 anchor_text=text_content,
-                is_internal=is_internal,
+                title_attribute=title_attribute,
+                rel_attribute=rel_attribute,
+                id_attribute=id_attribute,
                 link_type=link_type,
-                **attrs
+                is_internal=is_internal
             )
         except Exception as e:
             self.logger.error(
@@ -87,7 +87,7 @@ class _WikipediaLinkExtractor:
         text: str
     ) -> str:
         """
-        Classifies a URL based on its structure, domain, and metadata.
+        Classifies a URL based on its structure, domain, and metadata
         """
         try:
             if is_internal:
@@ -111,9 +111,9 @@ class _WikipediaLinkExtractor:
             return 'error_determining_type'
 
 
-def extract_wiki_page_links(page_url: str, html_content: str, logger: logging.Logger) -> List[LinkData]:
+def extract_wiki_page_links(page_url: str, html_content: str, depth: int, logger: logging.Logger) -> List[LinkData]:
     """
-    Extracts and classifies anchor links from the main body of a Wikipedia page.
+    Extracts and classifies anchor links from the main body of a Wikipedia page
     """
     extractor = _WikipediaLinkExtractor(logger)
-    return extractor.extract(page_url, html_content)
+    return extractor.extract(page_url, html_content, depth)

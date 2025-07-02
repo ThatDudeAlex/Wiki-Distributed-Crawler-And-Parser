@@ -2,9 +2,10 @@ from dataclasses import dataclass, field
 from pydantic import BaseModel, Field, HttpUrl
 from typing import List, Optional
 
+from shared.rabbitmq.schemas.parsing_task_schemas import DiscoveredLink, ParsedContentsMessage
+
 
 class LinkDataSchema(BaseModel):
-    original_href: str
     to_url: str
     anchor_text: str
     title: Optional[str]
@@ -15,36 +16,48 @@ class LinkDataSchema(BaseModel):
     link_type: str
 
 
-class PageContentSchema(BaseModel):
-    page_url: HttpUrl
-    title: Optional[str]
-    categories: Optional[List[str]] = Field(default_factory=list)
-    summary: Optional[str]
-    text_content: Optional[str]
-    text_content_hash: Optional[str]
-    parsed_at: Optional[str]
-
-
 @dataclass
 class LinkData:
-    original_href: str
-    to_url: str
+    url: str
     depth: int
     anchor_text: str
-    title: Optional[str] = None
-    rel: Optional[List[str]] = None
-    id_attr: Optional[str] = None
-    classes: Optional[List[str]] = None
+    title_attribute: Optional[str] = None
+    rel_attribute: Optional[str] = None
+    id_attribute: Optional[str] = None
+    link_type: Optional[str] = None
     is_internal: bool = False
-    link_type: str = ""
+
+    def to_discovered_link(self) -> DiscoveredLink:
+        return DiscoveredLink(
+            url=self.url,
+            depth=self.depth,
+            anchor_text=self.anchor_text,
+            title_attribute=self.title_attribute,
+            rel_attribute=self.rel_attribute,
+            id_attribute=self.id_attribute,
+            link_type=self.link_type,
+            is_internal=self.is_internal
+        )
 
 
 @dataclass
 class PageContent:
-    page_url: str
+    source_page_url: str
     title: Optional[str] = None
     categories: List[str] = field(default_factory=list)
     summary: Optional[str] = None
     text_content: Optional[str] = None
     text_content_hash: Optional[str] = None
     parsed_at: Optional[str] = None
+
+    def to_parsed_contents_message(self) -> ParsedContentsMessage:
+        return ParsedContentsMessage(
+            source_page_url=self.source_page_url,
+            title=self.title,
+            # If empty list make it None
+            categories=self.categories if self.categories else None,
+            summary=self.summary,
+            text_content=self.text_content,
+            text_content_hash=self.text_content_hash,
+            parsed_at=self.parsed_at
+        )

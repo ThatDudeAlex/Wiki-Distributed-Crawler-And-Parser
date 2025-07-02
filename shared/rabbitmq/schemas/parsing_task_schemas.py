@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, FilePath, HttpUrl
 
 
@@ -7,6 +7,7 @@ from pydantic import BaseModel, FilePath, HttpUrl
 
 class ParsingTask(BaseModel):
     url: HttpUrl
+    depth: int
     compressed_filepath: FilePath
 
 
@@ -25,7 +26,18 @@ class ParsedContentsMessage(BaseModel):
 
 # === Process Discovered Links (Parser → Scheduler) ===
 
+class DiscoveredLink(BaseModel):
+    url: HttpUrl
+    depth: int
+    anchor_text: str
+    title_attribute: Optional[str] = None
+    rel_attribute: Optional[str] = None
+    id_attribute: Optional[str] = None
+    link_type: Optional[str] = None
+    is_internal: bool = False
+
+
 class ProcessDiscoveredLinks(BaseModel):
     source_page_url: HttpUrl
     discovered_at: datetime
-    links: list[HttpUrl]
+    links: List[DiscoveredLink]

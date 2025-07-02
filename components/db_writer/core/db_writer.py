@@ -56,7 +56,7 @@ def save_crawl_data(page_data: dict, logger: logging.Logger, session_factory=Non
                     url_hash=page_data['url_hash'],
                     last_crawl_status=CrawlStatus.CRAWLED_SUCCESS,
                     http_status_code=page_data['status_code'],
-                    compressed_path=page_data['compressed_path'],
+                    compressed_filepath=page_data['compressed_filepath'],
                     last_crawled_at=page_data['crawl_time'],
                 )
                 db.add(new_page)

@@ -1,25 +1,26 @@
 import logging
-from typing import List
-from components.parser.configs.types import LinkData, PageContentSchema
 from shared.rabbitmq.queue_service import QueueService
 from components.parser.core.wiki_content_extractor import extract_wiki_page_content
 from components.parser.core.wiki_link_extractor import extract_wiki_page_links
 from components.parser.services.compressed_html_reader import load_compressed_html
-from shared.rabbitmq.enums.queue_names import ParserQueueChannels
+from components.parser.services.publisher import PublishingService
+from shared.utils import get_timestamp_eastern_time
 
 
 class ParsingService:
     def __init__(self, queue_service: QueueService, logger: logging.Logger):
         self._queue_service = queue_service
         self._logger = logger
+        self._publisher = PublishingService(self._queue_service, self._logger)
         pass
 
-    def run(self, url: str, compressed_path: str):
+    def run(self, url: str, depth: int, compressed_filepath: str):
         try:
             self._logger.info(
-                'STAGE 1: Loading HTML file from: %s', compressed_path
+                'STAGE 1: Loading HTML file from: %s', compressed_filepath
             )
-            html_content = load_compressed_html(compressed_path, self._logger)
+            html_content = load_compressed_html(
+                compressed_filepath, self._logger)
 
             if html_content is None:
                 self._logger.error(
@@ -33,13 +34,18 @@ class ParsingService:
 
             self._logger.info('STAGE 3: Extracting Links')
             page_links = extract_wiki_page_links(
-                url, html_content, self._logger)
+                url, html_content, depth, self._logger)
+
+            parsed_at = get_timestamp_eastern_time()
 
             self._logger.info('STAGE 4: Publish Save Page Content')
-            self._send_save_parsed_data_message(page_content)
+            # self._send_save_parsed_data_message(page_content)
+            self._publisher.publish_save_parsed_data(page_content)
 
             self._logger.info('STAGE 5: Publish Process Links')
-            self._send_process_links_message(page_links)
+            # self._send_process_links_message(page_links)
+            self._publisher.publish_process_links_task(
+                url, parsed_at, page_links)
 
             self._logger.info('Parsing Task Successfully Completed!')
         except Exception as e:
@@ -47,20 +53,3 @@ class ParsingService:
             self._logger.error(
                 f"An exception of type '{exception_type_name}' occurred: {e}")
             return
-
-    # TODO: Implement retry mechanism and dead-letter
-    def _send_save_parsed_data_message(self, page_content: PageContentSchema):
-        self._queue_service.publish(
-            ParserQueueChannels.SAVE_PARSED_DATA.value, page_content.model_dump(mode="json"))
-
-        self._logger.debug("Task Published - Save Page Content")
-
-    # TODO: Implement retry mechanism and dead-letter
-    def _send_process_links_message(self, page_links: List[LinkData]):
-
-        message = [link.model_dump(mode="json") for link in page_links]
-
-        self._queue_service.publish(
-            ParserQueueChannels.PROCESS_LINKS.value, message)
-
-        self._logger.debug("Task Published - Process Links")
