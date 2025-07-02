@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal, Optional, Union
 from pydantic import Field
 from pydantic import BaseModel, HttpUrl
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
@@ -17,9 +17,9 @@ class CrawlTask(BaseModel):
 # === Crawl Report (Crawler → Scheduler) ===
 
 class CrawlReportBase(BaseModel):
-    url: HttpUrl
     status: CrawlStatus
     fetched_at: datetime
+    url: HttpUrl
 
 
 class SuccessCrawlReport(CrawlReportBase):
@@ -32,9 +32,9 @@ class SuccessCrawlReport(CrawlReportBase):
 
 class FailedCrawlReport(CrawlReportBase):
     status: Literal[CrawlStatus.CRAWL_FAILED, CrawlStatus.SKIPPED]
-    error_type: str | None  # Is None when skipped due to robot.txt
-    error_message: str | None  # Is None when skipped due to robot.txt
-    # retryable: bool
+    error_type: Optional[str] = None     # None when skipped due to robots.txt
+    error_message: Optional[str] = None  # None when skipped due to robots.txt
+    # retryable: Optional[bool] = None
 
 
 CrawlReport = Annotated[
@@ -46,12 +46,17 @@ CrawlReport = Annotated[
 # === Crawl Metadata Message (Scheduler → DB Writer) ===
 
 class CrawlMetadataMessage(BaseModel):
-    url: HttpUrl
     status: CrawlStatus
-    http_status:         int | None = None   # null if failed
-    url_hash:            str | None = None   # null if failed
-    content_hash:        str | None = None   # null if failed
-    compressed_filepath: str | None = None   # null if failed
     fetched_at: datetime
-    error: str | None = None
-    retryable: bool | None = None
+    url: HttpUrl
+    http_status_code: Optional[int] = None      # None if failed
+    url_hash: Optional[str] = None              # None if failed
+    html_content_hash: Optional[str] = None     # None if failed
+    compressed_filepath: Optional[str] = None   # None if failed
+    error_type: Optional[str] = None            # None if success
+    error_message: Optional[str] = None         # None if success
+    # retryable: Optional[bool] = None
+
+
+class FetchPageMetadata(BaseModel):
+    url: HttpUrl

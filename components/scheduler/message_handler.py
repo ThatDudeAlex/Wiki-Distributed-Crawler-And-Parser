@@ -1,10 +1,12 @@
 from functools import partial
 import json
 import logging
+from pydantic import TypeAdapter
 from shared.rabbitmq.queue_service import QueueService
 from components.scheduler.configs.app_configs import SCHEDULER_QUEUE_CHANNELS
+from shared.rabbitmq.schemas.crawling_task_schemas import CrawlReport, FailedCrawlReport, SuccessCrawlReport
 
-# TODO: implement pydantic types to perform validation on messages received
+ReportAdapter = TypeAdapter(CrawlReport)
 
 
 def handle_crawl_result_message(ch, method, properties, body, logger: logging.Logger):
@@ -12,8 +14,13 @@ def handle_crawl_result_message(ch, method, properties, body, logger: logging.Lo
         logger.debug("Received message: %s", body)
         message = json.loads(body.decode())
 
-        # TODO: implement
-        # save_crawled_page(message, logger)
+        # Validate and convert the message using TypeAdapter
+        report = ReportAdapter.validate_python(message)
+
+        if isinstance(report, SuccessCrawlReport):
+            handle_success(report, logger)
+        elif isinstance(report, FailedCrawlReport):
+            handle_failure(report, logger)
 
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -33,7 +40,7 @@ def handle_process_links_message(ch, method, properties, body, logger: logging.L
         message = json.loads(body.decode())
 
         # TODO: Implement
-        # save_parsed_page_content(message, logger)
+        # save_report_page_content(message, logger)
 
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)

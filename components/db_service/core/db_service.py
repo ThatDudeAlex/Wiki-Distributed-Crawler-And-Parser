@@ -6,7 +6,7 @@ from sqlalchemy.exc import DataError, IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 from database.engine import SessionLocal
 from database.db_models.models import Category, Page, PageContent, CrawlStatus
-from components.db_writer.configs.app_configs import MAX_RETRIES
+from components.db_service.configs.app_configs import MAX_RETRIES
 
 
 @contextmanager
@@ -21,6 +21,16 @@ def get_db(session_factory=None):
         raise
     finally:
         db.close()
+
+
+def fetch_page_metadata(url: str, logger: logging.Logger, session_factory=None):
+    with get_db(session_factory=session_factory) as db:
+        try:
+            # Try finding an existing page by URL
+            return db.query(Page).filter_by(url=url).first()
+        except Exception:
+            logger.exception(
+                "Unexpected error while fetching page metadata: %s", url)
 
 
 def save_crawl_data(page_data: dict, logger: logging.Logger, session_factory=None) -> bool:
