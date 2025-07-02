@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 from typing import List
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
-from shared.rabbitmq.schemas.parsing_task_schemas import DiscoveredLink, ProcessDiscoveredLinks
+from shared.rabbitmq.schemas.parsing_task_schemas import DiscoveredLinkPydanticModel, ProcessDiscoveredLinksMsg
 from shared.rabbitmq.queue_service import QueueService
 
 

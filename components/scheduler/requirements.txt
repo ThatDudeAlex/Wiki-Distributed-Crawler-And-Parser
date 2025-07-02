@@ -1,0 +1,4 @@
+-r ../../requirements-common.txt
+pika
+pydantic
+redis

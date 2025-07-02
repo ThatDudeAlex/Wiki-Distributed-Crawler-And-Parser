@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, FilePath, HttpUrl
-from shared.rabbitmq.types import ParsedContent
+from shared.rabbitmq.types import ParsedContent, ProcessDiscoveredLinks
 
 
 # === Parsing Task (Crawler → Parser) ===
@@ -41,7 +41,7 @@ class ParsedContentsMessage(BaseModel):
 # === Process Discovered Links (Parser → Scheduler) ===
 
 # TODO: Pydantic - Create a dataclass to convert this class into
-class DiscoveredLink(BaseModel):
+class DiscoveredLinkPydanticModel(BaseModel):
     url: HttpUrl
     depth: int
     anchor_text: str
@@ -53,7 +53,28 @@ class DiscoveredLink(BaseModel):
 
 
 # TODO: Pydantic - Create a dataclass to convert this class into
-class ProcessDiscoveredLinks(BaseModel):
+class ProcessDiscoveredLinksMsg(BaseModel):
     source_page_url: HttpUrl
     discovered_at: datetime
-    links: List[DiscoveredLink]
+    links: List[DiscoveredLinkPydanticModel]
+
+    def to_dataclass(self) -> ProcessDiscoveredLinks:
+        discovered_links_dc = [
+            DiscoveredLinkPydanticModel(
+                url=str(link.url),  # Convert HttpUrl to string
+                depth=link.depth,
+                anchor_text=link.anchor_text,
+                title_attribute=link.title_attribute,
+                rel_attribute=link.rel_attribute,
+                id_attribute=link.id_attribute,
+                link_type=link.link_type,
+                is_internal=link.is_internal,
+            )
+            for link in self.links
+        ]
+        return ProcessDiscoveredLinks(
+            # Convert HttpUrl to string
+            source_page_url=str(self.source_page_url),
+            discovered_at=self.discovered_at,
+            links=discovered_links_dc,
+        )

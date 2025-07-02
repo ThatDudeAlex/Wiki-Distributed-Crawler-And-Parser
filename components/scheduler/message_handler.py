@@ -4,15 +4,16 @@ import logging
 from components.scheduler.services.schedule_service import ScheduleService
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
+from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinksMsg
 
 
 def process_discovered_links(ch, method, properties, body, scheduler: ScheduleService, logger: logging.Logger):
     try:
         logger.debug("Received message: Process Discovered Links Task")
         message = json.loads(body.decode())
+        task = ProcessDiscoveredLinksMsg.model_validate_json(message)
 
-        # TODO: Scheduler - Implement
-
+        scheduler.process_links(task.to_dataclass())
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)
     except ValueError as e:
@@ -25,17 +26,17 @@ def process_discovered_links(ch, method, properties, body, scheduler: ScheduleSe
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
-def start_schedule_listener(queue_service: QueueService, logger: logging.Logger):
+def start_schedule_listener(scheduler_service: ScheduleService, queue_service: QueueService, logger: logging.Logger):
     # Partial allows us to inject the value of a param into a function
     # This allows me to inject the logger while still complying with
     # the RabbitMQ api for listening to messages
     process_discovered_links_partial = partial(
-        process_discovered_links, logger=logger
+        process_discovered_links, scheduler=scheduler_service, logger=logger
     )
 
     # listen for crawl results
     queue_service.channel.basic_consume(
-        queue=SchedulerQueueChannels.SAVE_CRAWL_DATA.value,
+        queue=SchedulerQueueChannels.SAVE_PROCESSED_LINKS.value,
         on_message_callback=process_discovered_links_partial,
         auto_ack=False
     )

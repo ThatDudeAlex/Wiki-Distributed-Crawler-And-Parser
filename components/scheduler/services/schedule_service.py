@@ -1,9 +1,8 @@
 
 import logging
-from typing import List
+from shared.rabbitmq.types import ProcessDiscoveredLinks
 from shared.redis.cache_service import CacheService
-from components.parser.configs.types import LinkData
-from components.scheduler.message_handler import QueueService
+from shared.rabbitmq.queue_service import QueueService
 
 
 class ScheduleService:
@@ -21,8 +20,9 @@ class ScheduleService:
         self._logger.info('Schedule Service Initiation Completed')
 
     # TODO: Scheduler - Implement
-    def process_links(self, page_links: List[LinkData]):
-        self._logger.info('STAGE 1 - Handle Duplicates')
+    def process_links(self, page_links: ProcessDiscoveredLinks):
+        self._logger.info('STAGE 1 - Handle Duplicates & Filter')
+        self._logger.info('SCHEDULER!!!!!!!')
         pass
 
     # TODO: Scheduler - Potentially better if pulled to a separate file in core/

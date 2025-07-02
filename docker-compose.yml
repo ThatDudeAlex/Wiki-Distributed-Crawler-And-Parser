@@ -176,6 +176,17 @@ services:
       - rabbitmq
       - postgres
     command: [ "python", "-m", "components.db_service.main" ]
+
+  scheduler:
+    container_name: scheduler
+    build:
+      context: .
+      dockerfile: components/scheduler/Dockerfile
+    env_file: .env
+    depends_on:
+      - rabbitmq
+      - postgres
+    command: [ "python", "-m", "components.scheduler.main" ]
   # ===========================================
   # Testing services for proxies/vpn services
   # ===========================================

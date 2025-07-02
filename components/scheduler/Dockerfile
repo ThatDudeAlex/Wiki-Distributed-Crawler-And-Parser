@@ -8,8 +8,8 @@ COPY database/      ./database/
 COPY shared/        ./shared/
 
 # service-specific code
-COPY database_service/        ./database_service/
+COPY components/scheduler/        ./components/scheduler/
 
-RUN pip install --no-cache-dir -r database_service/requirements.txt
+RUN pip install --no-cache-dir -r components/scheduler/requirements.txt
 
-CMD ["python", "-m", "database_service.db_service"]
+CMD ["python", "-m", "components.scheduler.main"]

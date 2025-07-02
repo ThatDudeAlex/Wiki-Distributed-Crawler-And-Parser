@@ -31,3 +31,22 @@ class ParsedContent:
     text_content: Optional[str] = None
     text_content_hash: Optional[str] = None
     categories: Optional[List[str]] = None
+
+
+@dataclass
+class DiscoveredLink:
+    url: str
+    depth: int
+    anchor_text: str
+    title_attribute: Optional[str] = None
+    rel_attribute: Optional[str] = None
+    id_attribute: Optional[str] = None
+    link_type: Optional[str] = None
+    is_internal: bool = False
+
+
+@dataclass
+class ProcessDiscoveredLinks:
+    source_page_url: str
+    discovered_at: datetime
+    links: List[DiscoveredLink]

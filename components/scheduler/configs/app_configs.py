@@ -10,6 +10,8 @@ from shared.rabbitmq.enums.queue_names import QueueNames
 #     'storelinks': QueueNames.FAILED_TASK.value
 # }
 
+# TODO: Cleanup all these unneed configs afterwards
+
 
 @dataclass(frozen=True)
 class SchedulerQueueChannels:

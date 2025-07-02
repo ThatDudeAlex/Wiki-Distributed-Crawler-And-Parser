@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from pydantic import BaseModel
 from typing import List, Optional
 
-from shared.rabbitmq.schemas.parsing_task_schemas import DiscoveredLink, ParsedContentsMessage
+from shared.rabbitmq.schemas.parsing_task_schemas import DiscoveredLinkPydanticModel, ParsedContentsMessage
 
 
 class LinkDataSchema(BaseModel):
@@ -27,8 +27,8 @@ class LinkData:
     link_type: Optional[str] = None
     is_internal: bool = False
 
-    def to_discovered_link(self) -> DiscoveredLink:
-        return DiscoveredLink(
+    def to_discovered_link(self) -> DiscoveredLinkPydanticModel:
+        return DiscoveredLinkPydanticModel(
             url=self.url,
             depth=self.depth,
             anchor_text=self.anchor_text,
