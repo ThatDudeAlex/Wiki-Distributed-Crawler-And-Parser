@@ -27,6 +27,13 @@ def fetch_page_metadata(url: str, logger: logging.Logger, session_factory=None):
     with get_db(session_factory=session_factory) as db:
         try:
             # Try finding an existing page by URL
+            res = db.query(Page).filter_by(url=url).first()
+            if res:
+                logger.info(
+                    f"Found Page: ID = {res.id}, URL = {res.url}, Status = {res.last_crawl_status}")
+            else:
+                logger.warning('No entry fround for URL: %s', url)
+
             return db.query(Page).filter_by(url=url).first()
         except Exception:
             logger.exception(

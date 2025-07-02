@@ -89,7 +89,7 @@ class Link(Base):
     __tablename__ = "links"
 
     source_page_url = Column(
-        BigInteger,
+        String(2048),
         ForeignKey("pages.url", ondelete="CASCADE"),
         primary_key=True,
     )

@@ -6,9 +6,11 @@ from components.db_service.message_handler import start_db_writer_listener
 
 def run():
     logger = get_logger("DB_Writer")
+    logger.info("DB_SERVICE IS RUNNING!!!")
     queue_service = QueueService(logger, DbWriterQueueChannels.get_values())
 
     start_db_writer_listener(queue_service, logger)
 
-    if __name__ == "__main__":
-        run()
+
+if __name__ == "__main__":
+    run()

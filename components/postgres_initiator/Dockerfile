@@ -5,6 +5,7 @@ WORKDIR /app
 # shared code
 COPY requirements-common.txt  ./requirements-common.txt
 COPY database/                ./database
+COPY shared/                  ./shared
 
 # service-specific code
 COPY components/postgres_initiator   ./components/postgres_initiator

@@ -54,6 +54,16 @@ services:
     ports:
       - "5432:5432"
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@domain.com
+      PGADMIN_DEFAULT_PASSWORD: adminpassword
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
   postgres_initiator:
     container_name: postgres_initiator
     build:
@@ -70,6 +80,9 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+
+  # ============= 
+
   crawler_noproxy:
     <<: *crawler-common
   # California Proxies
@@ -138,6 +151,8 @@ services:
   #     - HTTP_PROXY=${VA_RESTON1_PROXY}
   #     - HTTPS_PROXY=${VA_RESTON1_PROXY}
 
+
+  # =========== 
 
   parser:
     build:
