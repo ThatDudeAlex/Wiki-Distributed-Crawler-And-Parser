@@ -46,7 +46,7 @@ class EnumCommonMethods:
 # Crawler queue channels
 class CrawlerQueueChannels(EnumCommonMethods, str, Enum):
     LISTEN = QueueNames.CRAWL_TASK.value,
-    REPORT = QueueNames.CRAWL_REPORT.value,
+    SAVE_CRAWL_DATA = QueueNames.SAVE_CRAWL_DATA.value,
     PARSE = QueueNames.PARSE_TASK.value
 
 
@@ -58,8 +58,8 @@ class ParserQueueChannels(EnumCommonMethods, str, Enum):
 
 
 # DB Writer queue channels
-class DbWriterQueueChannels(EnumCommonMethods, str, Enum):
-    FETCH_PAGE_DATA = QueueNames.FETCH_PAGE_DATA.value,
+class DbServiceQueueChannels(EnumCommonMethods, str, Enum):
+    SAVE_CRAWL_DATA = QueueNames.SAVE_CRAWL_DATA.value,
     SAVE_PARSED_DATA = QueueNames.SAVE_PARSED_DATA.value,
     SAVE_PROCESSED_LINKS = QueueNames.SAVE_PROCESSED_LINKS.value
 
@@ -67,5 +67,4 @@ class DbWriterQueueChannels(EnumCommonMethods, str, Enum):
 # Scheduler queue channels
 class SchedulerQueueChannels(EnumCommonMethods, str, Enum):
     PROCESS_LINKS = QueueNames.PROCESS_LINKS.value,
-    SAVE_CRAWL_DATA = QueueNames.SAVE_CRAWL_DATA.value,
     SAVE_PROCESSED_LINKS = QueueNames.SAVE_PROCESSED_LINKS.value

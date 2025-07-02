@@ -1,13 +1,12 @@
 from shared.logging_utils import get_logger
 from shared.rabbitmq.queue_service import QueueService
-from shared.rabbitmq.enums.queue_names import DbWriterQueueChannels
+from shared.rabbitmq.enums.queue_names import DbServiceQueueChannels
 from components.db_service.message_handler import start_db_writer_listener
 
 
 def run():
-    logger = get_logger("DB_Writer")
-    logger.info("DB_SERVICE IS RUNNING!!!")
-    queue_service = QueueService(logger, DbWriterQueueChannels.get_values())
+    logger = get_logger("DB_Service")
+    queue_service = QueueService(logger, DbServiceQueueChannels.get_values())
 
     start_db_writer_listener(queue_service, logger)
 

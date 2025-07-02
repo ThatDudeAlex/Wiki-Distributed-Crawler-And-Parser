@@ -1,21 +1,40 @@
 from functools import partial
 import json
 import logging
-from components.db_service.core.db_service import fetch_page_metadata
+from components.db_service.core.db_service import save_page_metadata, save_parsed_data
 from shared.rabbitmq.queue_service import QueueService
-from shared.rabbitmq.enums.queue_names import DbWriterQueueChannels
-from shared.rabbitmq.schemas.crawling_task_schemas import FetchPageMetadata
+from shared.rabbitmq.enums.queue_names import DbServiceQueueChannels
+from shared.rabbitmq.schemas.crawling_task_schemas import PageMetadataMessage
+from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContentsMessage
 
-# TODO: implement pydantic types to perform validation on messages received
 
-
-def consume_fetch_page_metadata(ch, method, properties, body, logger: logging.Logger):
+def consume_save_page_metadata(ch, method, properties, body, logger: logging.Logger):
     try:
-        logger.info("Received fetch page message")
+        logger.info("Received save page metadata")
         message = json.loads(body.decode())
-        task = FetchPageMetadata.model_validate_json(message)
+        task = PageMetadataMessage.model_validate_json(message)
 
-        fetch_page_metadata(str(task.url), logger)
+        save_page_metadata(task.to_dataclass(), logger)
+
+        # acknowledge success
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+    except ValueError as e:
+        logger.error(f"Message Skipped - Invalid task message: {e}")
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+    except Exception as e:
+        # TODO: look into if retrying could help the situation
+        # maybe requeue for OperationalError or add a dead-letter queue
+        logger.error(f"Error processing message: {e}")
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
+
+def consume_save_parsed_content(ch, method, properties, body, logger: logging.Logger):
+    try:
+        logger.info("Received save parsed content message")
+        message = json.loads(body.decode())
+        task = ParsedContentsMessage.model_validate_json(message)
+
+        save_parsed_data(task.to_dataclass(), logger)
 
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -30,23 +49,28 @@ def consume_fetch_page_metadata(ch, method, properties, body, logger: logging.Lo
 
 
 def start_db_writer_listener(queue_service: QueueService, logger: logging.Logger):
-    # Partial allows us to inject the value of a param into a function
+    # Partial allows us to inject the value of a param into a function.
     # This allows me to inject the logger while still complying with
     # the RabbitMQ api for listening to messages
-    fetch_page_metadata_partial = partial(
-        consume_fetch_page_metadata, logger=logger
+    save_page_metadata_partial = partial(
+        consume_save_page_metadata, logger=logger
+    )
+    save_parsed_content_partial = partial(
+        consume_save_parsed_content, logger=logger
     )
 
+    # Save Page Metadata
     queue_service.channel.basic_consume(
-        queue=DbWriterQueueChannels.FETCH_PAGE_DATA,
-        on_message_callback=fetch_page_metadata_partial,
+        queue=DbServiceQueueChannels.SAVE_CRAWL_DATA,
+        on_message_callback=save_page_metadata_partial,
         auto_ack=False
     )
-    # queue_service.channel.basic_consume(
-    #     queue=DbWriterQueueChannels.SAVE_PARSED_DATA,
-    #     on_message_callback=save_parsed_data_partial,
-    #     auto_ack=False
-    # )
+    # Save Parsed Content
+    queue_service.channel.basic_consume(
+        queue=DbServiceQueueChannels.SAVE_PARSED_DATA,
+        on_message_callback=save_parsed_content_partial,
+        auto_ack=False
+    )
 
     logger.info("Listening for Database requests...")
     queue_service.channel.start_consuming()

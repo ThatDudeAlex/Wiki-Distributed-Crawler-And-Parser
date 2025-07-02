@@ -46,13 +46,13 @@ class CrawlerService:
             # Timestamp of when crawling finished
             fetched_at = get_timestamp_eastern_time()
 
-            self.publisher.publish_fail_report(
+            self.publisher.store_failed_crawl(
                 url, fetched_response.crawl_status, fetched_at,
                 fetched_response.error_type, fetched_response.error_message)
             return
 
         # TODO: Implement try/catch with retry for download
-        self._logger.info('STAGE 2: Download Compressed Html File')
+        self._logger.info('STAGE 2: Create Hash of Html file')
         html_content_hash = create_hash(fetched_response.text)
 
         self._logger.info('STAGE 3: Download Compressed Html File')
@@ -62,8 +62,9 @@ class CrawlerService:
         # Timestamp of when crawling finished
         fetched_at = get_timestamp_eastern_time()
 
-        self._logger.info('STAGE 4: Send Successful Crawl Report To Scheduler')
-        self.publisher.publish_success_report(
+        self._logger.info(
+            'STAGE 4: Publish Page Metadata Report')
+        self.publisher.store_successful_crawl(
             fetched_response, url_hash, html_content_hash, compressed_filepath, fetched_at)
 
         self._logger.info('STAGE 5: Tell Parsers to extract page content')

@@ -3,10 +3,12 @@ from typing import Annotated, Literal, Optional, Union
 from pydantic import Field
 from pydantic import BaseModel, HttpUrl
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
+from shared.rabbitmq.types import PageMetadata
 
 
 # === Crawling Task (Scheduler → Crawler) ===
 
+# TODO: Pydantic - create a dataclass to then easily convert this
 class CrawlTask(BaseModel):
     url: HttpUrl
     scheduled_at: datetime
@@ -14,38 +16,10 @@ class CrawlTask(BaseModel):
     retry_count: int = 0
 
 
-# === Crawl Report (Crawler → Scheduler) ===
+# === Crawl Metadata Message (Crawler → DB Writer) ===
 
-class CrawlReportBase(BaseModel):
-    status: CrawlStatus
-    fetched_at: datetime
-    url: HttpUrl
-
-
-class SuccessCrawlReport(CrawlReportBase):
-    status: Literal[CrawlStatus.CRAWLED_SUCCESS]
-    http_status_code: int
-    url_hash: str
-    html_content_hash: str
-    compressed_filepath: str
-
-
-class FailedCrawlReport(CrawlReportBase):
-    status: Literal[CrawlStatus.CRAWL_FAILED, CrawlStatus.SKIPPED]
-    error_type: Optional[str] = None     # None when skipped due to robots.txt
-    error_message: Optional[str] = None  # None when skipped due to robots.txt
-    # retryable: Optional[bool] = None
-
-
-CrawlReport = Annotated[
-    Union[SuccessCrawlReport, FailedCrawlReport],
-    Field(discriminator="status")
-]
-
-
-# === Crawl Metadata Message (Scheduler → DB Writer) ===
-
-class CrawlMetadataMessage(BaseModel):
+# TODO: Pydantic - Make a BaseClass so that all models have to_dataclass()
+class PageMetadataMessage(BaseModel):
     status: CrawlStatus
     fetched_at: datetime
     url: HttpUrl
@@ -55,8 +29,21 @@ class CrawlMetadataMessage(BaseModel):
     compressed_filepath: Optional[str] = None   # None if failed
     error_type: Optional[str] = None            # None if success
     error_message: Optional[str] = None         # None if success
-    # retryable: Optional[bool] = None
+
+    def to_dataclass(self) -> PageMetadata:
+        return PageMetadata(
+            status=self.status,
+            fetched_at=self.fetched_at,
+            url=str(self.url),  # Convert HttpUrl to string
+            http_status_code=self.http_status_code,
+            url_hash=self.url_hash,
+            html_content_hash=self.html_content_hash,
+            compressed_filepath=self.compressed_filepath,
+            error_type=self.error_type,
+            error_message=self.error_message
+        )
 
 
+# TODO: Remove if not needed
 class FetchPageMetadata(BaseModel):
     url: HttpUrl

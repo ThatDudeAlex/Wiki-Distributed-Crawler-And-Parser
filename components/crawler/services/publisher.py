@@ -3,7 +3,7 @@ import logging
 from components.crawler.configs.types import FetchResponse
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
-from shared.rabbitmq.schemas.crawling_task_schemas import CrawlStatus, SuccessCrawlReport, FailedCrawlReport
+from shared.rabbitmq.schemas.crawling_task_schemas import CrawlStatus, PageMetadataMessage, SuccessCrawlReport, FailedCrawlReport
 from shared.rabbitmq.queue_service import QueueService
 
 
@@ -13,7 +13,7 @@ class PublishingService:
         self._logger = logger
         pass
 
-    def publish_success_report(
+    def store_successful_crawl(
             self,
             fetched_response: FetchResponse,
             url_hash: str,
@@ -21,38 +21,38 @@ class PublishingService:
             compressed_filepath: str,
             fetched_at: str
     ):
-        message = SuccessCrawlReport(
-            url=fetched_response.url,
+        message = PageMetadataMessage(
             status=fetched_response.crawl_status,
+            fetched_at=fetched_at,
+            url=fetched_response.url,
             http_status_code=fetched_response.status_code,
             url_hash=url_hash,
             html_content_hash=html_content_hash,
             compressed_filepath=compressed_filepath,
-            fetched_at=fetched_at,
         ).model_dump_json()
 
         self._queue_service.publish(
-            CrawlerQueueChannels.REPORT.value, message)
+            CrawlerQueueChannels.SAVE_CRAWL_DATA.value, message)
 
-        self._logger.info("Published: Crawl Report - Success")
+        self._logger.info("Published: Page Metadata - Success")
 
-    def publish_fail_report(
+    def store_failed_crawl(
         self,
-        url: str,
         status: CrawlStatus,
         fetched_at: datetime,
+        url: str,
         error_type: str = None,
         error_message: str = None
     ):
-        message = FailedCrawlReport(
+        message = PageMetadataMessage(
             url=url, status=status, fetched_at=fetched_at,
             error_type=error_type, error_message=error_message
         ).model_dump_json()
 
         self._queue_service.publish(
-            CrawlerQueueChannels.REPORT.value, message)
+            CrawlerQueueChannels.SAVE_CRAWL_DATA.value, message)
 
-        self._logger.info("Published: Crawl Report - Failed")
+        self._logger.info("Published: Page Metadata - Failed Crawl")
 
     def publish_parsing_task(self, url: str, depth: int, compressed_filepath: str):
         message = ParsingTask(

@@ -1,7 +1,6 @@
 
 import logging
 from typing import List
-from shared.rabbitmq.schemas.crawling_task_schemas import SuccessCrawlReport
 from shared.redis.cache_service import CacheService
 from components.parser.configs.types import LinkData
 from components.scheduler.message_handler import QueueService
@@ -21,17 +20,14 @@ class ScheduleService:
 
         self._logger.info('Schedule Service Initiation Completed')
 
+    # TODO: Scheduler - Implement
     def process_links(self, page_links: List[LinkData]):
         self._logger.info('STAGE 1 - Handle Duplicates')
-
         pass
 
-    def handle_crawler_success_report(self, report: SuccessCrawlReport):
-
+    # TODO: Scheduler - Potentially better if pulled to a separate file in core/
+    def _produce_crawl_task(self):
         pass
 
-    def produce_crawl_task(self):
-        pass
-
-    def produce_store_links_task(self):
+    def _produce_store_links_task(self):
         pass

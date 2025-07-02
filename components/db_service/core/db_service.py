@@ -2,11 +2,14 @@ from contextlib import contextmanager
 import logging
 from typing import List
 
+from sqlalchemy import case
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import DataError, IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 from database.engine import SessionLocal
 from database.db_models.models import Category, Page, PageContent, CrawlStatus
 from components.db_service.configs.app_configs import MAX_RETRIES
+from shared.rabbitmq.types import PageMetadata, ParsedContent
 
 
 @contextmanager
@@ -21,6 +24,8 @@ def get_db(session_factory=None):
         raise
     finally:
         db.close()
+
+# TODO: Remove if not needed
 
 
 def fetch_page_metadata(url: str, logger: logging.Logger, session_factory=None):
@@ -40,133 +45,70 @@ def fetch_page_metadata(url: str, logger: logging.Logger, session_factory=None):
                 "Unexpected error while fetching page metadata: %s", url)
 
 
-def save_crawl_data(page_data: dict, logger: logging.Logger, session_factory=None) -> bool:
-    """
-    Inserts a new Page or updates crawl metadata if it already exists.
-
-    If a Page with the same URL exists:
-        - Updates last_crawled_at and crawl_attempts.
-    Else:
-        - Inserts a new Page.
-    """
-    for attempt in range(1, MAX_RETRIES + 1):
+def save_page_metadata(page_metadata: PageMetadata, logger: logging.Logger, session_factory=None):
+    with get_db(session_factory=session_factory) as db:
         try:
-            with get_db(session_factory=session_factory) as db:
+            stmt = insert(Page).values(
+                url=page_metadata.url,
+                last_crawl_status=page_metadata.status.value,
+                http_status_code=page_metadata.http_status_code,
+                url_hash=page_metadata.url_hash,
+                html_content_hash=page_metadata.html_content_hash,
+                compressed_filepath=page_metadata.compressed_filepath,
+                last_crawled_at=page_metadata.fetched_at,
+                total_crawl_attempts=1,
+                failed_crawl_attempts=0,
+                last_error_seen=page_metadata.error_message
+            )
 
-                # Try finding an existing page by URL
-                existing = db.query(Page).filter_by(
-                    url=page_data['url']).first()
-
-                # If URL exist then just update metadata
-                if existing:
-                    existing.last_crawled_at = page_data['crawl_time']
-                    existing.crawl_attempts = existing.crawl_attempts + 1
-
-                    logger.debug(
-                        f"Updated existing page: '{page_data['url']}' with new crawl metadata"
+            # INSERT or UPDATE (aka Upsert)
+            # IMPORTANT: This can causes an update of EVERY column even if it's not needed
+            # It's fine to do on a low-scale (less than 1k+ upserts per second)
+            stmt = stmt.on_conflict_do_update(
+                # Assumes `url` has a UNIQUE constraint
+                index_elements=['url'],
+                set_={
+                    'last_crawl_status': stmt.excluded.last_crawl_status,
+                    'http_status_code': stmt.excluded.http_status_code,
+                    'url_hash': stmt.excluded.url_hash,
+                    'html_content_hash': stmt.excluded.html_content_hash,
+                    'compressed_filepath': stmt.excluded.compressed_filepath,
+                    'last_crawled_at': stmt.excluded.last_crawled_at,
+                    'last_error_seen': stmt.excluded.last_error_seen,
+                    'total_crawl_attempts': Page.total_crawl_attempts + 1,
+                    'failed_crawl_attempts': case(
+                        (
+                            stmt.excluded.last_crawl_status.in_(
+                                ['CRAWL_FAILED', 'SKIPPED']),
+                            Page.failed_crawl_attempts + 1
+                        ),
+                        else_=Page.failed_crawl_attempts
                     )
-                    return True
-
-                # No match on URL — insert new Page
-                new_page = Page(
-                    url=page_data['url'],
-                    url_hash=page_data['url_hash'],
-                    last_crawl_status=CrawlStatus.CRAWLED_SUCCESS,
-                    http_status_code=page_data['status_code'],
-                    compressed_filepath=page_data['compressed_filepath'],
-                    last_crawled_at=page_data['crawl_time'],
-                )
-                db.add(new_page)
-
-                logger.debug(
-                    f"Inserted new page: '{page_data['url']}' into the database")
-                return True
-
-        except (IntegrityError, DataError) as e:
-            logger.warning(
-                f"Non-recoverable DB error while saving page: {page_data['url']} - {e}")
-            return False
-        except OperationalError as e:
-            logger.warning(
-                f"OperationalError while saving page: {page_data['url']} - Attempt {attempt}/{MAX_RETRIES} - {e}")
+                }
+            )
+            db.execute(stmt)
         except Exception:
             logger.exception(
-                f"Unexpected error while saving page: {page_data['url']} - Attempt {attempt}/{MAX_RETRIES}"
-            )
-
-    logger.error(
-        f"Page '{page_data['url']}' failed to be saved after {MAX_RETRIES} attempts")
-    return False
+                "Unexpected error while fetching page metadata: %s", page_metadata.url)
 
 
-def save_parsed_data(parsed_data: dict, logger: logging.Logger, session_factory=None) -> bool:
-    """
-    Inserts or updates parsed page content in the database.
-
-    :param parsed_data: Dictionary with keys: 'page_url', 'title', 'summary', 'content',
-                        'content_hash', 'categories' (list of category names)
-    """
-    for attempt in range(1, MAX_RETRIES + 1):
+def save_parsed_data(page_data: ParsedContent, logger: logging.Logger, session_factory=None) -> bool:
+    with get_db(session_factory=session_factory) as db:
         try:
-            with get_db(session_factory=session_factory) as db:
-                existing = db.query(PageContent).filter_by(
-                    page_url=parsed_data['page_url']).first()
-
-                # Case 1: Page does not exist – insert new record
-                if not existing:
-                    categories = _get_or_create_categories(
-                        db, parsed_data.get('categories', []))
-
-                    new_content = PageContent(
-                        # page_url can't be None
-                        page_url=parsed_data['page_url'],
-                        title=parsed_data.get('title'),
-                        summary=parsed_data.get('summary'),
-                        content=parsed_data.get('content'),
-                        content_hash=parsed_data.get('content_hash'),
-                        categories=categories
-                    )
-                    db.add(new_content)
-                    logger.debug(
-                        f"Inserted new parsed content for page URL: {parsed_data['page_url']}")
-                    return True
-
-                # Case 2: Page exists but content hasn't changed – skip
-                if existing.content_hash == parsed_data.get('content_hash'):
-                    logger.info(
-                        f"Skipping update: No content change for page URL: {parsed_data['page_url']}")
-                    return False
-
-                # Case 3: Page exists and content changed – update record
-                existing.title = parsed_data.get('title')
-                existing.summary = parsed_data.get('summary')
-                existing.content = parsed_data.get('content')
-                existing.content_hash = parsed_data.get('content_hash')
-
-                categories = _get_or_create_categories(
-                    db, parsed_data.get('categories', []))
-                existing.categories = categories
-
-                logger.debug(
-                    f"Updated parsed content for page URL: {parsed_data['page_url']}")
-                return True
-
-        except (IntegrityError, DataError) as e:
-            logger.warning(
-                f"Non-recoverable DB error on parsed page '{parsed_data['page_url']}': {e}")
-            return False
-        except OperationalError as e:
-            logger.warning(
-                f"OperationalError on parsed page '{parsed_data['page_url']}' - Attempt {attempt}/{MAX_RETRIES}: {e}"
+            stmt = insert(PageContent).values(
+                source_page_url=page_data.source_page_url,
+                title=page_data.title,
+                summary=page_data.summary,
+                text_content=page_data.text_content,
+                text_content_hash=page_data.text_content_hash,
+                parsed_at=page_data.parsed_at,
             )
+
+            # TODO: Implement inserting categories into their own table
+            db.execute(stmt)
         except Exception:
             logger.exception(
-                f"Unexpected error while saving parsed page contents '{parsed_data['page_url']}' - Attempt {attempt}/{MAX_RETRIES}"
-            )
-
-    logger.error(
-        f"Failed to save parsed page contents: {parsed_data['page_url']} after {MAX_RETRIES} retries")
-    return False
+                "Unexpected error while saving parsed content: %s", page_data.source_page_url)
 
 
 def _get_or_create_categories(db: Session, category_names: List[str]):
