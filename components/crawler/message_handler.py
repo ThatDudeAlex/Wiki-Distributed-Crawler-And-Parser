@@ -9,9 +9,8 @@ from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 
 def handle_message(ch, method, properties, body, crawler_service: CrawlerService, logger: logging.Logger):
     try:
-        message = json.loads(body.decode())
         # model_validate_json(body)
-        task = CrawlTask.model_validate_json(message)
+        task = CrawlTask.model_validate_json(body)
 
         logger.info("Initiating crawl for URL: %s", task.url)
 

@@ -1,48 +1,11 @@
 import logging
-from typing import Optional, Union
+from typing import Optional
 import requests
 import urllib.robotparser
 
-from components.crawler.configs.types import CrawlerResponse
+from components.crawler.configs.types import FetchResponse
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from components.crawler.configs.app_configs import ROBOTS_TXT, BASE_HEADERS
-
-
-# TODO: I don't like this function AT ALL! refactor this page
-def _generate_crawler_response(
-    success: bool,
-    url: str,
-    crawl_status: CrawlStatus,
-    data,
-    error: Optional[Exception] = None
-) -> CrawlerResponse:
-    """
-    Build a CrawlerResponse, extracting error details and response data if needed.
-    """
-    if not success and error:
-        # If the exception has a response (e.g., HTTPError), extract its data
-        response = getattr(error, "response", None)
-        if response:
-            data = {
-                'status_code': response.status_code,
-                'headers': dict(response.headers),
-                'text': response.text,
-            }
-
-        err = {
-            'type': error.__class__.__name__,
-            'message': str(error),
-        }
-    else:
-        err = None
-
-    return CrawlerResponse(
-        success=success,
-        url=url,
-        crawl_status=crawl_status,
-        data=data,
-        error=err
-    )
 
 
 def _robot_blocks_crawling(url: str, logger: logging.Logger) -> bool:
@@ -69,7 +32,7 @@ def _fetch(url: str) -> requests.Response:
     return response
 
 
-def crawl(url: str, logger: logging.Logger) -> CrawlerResponse:
+def crawl(url: str, logger: logging.Logger) -> FetchResponse:
     """
     Perform a crawl of the specified URL, respecting robots.txt, and return a CrawlerResponse.
     """
@@ -77,27 +40,21 @@ def crawl(url: str, logger: logging.Logger) -> CrawlerResponse:
         logger.info('Verifying that robots.txt allows crawling URL: %s', url)
 
         if _robot_blocks_crawling(url, logger):
-            return _generate_crawler_response(False, url, CrawlStatus.SKIPPED)
+            return FetchResponse(False, url, CrawlStatus.SKIPPED)
 
         response = _fetch(url)
         logger.info('Successfully Fetched URL: %s', url)
 
-        return _generate_crawler_response(
-            True,
-            url,
-            CrawlStatus.CRAWLED_SUCCESS,
-            {
-                'status_code': response.status_code,
-                'headers': dict(response.headers),
-                'text': response.text
-            }
+        return FetchResponse(
+            True, url, CrawlStatus.CRAWLED_SUCCESS,
+            response.status_code, dict(response.headers), response.text
         )
 
     except requests.HTTPError as e:
         logger.error("HTTPError in '%s' - StatusCode: %s - %s", url,
                      e.response.status_code if e.response else "N/A", str(e))
-        return _generate_crawler_response(False, url, CrawlStatus.CRAWL_FAILED, error=e)
+        return FetchResponse(success=False, url=url, crawl_status=CrawlStatus.CRAWL_FAILED, error=e)
 
     except requests.RequestException as e:
         logger.error(f"RequestException in '{url}' - {e}")
-        return _generate_crawler_response(False, url, CrawlStatus.CRAWL_FAILED, error=e)
+        return FetchResponse(success=False, url=url, crawl_status=CrawlStatus.SKIPPED, error=e)

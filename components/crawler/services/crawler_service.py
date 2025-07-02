@@ -3,13 +3,13 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from components.crawler.configs.types import CrawlerResponse
+from components.crawler.configs.types import FetchResponse
 from components.crawler.services.downloader import download_compressed_html_content
+from components.crawler.services.publisher import PublishingService
 from components.crawler.core.crawler import crawl
 from shared.rabbitmq.queue_service import QueueService
-from shared.rabbitmq.schemas.crawling_task_schemas import SuccessCrawlReport, FailedCrawlReport
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
-from shared.utils import get_timestamp_eastern_time
+from shared.utils import get_timestamp_eastern_time, create_hash
 
 
 class CrawlerService:
@@ -26,9 +26,8 @@ class CrawlerService:
         # queue setup
         self.queue_service = queue_service
 
-        # TODO: Remove if redis is no longer needed here
-        # redis setup
-        # self.cache = CacheService(self._logger)
+        # queue publisher setup
+        self.publisher = PublishingService(self.queue_service, self._logger)
 
         self._logger.info('Crawler Service Initiation Complete')
 
@@ -41,79 +40,34 @@ class CrawlerService:
             return
 
         self._logger.info('STAGE 1: Fetch URL: %s', url)
-        crawler_response: CrawlerResponse = crawl(url, self._logger)
+        fetched_response: FetchResponse = crawl(url, self._logger)
 
         # if crawl failed or was skipped due to robot.txt
-        if not crawler_response.success:
-            self._send_failed_report_message(crawler_response)
+        if not fetched_response.success:
+            # Timestamp of when crawling finished
+            fetched_at = get_timestamp_eastern_time()
+
+            self.publisher.publish_fail_report(
+                url, fetched_response.crawl_status, fetched_at,
+                fetched_response.error_type, fetched_response.error_message)
             return
 
         # TODO: Implement try/catch with retry for download
         self._logger.info('STAGE 2: Download Compressed Html File')
+        html_content_hash = create_hash(fetched_response.text)
 
-        url_hash, compressed_path = download_compressed_html_content(
-            os.getenv('DL_HTML_PATH'), url, crawler_response.data.text, self._logger)
+        self._logger.info('STAGE 3: Download Compressed Html File')
+        url_hash, compressed_filepath = download_compressed_html_content(
+            os.getenv('DL_HTML_PATH'), url, fetched_response.text, self._logger)
 
-        # get timestamp of when crawling finished
-        crawl_time = get_timestamp_eastern_time()
+        # Timestamp of when crawling finished
+        fetched_at = get_timestamp_eastern_time()
 
-        self._logger.info('STAGE 3: Tell DB_Service to store the page data')
+        self._logger.info('STAGE 4: Send Successful Crawl Report To Scheduler')
+        self.publisher.publish_sucess_report(
+            fetched_response, url_hash, html_content_hash, compressed_filepath, fetched_at)
 
-        self._send_sucess_report_message(
-            crawler_response, url_hash, compressed_path, crawl_time
-        )
-
-        self._logger.info('STAGE 4: Tell Parsers to extract page content')
-
-        self._publish_parse_downloaded_page(url, compressed_path)
+        self._logger.info('STAGE 5: Tell Parsers to extract page content')
+        self.publisher.publish_parsing_task(url, compressed_filepath)
 
         self._logger.info('Crawl Task Successfully Completed!')
-
-    def _send_failed_report_message(self, crawler_response: CrawlerResponse):
-        message = {
-            "url": crawler_response.url,
-            "crawl_status": crawler_response.crawl_status,
-            "status_code": crawler_response.data.status_code if crawler_response.data else None,
-            "error_message": crawler_response.error["message"] if crawler_response.error else None
-        }
-        self.queue_service.publish(CrawlerQueueChannels.REPORT.value, message)
-        self._logger.debug(f"Task Published - Save Failed Crawl: {message}")
-
-    # TODO: Implement retry mechanism and dead-letter
-    def _send_sucess_report_message(
-            self,
-            crawler_response: CrawlerResponse,
-            url_hash: str,
-            compressed_path: str,
-            crawl_time: str
-    ):
-        message = SuccessCrawlReport(
-            url=crawler_response.url,
-            url_hash=url_hash,
-            crawl_status=crawler_response.crawl_status,
-            compressed_path=compressed_path,
-            crawl_time=crawl_time,
-            status_code=crawler_response.data.status_code if crawler_response.data else None
-        ).model_dump_json()
-        # message = {
-        #     "url": crawler_response.url,
-        #     "url_hash": url_hash,
-        #     "crawl_status": crawler_response.crawl_status.value,
-        #     "compressed_path": compressed_path,
-        #     "crawl_time": crawl_time,
-        #     "status_code": crawler_response.data.status_code
-        # }
-        self.queue_service.publish(
-            CrawlerQueueChannels.REPORT.value, message)
-        self._logger.debug(
-            f"Task Published - Save Successful Crawl: {message}")
-
-    def _publish_parse_downloaded_page(self, url: str, compressed_path: str):
-        message = {
-            "url": str(url),
-            "compressed_path": compressed_path
-        }
-        self.queue_service.publish(
-            CrawlerQueueChannels.PARSE.value, message
-        )
-        self._logger.debug(f"Task Published - Parse Html Content: {message}")

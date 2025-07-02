@@ -24,16 +24,17 @@ class CrawlReportBase(BaseModel):
 
 class SuccessCrawlReport(CrawlReportBase):
     status: Literal[CrawlStatus.CRAWLED_SUCCESS]
-    http_status: int
+    http_status_code: int
     url_hash: str
-    content_hash: str
+    html_content_hash: str
     compressed_filepath: str
 
 
 class FailedCrawlReport(CrawlReportBase):
-    status: Literal[CrawlStatus.CRAWL_FAILED]
-    error: str
-    retryable: bool
+    status: Literal[CrawlStatus.CRAWL_FAILED, CrawlStatus.SKIPPED]
+    error_type: str | None  # Is None when skipped due to robot.txt
+    error_message: str | None  # Is None when skipped due to robot.txt
+    # retryable: bool
 
 
 CrawlReport = Annotated[

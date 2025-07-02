@@ -17,7 +17,7 @@ class CrawlerErrorType(str, Enum):
 
 
 @dataclass
-class CrawlerResponse:
+class FetchResponse:
     success: bool
     url: str
     crawl_status: Optional[CrawlStatus]

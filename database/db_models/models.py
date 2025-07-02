@@ -42,7 +42,7 @@ class Page(Base):
 
     # Hashes and filepath are all unique
     url_hash = Column(String(2048), unique=True, nullable=True)
-    content_hash = Column(String(2048), unique=True, nullable=True)
+    html_content_hash = Column(String(2048), unique=True, nullable=True)
     compressed_filepath = Column(String(2048), unique=True, nullable=True)
 
     last_crawled_at = Column(

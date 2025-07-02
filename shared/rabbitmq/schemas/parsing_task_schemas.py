@@ -7,7 +7,7 @@ from pydantic import BaseModel, FilePath, HttpUrl
 
 class ParsingTask(BaseModel):
     url: HttpUrl
-    compressed_path: FilePath
+    compressed_filepath: FilePath
 
 
 # === Save Parsed Content (Parser → DB Writer) ===
