@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 from database.engine import SessionLocal
 from database.db_models.models import Category, Page, PageContent
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
-from shared.rabbitmq.types import ParsedContent
 from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
+from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 
 
 @contextmanager

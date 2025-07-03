@@ -39,17 +39,6 @@ class ValidationError(Exception):
 
 
 @dataclass
-class ParsedContent:
-    source_page_url: str
-    title: str
-    parsed_at: datetime
-    summary: Optional[str] = None
-    text_content: Optional[str] = None
-    text_content_hash: Optional[str] = None
-    categories: Optional[List[str]] = None
-
-
-@dataclass
 class DiscoveredLink:
     url: str
     depth: int

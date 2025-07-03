@@ -1,9 +1,9 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, FilePath, HttpUrl
+from pydantic import BaseModel, HttpUrl
 from shared.rabbitmq.schemas.crawling_task_schemas import ValidationError
-from shared.rabbitmq.types import ParsedContent, ProcessDiscoveredLinks, QueueMsgSchemaInterface
+from shared.rabbitmq.types import ProcessDiscoveredLinks, QueueMsgSchemaInterface
 
 
 # === Parsing Task (Crawler → Parser) ===
@@ -38,42 +38,68 @@ class ParsingTask(QueueMsgSchemaInterface):
 
 # === Save Parsed Content (Parser → DB Writer) ===
 
-# @dataclass
-# class ParsedContent:
-#     source_page_url: str
-#     title: str
-#     parsed_at: datetime
-#     summary: Optional[str] = None
-#     text_content: Optional[str] = None
-#     text_content_hash: Optional[str] = None
-#     categories: Optional[List[str]] = None
-
-# TODO: Pydantic - Create a BaseClass that includes to_dataclass()
-class ParsedContentsMessage(BaseModel):
-    # Requires 'message.model_dump_json()' before publishing to queue
-    source_page_url: HttpUrl
+@dataclass
+class ParsedContent(QueueMsgSchemaInterface):
+    source_page_url: str
     title: str
-    summary:           Optional[str] = None
-    text_content:      Optional[str] = None
-    text_content_hash: Optional[str] = None
     parsed_at: datetime
-    categories:  Optional[List[str]] = None
+    summary: Optional[str] = None
+    text_content: Optional[str] = None
+    text_content_hash: Optional[str] = None
+    categories: Optional[List[str]] = None
 
-    def to_dataclass(self) -> ParsedContent:
-        return ParsedContent(
-            source_page_url=str(self.source_page_url),
-            title=self.title,
-            parsed_at=self.parsed_at,
-            summary=self.summary,
-            text_content=self.text_content,
-            text_content_hash=self.text_content_hash,
-            categories=self.categories,
-        )
+    def _validate(self) -> None:
+        # Validate source_page_url
+        if not self.source_page_url or not self.is_valid_url(self.source_page_url):
+            raise ValidationError(
+                "Invalid or missing source_page_url", field="source_page_url")
 
+        # Validate title
+        if not isinstance(self.title, str) or not self.title.strip():
+            raise ValidationError(
+                "Title must be a non-empty string", field="title")
+
+        # Validate text_content_hash if present
+        if self.text_content_hash is not None:
+            if not isinstance(self.text_content_hash, str) or not self.text_content_hash.strip():
+                raise ValidationError(
+                    "text_content_hash must be a non-empty string if provided", field="text_content_hash")
+
+        # Validate categories if present
+        if self.categories is not None:
+            if not isinstance(self.categories, list):
+                raise ValidationError(
+                    "categories must be a list of strings", field="categories")
+            for i, category in enumerate(self.categories):
+                if not isinstance(category, str) or not category.strip():
+                    raise ValidationError(
+                        f"Category at index {i} must be a non-empty string", field="categories")
+
+    def validate_publish(self) -> None:
+        self._validate()
+        # parsed_at must be a datetime obj — convert to ISO 8601 string
+        if not isinstance(self.parsed_at, datetime):
+            raise ValidationError(
+                "parsed_at must be a datetime object before publishing", field="parsed_at")
+        # Convert field to ISO string for JSON serialization
+        self.parsed_at = self.parsed_at.isoformat()
+
+    def validate_consume(self) -> None:
+        # parsed_at must be a string — convert to datetime
+        if not isinstance(self.parsed_at, str):
+            raise ValidationError(
+                "parsed_at must be a ISO 8601 string when consuming", field="parsed_at")
+
+        try:
+            self.parsed_at = datetime.fromisoformat(self.parsed_at)
+        except ValueError:
+            raise ValidationError(
+                "parsed_at must be a valid ISO 8601 datetime string", field="parsed_at")
+        self._validate()
 
 # === Process Discovered Links (Parser → Scheduler) ===
 
-# TODO: Pydantic - Create a dataclass to convert this class into
+
 class DiscoveredLinkPydanticModel(BaseModel):
     url: HttpUrl
     depth: int

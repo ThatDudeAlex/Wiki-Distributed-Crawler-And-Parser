@@ -34,7 +34,7 @@ class CrawlTask(QueueMsgSchemaInterface):
         if not isinstance(self.scheduled_at, datetime):
             raise ValidationError(
                 "scheduled_at must be a datetime object before publishing", field="scheduled_at")
-        # Mutate field to ISO string for JSON serialization
+        # Convert field to ISO string for JSON serialization
         self.scheduled_at = self.scheduled_at.isoformat()
 
     def validate_consume(self) -> None:
@@ -99,7 +99,7 @@ class SavePageMetadataTask(QueueMsgSchemaInterface):
         if not isinstance(self.fetched_at, datetime):
             raise ValidationError(
                 "fetched_at must be a datetime object before publishing", field="fetched_at")
-        # Mutate field to ISO string for JSON serialization
+        # Convert field to ISO string for JSON serialization
         self.fetched_at = self.fetched_at.isoformat()
 
     def validate_consume(self) -> None:

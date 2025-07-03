@@ -1,8 +1,8 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pydantic import BaseModel
 from typing import List, Optional
 
-from shared.rabbitmq.schemas.parsing_task_schemas import DiscoveredLinkPydanticModel, ParsedContentsMessage
+from shared.rabbitmq.schemas.parsing_task_schemas import DiscoveredLinkPydanticModel
 
 
 class LinkDataSchema(BaseModel):
@@ -37,27 +37,4 @@ class LinkData:
             id_attribute=self.id_attribute,
             link_type=self.link_type,
             is_internal=self.is_internal
-        )
-
-
-@dataclass
-class PageContent:
-    source_page_url: str
-    title: Optional[str] = None
-    categories: List[str] = field(default_factory=list)
-    summary: Optional[str] = None
-    text_content: Optional[str] = None
-    text_content_hash: Optional[str] = None
-    parsed_at: Optional[str] = None
-
-    def to_parsed_contents_message(self) -> ParsedContentsMessage:
-        return ParsedContentsMessage(
-            source_page_url=self.source_page_url,
-            title=self.title,
-            # If empty list make it None
-            categories=self.categories if self.categories else None,
-            summary=self.summary,
-            text_content=self.text_content,
-            text_content_hash=self.text_content_hash,
-            parsed_at=self.parsed_at
         )

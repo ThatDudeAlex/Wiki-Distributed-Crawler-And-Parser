@@ -1,7 +1,8 @@
 from datetime import datetime
 import logging
 from typing import List
-from components.parser.configs.types import LinkData, PageContent
+from components.parser.configs.types import LinkData
+from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 from shared.rabbitmq.enums.queue_names import ParserQueueChannels
 from shared.rabbitmq.schemas.parsing_task_schemas import DiscoveredLinkPydanticModel, ProcessDiscoveredLinksMsg
 from shared.rabbitmq.queue_service import QueueService
@@ -14,8 +15,9 @@ class PublishingService:
         pass
 
     # TODO: Implement retry mechanism and dead-letter
-    def publish_save_parsed_data(self, page_content: PageContent):
-        message = page_content.to_parsed_contents_message().model_dump_json()
+    def publish_save_parsed_data(self, page_content: ParsedContent):
+        message = page_content
+        message.validate_publish()
 
         self._queue_service.publish(
             ParserQueueChannels.SAVE_PARSED_DATA.value, message)

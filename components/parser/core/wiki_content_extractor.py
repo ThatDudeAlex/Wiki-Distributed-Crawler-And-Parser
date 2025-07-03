@@ -2,12 +2,12 @@ import logging
 from typing import List, Optional
 from bs4 import BeautifulSoup, Tag
 
-from components.parser.configs.types import PageContent
+from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 from components.parser.core.wiki_html_content_cleaner import clean_wiki_html_content
 from shared.utils import create_hash, get_timestamp_eastern_time
 
 
-def extract_wiki_page_content(url: str, html_content: str, logger: logging.Logger) -> PageContent:
+def extract_wiki_page_content(url: str, html_content: str, logger: logging.Logger) -> ParsedContent:
     """
     Parses HTML content from a Wikipedia-like page and returns structured content including
     title, categories, summary, main body text, and a hash of the text content.
@@ -31,7 +31,7 @@ def extract_wiki_page_content(url: str, html_content: str, logger: logging.Logge
         text_content_hash = create_hash(text_content)
 
     parsed_at = get_timestamp_eastern_time()
-    return PageContent(
+    return ParsedContent(
         source_page_url=url,
         title=title,
         categories=categories,
