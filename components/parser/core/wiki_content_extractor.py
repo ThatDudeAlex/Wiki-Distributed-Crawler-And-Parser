@@ -95,11 +95,11 @@ def _extract_summary(main_content: Tag, logger: logging.Logger) -> Optional[str]
     try:
         paragraphs = main_content.find_all('p')  # removed recursive=False
         for p in paragraphs:
-            paragraph_text = p.get_text(strip=True)
+            paragraph_text = p.get_text(separator=" ", strip=True)
             if not paragraph_text:
                 continue
 
-            # Filter out boilerplate but don't be too aggressive
+            # Filter out boilerplate
             if any(paragraph_text.startswith(prefix) for prefix in [
                 "Coordinates:", "For other uses, see", "This is a redirect"
             ]):

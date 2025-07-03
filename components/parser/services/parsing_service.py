@@ -49,8 +49,7 @@ class ParsingService:
 
             self._logger.info('STAGE 5: Publish Process Links')
             # self._send_process_links_message(page_links)
-            self._publisher.publish_process_links_task(
-                url, parsed_at, page_links)
+            self._publisher.publish_process_links_task(parsed_at, page_links)
 
             self._logger.info('Parsing Task Successfully Completed!')
         except Exception as e:

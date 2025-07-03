@@ -4,15 +4,15 @@ from typing import List
 
 from bs4 import BeautifulSoup, Tag
 from components.parser.configs.app_configs import WIKIPEDIA_MAIN_BODY_ID, IMAGE_EXTENSIONS
-from components.parser.configs.types import LinkData
-from shared.utils import is_external_link, normalize_url
+from shared.rabbitmq.schemas.parsing_task_schemas import LinkData
+from shared.utils import is_internal_link, normalize_url
 
 
 class _WikipediaLinkExtractor:
     def __init__(self, logger: logging.Logger):
         self.logger = logger
 
-    def extract(self, page_url: str, html_content: str, depth: int) -> LinkData:
+    def extract(self, source_page_url: str, html_content: str, depth: int) -> LinkData:
         """
         Parses a Wikipedia HTML page and returns structured data for links within the main body
         """
@@ -20,27 +20,28 @@ class _WikipediaLinkExtractor:
             soup = BeautifulSoup(html_content, 'lxml')
         except Exception as e:
             self.logger.error(
-                f"Failed to parse HTML for {page_url}: {e}", exc_info=True)
+                f"Failed to parse HTML for {source_page_url}: {e}", exc_info=True)
             return []
 
         main = soup.find('div', id=WIKIPEDIA_MAIN_BODY_ID)
         if main is None:
             self.logger.warning(
-                f"No main body ('{WIKIPEDIA_MAIN_BODY_ID}') on {page_url}")
+                f"No main body ('{WIKIPEDIA_MAIN_BODY_ID}') on {source_page_url}")
             return []
 
         results: List[LinkData] = []
         for a in main.find_all('a'):
-            data = self._extract_link(a, page_url, depth)
+            data = self._extract_link(a, source_page_url, depth)
             if data is not None:
                 results.append(data)
 
         if not results:
-            self.logger.info(f"No links found in main body of {page_url}")
+            self.logger.info(
+                f"No links found in main body of {source_page_url}")
 
         return results
 
-    def _extract_link(self, tag: Tag, page_url: str, depth: str) -> LinkData:
+    def _extract_link(self, tag: Tag, source_page_url: str, depth: str) -> LinkData:
         """
         Extracts metadata from an <a> tag and returns structured LinkData
         """
@@ -50,7 +51,7 @@ class _WikipediaLinkExtractor:
 
         try:
             normalized_href = normalize_url(href)
-            is_internal = not is_external_link(normalized_href)
+            is_internal = is_internal_link(normalized_href)
             text_content = tag.get_text(strip=True)
             title_attribute = tag.get('title')
             id_attribute = tag.get('id')
@@ -63,6 +64,7 @@ class _WikipediaLinkExtractor:
             )
 
             return LinkData(
+                source_page_url=source_page_url,
                 url=normalized_href,
                 depth=depth + 1,  # update the depth of the link
                 anchor_text=text_content,
@@ -74,7 +76,7 @@ class _WikipediaLinkExtractor:
             )
         except Exception as e:
             self.logger.error(
-                f"Error extracting link '{href}' on page '{page_url}': {e}", exc_info=True
+                f"Error extracting link '{href}' on page '{source_page_url}': {e}", exc_info=True
             )
             return None
 
@@ -111,9 +113,9 @@ class _WikipediaLinkExtractor:
             return 'error_determining_type'
 
 
-def extract_wiki_page_links(page_url: str, html_content: str, depth: int, logger: logging.Logger) -> List[LinkData]:
+def extract_wiki_page_links(source_page_url: str, html_content: str, depth: int, logger: logging.Logger) -> List[LinkData]:
     """
     Extracts and classifies anchor links from the main body of a Wikipedia page
     """
     extractor = _WikipediaLinkExtractor(logger)
-    return extractor.extract(page_url, html_content, depth)
+    return extractor.extract(source_page_url, html_content, depth)

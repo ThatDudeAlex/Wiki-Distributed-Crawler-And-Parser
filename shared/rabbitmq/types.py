@@ -36,22 +36,3 @@ class ValidationError(Exception):
         self.field = field
         full_msg = f"{field}: {message}" if field else message
         super().__init__(full_msg)
-
-
-@dataclass
-class DiscoveredLink:
-    url: str
-    depth: int
-    anchor_text: str
-    title_attribute: Optional[str] = None
-    rel_attribute: Optional[str] = None
-    id_attribute: Optional[str] = None
-    link_type: Optional[str] = None
-    is_internal: bool = False
-
-
-@dataclass
-class ProcessDiscoveredLinks:
-    source_page_url: str
-    discovered_at: datetime
-    links: List[DiscoveredLink]

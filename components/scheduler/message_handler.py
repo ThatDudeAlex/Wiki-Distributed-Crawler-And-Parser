@@ -4,16 +4,18 @@ import logging
 from components.scheduler.services.schedule_service import ScheduleService
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
-from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinksMsg
+from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
 
 
 def process_discovered_links(ch, method, properties, body, scheduler: ScheduleService, logger: logging.Logger):
     try:
-        logger.debug("Received message: Process Discovered Links Task")
-        message = json.loads(body.decode())
-        task = ProcessDiscoveredLinksMsg.model_validate_json(message)
+        message_str = body.decode('utf-8')
+        message_dict = json.loads(message_str)
 
-        scheduler.process_links(task.to_dataclass())
+        task = ProcessDiscoveredLinks(**message_dict)
+        task.validate_consume()
+
+        scheduler.process_links(task)
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)
     except ValueError as e:
