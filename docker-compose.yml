@@ -154,18 +154,18 @@ services:
 
   # =========== 
 
-  # parser:
-  #   build:
-  #     context: .
-  #     dockerfile: components/parser/Dockerfile
-  #   depends_on:
-  #     - postgres
-  #     - postgres_initiator
-  #     - rabbitmq
-  #   env_file: .env
-  #   command: [ "python", "-m", "components.parser.main" ]
-  #   volumes:
-  #     - compressed_html_data:${DL_HTML_PATH}
+  parser:
+    build:
+      context: .
+      dockerfile: components/parser/Dockerfile
+    depends_on:
+      - postgres
+      - postgres_initiator
+      - rabbitmq
+    env_file: .env
+    command: [ "python", "-m", "components.parser.main" ]
+    volumes:
+      - compressed_html_data:${DL_HTML_PATH}
   db_service:
     container_name: db_service
     build:

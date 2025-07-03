@@ -29,7 +29,7 @@ def test_run_skips_when_depth_exceeded(mock_crawl, crawler_service, mock_logger)
 #     mock_crawl.return_value = CrawlerResponse(
 #         success=False,
 #         url="http://example.com",
-#         crawl_status=CrawlStatus.CRAWL_FAILED,
+#         crawl_status=CrawlStatus.FAILED,
 #         data=None,
 #         error={'type': 'HTTPError', 'message': 'Request failed'}
 #     )
@@ -38,7 +38,7 @@ def test_run_skips_when_depth_exceeded(mock_crawl, crawler_service, mock_logger)
 #     assert mock_queue.publish.call_count == 1
 #     args, kwargs = mock_queue.publish.call_args
 
-#     assert args[1]['crawl_status'].value == CrawlStatus.CRAWL_FAILED.value
+#     assert args[1]['crawl_status'].value == CrawlStatus.FAILED.value
 #     assert str(args[1]['url']) == "http://example.com/"
 #     assert args[1]['error_message'] == 'Request failed'
 

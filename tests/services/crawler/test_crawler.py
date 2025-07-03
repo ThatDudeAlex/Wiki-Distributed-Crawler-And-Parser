@@ -127,7 +127,7 @@ def test_crawl_http_error(mock_robot_check, mock_fetch):
     got = crawler.crawl(url, logger)
 
     assert got['success'] is False
-    assert got['crawl_status'] == CrawlStatus.CRAWL_FAILED
+    assert got['crawl_status'] == CrawlStatus.FAILED
     assert got['error']['type'] == 'HTTPError'
     assert got['error']['message'] == 'Not Found'
 
@@ -143,7 +143,7 @@ def test_crawl_request_exception(mock_robot_check, mock_fetch):
     got = crawler.crawl(url, logger)
 
     assert got['success'] is False
-    assert got['crawl_status'] == CrawlStatus.CRAWL_FAILED
+    assert got['crawl_status'] == CrawlStatus.FAILED
     assert got['error'] is not None
     assert got['error']['type'] == 'Timeout'
     assert got['error']['message'] == 'Request timed out'

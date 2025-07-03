@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Annotated, Literal, Optional, Union
-from pydantic import Field
-from pydantic import BaseModel, HttpUrl
+from typing import Optional
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.rabbitmq.types import QueueMsgSchemaInterface, ValidationError
 

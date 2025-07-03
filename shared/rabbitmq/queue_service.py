@@ -6,6 +6,8 @@ import json
 from pika.exceptions import AMQPConnectionError
 from dotenv import load_dotenv
 
+from shared.rabbitmq.types import QueueMsgSchemaInterface
+
 
 class QueueService:
     def __init__(
@@ -54,11 +56,11 @@ class QueueService:
 
         raise RuntimeError("RabbitMQ not reachable after multiple retries")
 
-    def publish(self, queue_name, message):
+    def publish(self, queue_name: str, message: QueueMsgSchemaInterface):
         self.channel.basic_publish(
             exchange="",
             routing_key=queue_name,
-            body=json.dumps(message),
+            body=json.dumps(message.to_dict()),
             properties=pika.BasicProperties(delivery_mode=2),
         )
         self._logger.debug(f"Message published to {queue_name}: {message}")

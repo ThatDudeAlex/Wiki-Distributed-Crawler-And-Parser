@@ -1,6 +1,7 @@
 from dataclasses import asdict
 from datetime import datetime
 import logging
+import os
 from components.crawler.configs.types import FetchResponse
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
@@ -14,16 +15,15 @@ class PublishingService:
         self._logger = logger
         pass
 
-    def _publish_page_metadata(self, page_metadata: SavePageMetadataTask):
+    def _publish_page_metadata(self, message: SavePageMetadataTask):
         try:
-            page_metadata.validate_publish()
-            message = asdict(page_metadata)
+            message.validate_publish()
 
             self._queue_service.publish(
                 CrawlerQueueChannels.SAVE_PAGE_DATA.value, message
             )
 
-            if page_metadata.status == CrawlStatus.SUCCESS:
+            if message.status == CrawlStatus.SUCCESS:
                 self._logger.info("Published: Page Metadata - Success")
             else:
                 self._logger.info("Published: Page Metadata - Failed Crawl")
@@ -69,10 +69,13 @@ class PublishingService:
 
     def publish_parsing_task(self, url: str, depth: int, compressed_filepath: str):
         message = ParsingTask(
-            url=url, depth=depth, compressed_filepath=compressed_filepath).model_dump_json()
-
-        self._queue_service.publish(
-            CrawlerQueueChannels.PARSE.value, message
+            url=url, depth=depth, compressed_filepath=compressed_filepath
         )
+        # Validate Message
+        message.validate_publish()
+
+        # convert message to dict to so that it's JSON serializable
+        self._queue_service.publish(CrawlerQueueChannels.PARSE.value, message)
         self._logger.debug(
-            "Published: Parsing Task - %s", compressed_filepath)
+            "Published: Parsing Task - %s", compressed_filepath
+        )

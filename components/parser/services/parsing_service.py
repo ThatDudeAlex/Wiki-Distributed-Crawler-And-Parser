@@ -4,6 +4,7 @@ from components.parser.core.wiki_content_extractor import extract_wiki_page_cont
 from components.parser.core.wiki_link_extractor import extract_wiki_page_links
 from components.parser.services.compressed_html_reader import load_compressed_html
 from components.parser.services.publisher import PublishingService
+from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
 from shared.utils import get_timestamp_eastern_time
 
 
@@ -14,7 +15,11 @@ class ParsingService:
         self._publisher = PublishingService(self._queue_service, self._logger)
         pass
 
-    def run(self, url: str, depth: int, compressed_filepath: str):
+    def run(self, task: ParsingTask):
+        url = task.url
+        depth = task.depth
+        compressed_filepath = task.compressed_filepath
+
         try:
             self._logger.info(
                 'STAGE 1: Loading HTML file from: %s', compressed_filepath

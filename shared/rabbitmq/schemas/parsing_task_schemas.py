@@ -1,19 +1,52 @@
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, FilePath, HttpUrl
-from shared.rabbitmq.types import ParsedContent, ProcessDiscoveredLinks
+from shared.rabbitmq.schemas.crawling_task_schemas import ValidationError
+from shared.rabbitmq.types import ParsedContent, ProcessDiscoveredLinks, QueueMsgSchemaInterface
 
 
 # === Parsing Task (Crawler → Parser) ===
 
-# TODO: Pydantic - Create a dataclass to convert this class into
-class ParsingTask(BaseModel):
-    url: HttpUrl
+@dataclass
+class ParsingTask(QueueMsgSchemaInterface):
+    url: str
     depth: int
-    compressed_filepath: FilePath
+    compressed_filepath: str
+
+    def _validate(self) -> None:
+        # Validate URL
+        if not self.url or not self.is_valid_url(self.url):
+            raise ValidationError("Invalid or missing URL", field="url")
+
+        # Validate depth
+        if not isinstance(self.depth, int) or self.depth < 0:
+            raise ValidationError(
+                "Depth must be a non-negative integer", field="depth")
+
+        # Validate compressed_filepath
+        if not isinstance(self.compressed_filepath, str) or not self.compressed_filepath.strip():
+            raise ValidationError(
+                "compressed_filepath must be a non-empty string", field="compressed_filepath")
+
+    def validate_publish(self) -> None:
+        self._validate()
+
+    def validate_consume(self) -> None:
+        self._validate()
 
 
 # === Save Parsed Content (Parser → DB Writer) ===
+
+# @dataclass
+# class ParsedContent:
+#     source_page_url: str
+#     title: str
+#     parsed_at: datetime
+#     summary: Optional[str] = None
+#     text_content: Optional[str] = None
+#     text_content_hash: Optional[str] = None
+#     categories: Optional[List[str]] = None
 
 # TODO: Pydantic - Create a BaseClass that includes to_dataclass()
 class ParsedContentsMessage(BaseModel):
