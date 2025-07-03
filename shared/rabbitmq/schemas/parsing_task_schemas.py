@@ -53,6 +53,7 @@ class DiscoveredLinkPydanticModel(BaseModel):
 
 
 # TODO: Pydantic - Create a dataclass to convert this class into
+# TODO: This class and SaveLinksPayload can be merged
 class ProcessDiscoveredLinksMsg(BaseModel):
     source_page_url: HttpUrl
     discovered_at: datetime

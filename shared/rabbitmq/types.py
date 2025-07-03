@@ -1,13 +1,35 @@
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
+from urllib.parse import urlparse
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 
 
-# TODO: Pydantic - For each pydantic message model, create a @dataclass for it.
-# That way i can easily convert into it after doing validation, and not have to deal
-# with the pydantic errors that can occurr when used in internal logic
+@dataclass
+class QueueMsgSchemaInterface(ABC):
+    """Base class for all rabbitmq message schemas"""
+
+    def is_valid_url(self, url: str) -> bool:
+        if not isinstance(url, str):
+            return False
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+
+    @abstractmethod
+    def validate(self) -> None:
+        pass
+
+
+class ValidationError(Exception):
+    """Raised when a message schema fails validation"""
+
+    def __init__(self, message: str, field: str = None):
+        self.field = field
+        full_msg = f"{field}: {message}" if field else message
+        super().__init__(full_msg)
+
 
 @dataclass
 class PageMetadata:

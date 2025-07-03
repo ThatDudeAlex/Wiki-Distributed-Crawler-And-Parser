@@ -1,31 +1,37 @@
+from datetime import datetime
 from functools import partial
+import json
 import logging
 from components.crawler.services.crawler_service import CrawlerService
 from shared.rabbitmq.queue_service import QueueService
-from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
+from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask, ValidationError
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 
 
 def handle_message(ch, method, properties, body, crawler_service: CrawlerService, logger: logging.Logger):
     try:
-        # model_validate_json(body)
-        task = CrawlTask.model_validate_json(body)
+        message_str = body.decode('utf-8')
+        message_dict = json.loads(message_str)
+
+        task = CrawlTask(**message_dict)
+        task.validate()
 
         logger.info("Initiating crawl for URL: %s", task.url)
+        crawler_service.run(task)
 
-        # run crawler service
-        # IMPORTANT: url must be converted to a string to avoid potential type errors
-        # TODO: idk how true is the important comment above, experiment with removing str()
-        crawler_service.run(str(task.url), task.depth)
-
-        # acknowledge success
+        # Acknowledge message
         ch.basic_ack(delivery_tag=method.delivery_tag)
-    except ValueError as e:
-        logger.error("Message Skipped - Invalid task message: %s", e.json())
+
+    except ValidationError as e:
+        logger.error("Validation failed: %s", str(e))
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
+    except json.JSONDecodeError as e:
+        logger.error("Invalid JSON format: %s", str(e))
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
     except Exception as e:
-        # TODO: look into if retrying could help the situation
-        logger.error(f"Error processing message: {e}")
+        logger.exception("Unexpected error processing message:")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 

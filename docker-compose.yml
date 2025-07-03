@@ -54,15 +54,15 @@ services:
     ports:
       - "5432:5432"
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@domain.com
-      PGADMIN_DEFAULT_PASSWORD: adminpassword
-    ports:
-      - "5050:80"
-    depends_on:
-      - postgres
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@domain.com
+  #     PGADMIN_DEFAULT_PASSWORD: adminpassword
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     - postgres
 
   postgres_initiator:
     container_name: postgres_initiator
@@ -154,39 +154,39 @@ services:
 
   # =========== 
 
-  parser:
-    build:
-      context: .
-      dockerfile: components/parser/Dockerfile
-    depends_on:
-      - postgres
-      - postgres_initiator
-      - rabbitmq
-    env_file: .env
-    command: [ "python", "-m", "components.parser.main" ]
-    volumes:
-      - compressed_html_data:${DL_HTML_PATH}
-  db_service:
-    container_name: db_service
-    build:
-      context: .
-      dockerfile: components/db_service/Dockerfile
-    env_file: .env
-    depends_on:
-      - rabbitmq
-      - postgres
-    command: [ "python", "-m", "components.db_service.main" ]
+  # parser:
+  #   build:
+  #     context: .
+  #     dockerfile: components/parser/Dockerfile
+  #   depends_on:
+  #     - postgres
+  #     - postgres_initiator
+  #     - rabbitmq
+  #   env_file: .env
+  #   command: [ "python", "-m", "components.parser.main" ]
+  #   volumes:
+  #     - compressed_html_data:${DL_HTML_PATH}
+  # db_service:
+  #   container_name: db_service
+  #   build:
+  #     context: .
+  #     dockerfile: components/db_service/Dockerfile
+  #   env_file: .env
+  #   depends_on:
+  #     - rabbitmq
+  #     - postgres
+  #   command: [ "python", "-m", "components.db_service.main" ]
 
-  scheduler:
-    container_name: scheduler
-    build:
-      context: .
-      dockerfile: components/scheduler/Dockerfile
-    env_file: .env
-    depends_on:
-      - rabbitmq
-      - postgres
-    command: [ "python", "-m", "components.scheduler.main" ]
+  # scheduler:
+  #   container_name: scheduler
+  #   build:
+  #     context: .
+  #     dockerfile: components/scheduler/Dockerfile
+  #   env_file: .env
+  #   depends_on:
+  #     - rabbitmq
+  #     - postgres
+  #   command: [ "python", "-m", "components.scheduler.main" ]
   # ===========================================
   # Testing services for proxies/vpn services
   # ===========================================
