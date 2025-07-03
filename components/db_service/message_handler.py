@@ -14,7 +14,7 @@ def consume_save_page_metadata(ch, method, properties, body, logger: logging.Log
         message_dict = json.loads(message_str)
 
         task = SavePageMetadataTask(**message_dict)
-        task.validate()
+        task.validate_consume()
 
         logger.info("Initiating Save Page Metadata Task: %s", task.url)
         save_page_metadata(task, logger)

@@ -18,7 +18,11 @@ class QueueMsgSchemaInterface(ABC):
         return all([result.scheme, result.netloc])
 
     @abstractmethod
-    def validate(self) -> None:
+    def validate_publish(self) -> None:
+        pass
+
+    @abstractmethod
+    def validate_consume(self) -> None:
         pass
 
 

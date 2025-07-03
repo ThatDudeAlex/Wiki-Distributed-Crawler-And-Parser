@@ -16,7 +16,7 @@ class PublishingService:
 
     def _publish_page_metadata(self, page_metadata: SavePageMetadataTask):
         try:
-            page_metadata.validate()
+            page_metadata.validate_publish()
             message = asdict(page_metadata)
 
             self._queue_service.publish(

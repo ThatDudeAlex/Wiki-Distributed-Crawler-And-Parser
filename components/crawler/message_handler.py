@@ -14,7 +14,7 @@ def handle_message(ch, method, properties, body, crawler_service: CrawlerService
         message_dict = json.loads(message_str)
 
         task = CrawlTask(**message_dict)
-        task.validate()
+        task.validate_consume()
 
         logger.info("Initiating crawl for URL: %s", task.url)
         crawler_service.run(task)
