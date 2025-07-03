@@ -3,6 +3,7 @@ import logging
 from shared.rabbitmq.types import ProcessDiscoveredLinks
 from shared.redis.cache_service import CacheService
 from shared.rabbitmq.queue_service import QueueService
+from components.scheduler.core.filter import is_filtered
 
 
 class ScheduleService:
@@ -21,11 +22,29 @@ class ScheduleService:
 
     # TODO: Scheduler - Implement
     def process_links(self, page_links: ProcessDiscoveredLinks):
-        self._logger.info('STAGE 1 - Handle Duplicates & Filter')
-        self._logger.info('SCHEDULER!!!!!!!')
-        pass
+        length = len(page_links.links)
+        valid_links = []
+        self._logger.info('Link Processing Initiating....')
 
-    # TODO: Scheduler - Potentially better if pulled to a separate file in core/
+        for idx, link in enumerate(page_links.links, start=1):
+            self._logger.debug(f'Processing link {idx}/{length} - {link.url}')
+
+            # 1. Check For Duplicates
+            if self.cache.is_in_seen:
+                self._logger.debug(f'Discarding Duplicate URL - {link.url}')
+                continue
+
+            # 2. Apply Filter Rules
+            if is_filtered(link):
+                self._logger.debug(f'Filters Failed By - {link.url}')
+                continue
+
+            # 3. Add to 'seen' set
+            self.cache.add_to_seen_set(link.url)
+
+            # 4. Add to list of list to queue
+            valid_links.append(link)
+
     def _produce_crawl_task(self):
         pass
 

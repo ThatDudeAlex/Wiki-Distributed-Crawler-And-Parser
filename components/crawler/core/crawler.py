@@ -7,6 +7,7 @@ from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from components.crawler.configs.app_configs import ROBOTS_TXT, BASE_HEADERS
 
 
+# TODO: remove after moving it to scheduler
 def _robot_blocks_crawling(url: str, logger: logging.Logger) -> bool:
     """
     Returns True if robots.txt blocks crawling the URL; otherwise, False.

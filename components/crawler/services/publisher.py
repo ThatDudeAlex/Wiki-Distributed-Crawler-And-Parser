@@ -3,7 +3,7 @@ import logging
 from components.crawler.configs.types import FetchResponse
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
-from shared.rabbitmq.schemas.crawling_task_schemas import CrawlStatus, PageMetadataMessage, SuccessCrawlReport, FailedCrawlReport
+from shared.rabbitmq.schemas.crawling_task_schemas import CrawlStatus, PageMetadataMessage
 from shared.rabbitmq.queue_service import QueueService
 
 

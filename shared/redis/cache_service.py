@@ -12,9 +12,9 @@ class CacheService:
             host='redis', port=6379, decode_responses=True)
         self._logger = logger
 
-    def add_to_enqueued_set(self, url: str) -> bool:
+    def add_to_seen_set(self, url: str) -> bool:
         """
-        Add ``URL`` to the ``enqueued`` set
+        Add ``URL`` to the ``seen`` set
 
         Returns ``True`` if it successfully adds the ``URL`` else returns ``False``
         """
@@ -50,8 +50,8 @@ class CacheService:
     def is_in_visited(self, url: str) -> bool:
         return self._redis.sismember(CacheSets.VISITED.value, url)
 
-    def is_in_enqueued(self, url: str) -> bool:
+    def is_in_seen(self, url: str) -> bool:
         return self._redis.sismember(CacheSets.SEEN.value, url)
 
     def is_queueable(self, url: str) -> bool:
-        return not self.is_in_visited(url) and not self.is_in_enqueued(url)
+        return not self.is_in_visited(url) and not self.is_in_seen(url)

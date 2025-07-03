@@ -14,7 +14,7 @@ class _WikipediaLinkExtractor:
 
     def extract(self, page_url: str, html_content: str, depth: int) -> LinkData:
         """
-        Parses a Wikipedia HTML page and returns structured data for links within the main body.
+        Parses a Wikipedia HTML page and returns structured data for links within the main body
         """
         try:
             soup = BeautifulSoup(html_content, 'lxml')
@@ -64,7 +64,7 @@ class _WikipediaLinkExtractor:
 
             return LinkData(
                 url=normalized_href,
-                depth=depth,
+                depth=depth + 1,  # update the depth of the link
                 anchor_text=text_content,
                 title_attribute=title_attribute,
                 rel_attribute=rel_attribute,
