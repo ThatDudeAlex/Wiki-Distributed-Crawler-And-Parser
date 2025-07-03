@@ -5,6 +5,7 @@ from typing import List
 from bs4 import BeautifulSoup, Tag
 from components.parser.configs.app_configs import WIKIPEDIA_MAIN_BODY_ID, IMAGE_EXTENSIONS
 from shared.rabbitmq.schemas.parsing_task_schemas import LinkData
+from shared.utils import get_timestamp_eastern_time
 from shared.utils import is_internal_link, normalize_url
 
 
@@ -67,6 +68,7 @@ class _WikipediaLinkExtractor:
                 source_page_url=source_page_url,
                 url=normalized_href,
                 depth=depth + 1,  # update the depth of the link
+                discovered_at=get_timestamp_eastern_time(True),
                 anchor_text=text_content,
                 title_attribute=title_attribute,
                 rel_attribute=rel_attribute,

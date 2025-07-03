@@ -24,10 +24,9 @@ class PublishingService:
         self._logger.info("Published: Save Parsed Data")
 
     # TODO: Implement retry mechanism and dead-letter
-    def publish_process_links_task(self, discovered_at: datetime, page_links: List[LinkData]):
+    def publish_process_links_task(self, page_links: List[LinkData]):
 
-        message = ProcessDiscoveredLinks(
-            discovered_at=discovered_at, links=page_links)
+        message = ProcessDiscoveredLinks(links=page_links)
         message.validate_publish()
 
         self._queue_service.publish(

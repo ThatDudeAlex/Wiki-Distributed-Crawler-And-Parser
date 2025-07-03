@@ -103,6 +103,7 @@ class LinkData(QueueMsgSchemaInterface):
     source_page_url: str
     url: str
     depth: int
+    discovered_at: str
     is_internal: bool = False
     anchor_text: Optional[str] = None
     title_attribute: Optional[str] = None
@@ -124,6 +125,17 @@ class LinkData(QueueMsgSchemaInterface):
         if not isinstance(self.depth, int) or self.depth < 0:
             raise ValidationError(
                 "depth must be a non-negative integer", field="depth")
+
+        # Validate discovered_at
+        if not isinstance(self.discovered_at, str):
+            raise ValidationError(
+                "discovered_at must be a string", field="discovered_at")
+
+        try:
+            datetime.fromisoformat(self.discovered_at)
+        except ValueError:
+            raise ValidationError(
+                "discovered_at must be a valid ISO 8601 timestamp", field="discovered_at")
 
         # Validate is_internal
         if not isinstance(self.is_internal, bool):
@@ -148,14 +160,10 @@ class LinkData(QueueMsgSchemaInterface):
 
 @dataclass
 class ProcessDiscoveredLinks(QueueMsgSchemaInterface):
-    discovered_at: datetime
+    # discovered_at: datetime
     links: List[LinkData]
 
     def _validate(self) -> None:
-        if not isinstance(self.discovered_at, datetime):
-            raise ValidationError(
-                "discovered_at must be a datetime object", field="discovered_at")
-
         if not isinstance(self.links, list) or not self.links:
             raise ValidationError(
                 "links must be a non-empty list", field="links")
@@ -173,20 +181,7 @@ class ProcessDiscoveredLinks(QueueMsgSchemaInterface):
             except ValidationError as e:
                 raise ValidationError(str(e), field=f"links[{i}]")
 
-        # Convert to ISO string
-        self.discovered_at = self.discovered_at.isoformat()
-
     def validate_consume(self) -> None:
-        if not isinstance(self.discovered_at, str):
-            raise ValidationError(
-                "discovered_at must be a string", field="discovered_at")
-
-        try:
-            self.discovered_at = datetime.fromisoformat(self.discovered_at)
-        except ValueError:
-            raise ValidationError(
-                "discovered_at must be a valid ISO 8601 datetime", field="discovered_at")
-
         # Convert link dicts to LinkData instances
         for i, link in enumerate(self.links):
             if isinstance(link, dict):
