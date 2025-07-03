@@ -105,7 +105,18 @@ class SavePageMetadataTask(QueueMsgSchemaInterface):
         self.fetched_at = self.fetched_at.isoformat()
 
     def validate_consume(self) -> None:
-        # fetched_at must be a string — convert to datetime
+        # Convert status from string to enum if needed
+        if isinstance(self.status, str):
+            try:
+                self.status = CrawlStatus(self.status)
+            except ValueError:
+                raise ValidationError(
+                    f"Invalid value for CrawlStatus: {self.status}", field="status")
+        elif not isinstance(self.status, CrawlStatus):
+            raise ValidationError(
+                "status must be a CrawlStatus enum or string", field="status")
+
+        # Convert fetched_at from string to datetime
         if not isinstance(self.fetched_at, str):
             raise ValidationError(
                 "fetched_at must be a string when consuming", field="fetched_at")
@@ -115,5 +126,4 @@ class SavePageMetadataTask(QueueMsgSchemaInterface):
         except ValueError:
             raise ValidationError(
                 "fetched_at must be a valid ISO 8601 datetime string", field="fetched_at")
-
         self._validate()

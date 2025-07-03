@@ -4,11 +4,10 @@ from typing import List
 
 from sqlalchemy import case
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.exc import DataError, IntegrityError, OperationalError
 from sqlalchemy.orm import Session
 from database.engine import SessionLocal
-from database.db_models.models import Category, Page, PageContent, CrawlStatus
-from components.db_service.configs.app_configs import MAX_RETRIES
+from database.db_models.models import Category, Page, PageContent
+from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.rabbitmq.types import ParsedContent
 from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
 
@@ -81,7 +80,7 @@ def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logg
                     'failed_crawl_attempts': case(
                         (
                             stmt.excluded.last_crawl_status.in_(
-                                ['CRAWL_FAILED', 'SKIPPED']),
+                                [CrawlStatus.FAILED.value, CrawlStatus.SKIPPED.value]),
                             Page.failed_crawl_attempts + 1
                         ),
                         else_=Page.failed_crawl_attempts
