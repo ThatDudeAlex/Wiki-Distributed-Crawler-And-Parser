@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 from database.engine import SessionLocal
 from database.db_models.models import Category, Page, PageContent, CrawlStatus
 from components.db_service.configs.app_configs import MAX_RETRIES
-from shared.rabbitmq.types import PageMetadata, ParsedContent
+from shared.rabbitmq.types import ParsedContent
+from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
 
 
 @contextmanager
@@ -45,7 +46,7 @@ def fetch_page_metadata(url: str, logger: logging.Logger, session_factory=None):
                 "Unexpected error while fetching page metadata: %s", url)
 
 
-def save_page_metadata(page_metadata: PageMetadata, logger: logging.Logger, session_factory=None):
+def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logger, session_factory=None):
     with get_db(session_factory=session_factory) as db:
         try:
             stmt = insert(Page).values(

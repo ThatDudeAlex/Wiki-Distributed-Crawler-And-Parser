@@ -32,19 +32,6 @@ class ValidationError(Exception):
 
 
 @dataclass
-class PageMetadata:
-    status: CrawlStatus
-    fetched_at: datetime
-    url: str
-    http_status_code: Optional[int] = None
-    url_hash: Optional[str] = None
-    html_content_hash: Optional[str] = None
-    compressed_filepath: Optional[str] = None
-    error_type: Optional[str] = None
-    error_message: Optional[str] = None
-
-
-@dataclass
 class ParsedContent:
     source_page_url: str
     title: str

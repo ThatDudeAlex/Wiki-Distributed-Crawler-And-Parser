@@ -46,14 +46,14 @@ def crawl(url: str, logger: logging.Logger) -> FetchResponse:
         logger.info('Successfully Fetched URL: %s', url)
 
         return FetchResponse(
-            True, url, CrawlStatus.CRAWLED_SUCCESS,
+            True, url, CrawlStatus.SUCCESS,
             response.status_code, dict(response.headers), response.text
         )
 
     except requests.HTTPError as e:
         logger.error("HTTPError in '%s' - StatusCode: %s - %s", url,
                      e.response.status_code if e.response else "N/A", str(e))
-        return FetchResponse(success=False, url=url, crawl_status=CrawlStatus.CRAWL_FAILED, error=e)
+        return FetchResponse(success=False, url=url, crawl_status=CrawlStatus.FAILED, error=e)
 
     except requests.RequestException as e:
         logger.error(f"RequestException in '{url}' - {e}")

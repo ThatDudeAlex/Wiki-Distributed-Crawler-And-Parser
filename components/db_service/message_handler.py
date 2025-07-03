@@ -4,17 +4,20 @@ import logging
 from components.db_service.core.db_service import save_page_metadata, save_parsed_data
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import DbServiceQueueChannels
-from shared.rabbitmq.schemas.crawling_task_schemas import PageMetadataMessage
+from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContentsMessage
 
 
 def consume_save_page_metadata(ch, method, properties, body, logger: logging.Logger):
     try:
-        logger.info("Received save page metadata")
-        message = json.loads(body.decode())
-        task = PageMetadataMessage.model_validate_json(message)
+        message_str = body.decode('utf-8')
+        message_dict = json.loads(message_str)
 
-        save_page_metadata(task.to_dataclass(), logger)
+        task = SavePageMetadataTask(**message_dict)
+        task.validate()
+
+        logger.info("Initiating Save Page Metadata Task: %s", task.url)
+        save_page_metadata(task, logger)
 
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)
