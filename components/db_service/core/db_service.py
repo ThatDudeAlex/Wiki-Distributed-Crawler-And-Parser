@@ -46,6 +46,7 @@ def fetch_page_metadata(url: str, logger: logging.Logger, session_factory=None):
                 "Unexpected error while fetching page metadata: %s", url)
 
 
+# TODO: UPDATE the on_conflict_do_update to only change what's needed!
 def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logger, session_factory=None):
     with get_db(session_factory=session_factory) as db:
         try:
