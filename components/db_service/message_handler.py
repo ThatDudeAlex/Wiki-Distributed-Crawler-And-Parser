@@ -1,10 +1,11 @@
 from functools import partial
 import json
 import logging
-from components.db_service.core.db_service import save_page_metadata, save_parsed_data
+from components.db_service.core.db_service import save_page_metadata, save_parsed_data, save_processed_links
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import DbServiceQueueChannels
 from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
+from shared.rabbitmq.schemas.link_processing_schemas import List[str]
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 
 
@@ -50,6 +51,28 @@ def consume_save_parsed_content(ch, method, properties, body, logger: logging.Lo
         # TODO: look into if retrying could help the situation
         # maybe requeue for OperationalError or add a dead-letter queue
         logger.error(f"Error processing message: {e}")
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
+
+def consume_save_save_processed_Links(ch, method, properties, body, logger: logging.Logger):
+    try:
+        message_str = body.decode('utf-8')
+        message_dict = json.loads(message_str)
+
+        task = List[str](**message_dict)
+        task.validate_consume()
+
+        save_processed_links(task, logger)
+
+        # acknowledge success
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+    except ValueError as e:
+        logger.error("Message Skipped - Invalid task message: %s", e)
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+    except Exception as e:
+        # TODO: look into if retrying could help the situation
+        # maybe requeue for OperationalError or add a dead-letter queue
+        logger.error("Error processing message: %s", e)
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 

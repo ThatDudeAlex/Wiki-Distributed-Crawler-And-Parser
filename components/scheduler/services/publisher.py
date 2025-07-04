@@ -16,7 +16,7 @@ class PublishingService:
         pass
 
     # TODO: Implement retry mechanism and dead-letter
-    def publish_save_parsed_data(self, links_to_save: List[LinkData]):
+    def publish_save_processed_links(self, links_to_save: List[LinkData]):
         message = SaveProcessedLinks(links=links_to_save)
         message.validate_publish()
 

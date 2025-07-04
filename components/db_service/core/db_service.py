@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from datetime import datetime
 import logging
 from typing import List
 
@@ -6,9 +7,10 @@ from sqlalchemy import case
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 from database.engine import SessionLocal
-from database.db_models.models import Category, Page, PageContent
+from database.db_models.models import Category, Link, Page, PageContent
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
+from shared.rabbitmq.schemas.link_processing_schemas import SaveProcessedLinks
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 
 
@@ -71,9 +73,7 @@ def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logg
                 set_={
                     'last_crawl_status': stmt.excluded.last_crawl_status,
                     'http_status_code': stmt.excluded.http_status_code,
-                    'url_hash': stmt.excluded.url_hash,
                     'html_content_hash': stmt.excluded.html_content_hash,
-                    'compressed_filepath': stmt.excluded.compressed_filepath,
                     'last_crawled_at': stmt.excluded.last_crawled_at,
                     'last_error_seen': stmt.excluded.last_error_seen,
                     'total_crawl_attempts': Page.total_crawl_attempts + 1,
@@ -93,37 +93,87 @@ def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logg
                 "Unexpected error while fetching page metadata: %s", page_metadata.url)
 
 
+def save_processed_links(processed_links: SaveProcessedLinks, logger: logging.Logger, session_factory=None) -> None:
+    with get_db(session_factory=session_factory) as db:
+        try:
+            for link in processed_links.links:
+                discovered_at_dt = datetime.fromisoformat(link.discovered_at)
+
+                stmt = insert(Link).values(
+                    source_page_url=link.source_page_url,
+                    url=link.url,
+                    depth=link.depth,
+                    discovered_at=discovered_at_dt,
+                    is_internal=link.is_internal,
+                    anchor_text=link.anchor_text,
+                    title_attribute=link.title_attribute,
+                    rel_attribute=link.rel_attribute,
+                    id_attribute=link.id_attribute,
+                    link_type=link.link_type,
+                )
+
+                stmt = stmt.on_conflict_do_update(
+                    # Assumes `url` has a UNIQUE constraint
+                    index_elements=['source_page_url', 'url'],
+                    set_={
+                        'anchor_text': stmt.excluded.anchor_text,
+                        'title_attribute': stmt.excluded.title_attribute,
+                        'rel_attribute': stmt.excluded.rel_attribute,
+                        'id_attribute': stmt.excluded.id_attribute,
+                        'link_type': stmt.excluded.link_type,
+                    }
+                )
+                db.execute(stmt)
+        except Exception:
+            logger.exception(
+                "Unexpected error while saving processed links")
+
+
 def save_parsed_data(page_data: ParsedContent, logger: logging.Logger, session_factory=None) -> bool:
     with get_db(session_factory=session_factory) as db:
         try:
-            stmt = insert(PageContent).values(
-                source_page_url=page_data.source_page_url,
-                title=page_data.title,
-                summary=page_data.summary,
-                text_content=page_data.text_content,
-                text_content_hash=page_data.text_content_hash,
-                parsed_at=page_data.parsed_at,
-            )
+            # Get or create categories
+            category_objs = _get_or_create_categories(db, page_data.categories)
 
-            # TODO: Implement inserting categories into their own table
-            db.execute(stmt)
+            # Insert or update PageContent
+            existing_page = db.query(PageContent).filter_by(
+                source_page_url=page_data.source_page_url).first()
+
+            if existing_page:
+                # Update existing fields
+                existing_page.title = page_data.title
+                existing_page.summary = page_data.summary
+                existing_page.text_content = page_data.text_content
+                existing_page.text_content_hash = page_data.text_content_hash
+                existing_page.parsed_at = page_data.parsed_at
+                existing_page.categories = category_objs  # update associations
+            else:
+                # Create new PageContent
+                page = PageContent(
+                    source_page_url=page_data.source_page_url,
+                    title=page_data.title,
+                    summary=page_data.summary,
+                    text_content=page_data.text_content,
+                    text_content_hash=page_data.text_content_hash,
+                    parsed_at=page_data.parsed_at,
+                    categories=category_objs  # set relationship
+                )
+                db.add(page)
+
+            return True
         except Exception:
             logger.exception(
                 "Unexpected error while saving parsed content: %s", page_data.source_page_url)
+            return False
 
 
+# Makes sure Category objects exist for each name in the list.
 def _get_or_create_categories(db: Session, category_names: List[str]):
-    """
-    Ensures Category objects exist for each name in the list.
-
-    :param db: SQLAlchemy session
-    :param category_names: List of category names
-    :return: List of Category objects
-    """
     existing_categories = db.query(Category).filter(
-        Category.name.in_(category_names)).all()
+        Category.name.in_(category_names)
+    ).all()
 
-    existing_names = {cat.name for cat in existing_categories}
+    existing_names = {category.name for category in existing_categories}
     new_names = set(category_names) - existing_names
 
     new_categories = [Category(name=name) for name in new_names]

@@ -61,5 +61,5 @@ class ScheduleService:
             return
 
         self._logger.info("Publishing %d valid links", len(valid_links))
-        self._publisher.publish_save_parsed_data(valid_links)
+        self._publisher.publish_save_processed_links(valid_links)
         self._publisher.publish_crawl_tasks(valid_links)
