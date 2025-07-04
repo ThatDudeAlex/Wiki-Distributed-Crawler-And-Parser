@@ -160,7 +160,6 @@ class LinkData(QueueMsgSchemaInterface):
 
 @dataclass
 class ProcessDiscoveredLinks(QueueMsgSchemaInterface):
-    # discovered_at: datetime
     links: List[LinkData]
 
     def _validate(self) -> None:

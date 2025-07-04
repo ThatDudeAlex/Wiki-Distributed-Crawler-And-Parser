@@ -30,12 +30,12 @@ except ImportError:
     COLOR_FORMATTER = FORMATTER
 
 
-def get_logger(name: str) -> logging.Logger:
+def get_logger(name: str, level: str = LOG_LEVEL) -> logging.Logger:
     logger = logging.getLogger(name)
     if logger.handlers:
         return logger  # Avoid duplicate handlers
 
-    logger.setLevel(LOG_LEVEL)
+    logger.setLevel(level)
 
     # Console handler
     ch = logging.StreamHandler(sys.stdout)

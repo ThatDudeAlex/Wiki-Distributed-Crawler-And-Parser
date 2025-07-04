@@ -66,5 +66,6 @@ class DbServiceQueueChannels(EnumCommonMethods, str, Enum):
 
 # Scheduler queue channels
 class SchedulerQueueChannels(EnumCommonMethods, str, Enum):
+    ADD_TO_QUEUE = QueueNames.CRAWL_TASK.value,
     PROCESS_LINKS = QueueNames.PROCESS_LINKS.value,
     SAVE_PROCESSED_LINKS = QueueNames.SAVE_PROCESSED_LINKS.value

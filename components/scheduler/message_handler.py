@@ -16,6 +16,7 @@ def process_discovered_links(ch, method, properties, body, scheduler: ScheduleSe
         task.validate_consume()
 
         scheduler.process_links(task)
+
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)
     except ValueError as e:

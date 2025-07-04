@@ -54,15 +54,15 @@ services:
     ports:
       - "5432:5432"
 
-  # pgadmin:
-  #   image: dpage/pgadmin4:latest
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: admin@domain.com
-  #     PGADMIN_DEFAULT_PASSWORD: adminpassword
-  #   ports:
-  #     - "5050:80"
-  #   depends_on:
-  #     - postgres
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@domain.com
+      PGADMIN_DEFAULT_PASSWORD: adminpassword
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
 
   postgres_initiator:
     container_name: postgres_initiator
@@ -85,72 +85,72 @@ services:
 
   crawler_noproxy:
     <<: *crawler-common
+
   # California Proxies
-  # crawler_la:
-  #   <<: *crawler-common
-  #   environment:
-  #     - HTTP_PROXY=${CA_LA1_PROXY}
-  #     - HTTPS_PROXY=${CA_LA1_PROXY}
+  crawler_la:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_LA1_PROXY}
+      - HTTPS_PROXY=${CA_LA1_PROXY}
 
-  # crawler_santa_cruz:
-  #   <<: *crawler-common
-  #   environment:
-  #     - HTTP_PROXY=${CA_SANTA_CRUZ1_PROXY}
-  #     - HTTPS_PROXY=${CA_SANTA_CRUZ1_PROXY}
+  crawler_san_jose:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_SAN_JOSE_PROXY}
+      - HTTPS_PROXY=${CA_SAN_JOSE_PROXY}
 
-  # # Florida Proxies
-  # crawler_boca_raton:
-  #   <<: *crawler-common
-  #   environment:
-  #     - HTTP_PROXY=${FL_BOCA_RATON_PROXY}
-  #     - HTTPS_PROXY=${FL_BOCA_RATON_PROXY}
+  # Florida Proxies
+  crawler_boca_raton:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${FL_BOCA_RATON_PROXY}
+      - HTTPS_PROXY=${FL_BOCA_RATON_PROXY}
 
-  # # Nevada
-  # crawler_las_vegas:
-  #   <<: *crawler-common
-  #   environment:
-  #     - HTTP_PROXY=${NV_LAS_VEGAS1_PROXY}
-  #     - HTTPS_PROXY=${NV_LAS_VEGAS1_PROXY}
+  # Nevada
+  crawler_las_vegas:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NV_LAS_VEGAS1_PROXY}
+      - HTTPS_PROXY=${NV_LAS_VEGAS1_PROXY}
 
-  # # New York Proxies
-  # crawler_buffalo:
-  #   <<: *crawler-common
-  #   environment:
-  #     - HTTP_PROXY=${NY_BUFFALO1_PROXY}
-  #     - HTTPS_PROXY=${NY_BUFFALO1_PROXY}
+  # New York Proxies
+  crawler_buffalo:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NY_BUFFALO1_PROXY}
+      - HTTPS_PROXY=${NY_BUFFALO1_PROXY}
 
-  # crawler_nyc:
-  #   <<: *crawler-common
-  #   environment:
-  #     - HTTP_PROXY=${NY_NEW_YORK1_PROXY}
-  #     - HTTPS_PROXY=${NY_NEW_YORK1_PROXY}
+  crawler_nyc:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NY_NEW_YORK1_PROXY}
+      - HTTPS_PROXY=${NY_NEW_YORK1_PROXY}
 
-  # # Texas Proxies
-  # crawler_dallas:
-  #   <<: *crawler-common
-  #   environment:
-  #     - HTTP_PROXY=${TX_DALLAS1_PROXY}
-  #     - HTTPS_PROXY=${TX_DALLAS1_PROXY}
+  # Texas Proxies
+  crawler_dallas:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${TX_DALLAS1_PROXY}
+      - HTTPS_PROXY=${TX_DALLAS1_PROXY}
 
-  # crawler_victoria:
-  #   <<: *crawler-common
-  #   environment:
-  #     - HTTP_PROXY=${TX_VICTORIA1_PROXY}
-  #     - HTTPS_PROXY=${TX_VICTORIA1_PROXY}
+  crawler_victoria:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${TX_VICTORIA1_PROXY}
+      - HTTPS_PROXY=${TX_VICTORIA1_PROXY}
 
-  # # Virginia Proxies
-  # crawler_ashburn:
-  #   <<: *crawler-common
-  #   environment:
-  #     - HTTP_PROXY=${VA_ASHBURN1_PROXY}
-  #     - HTTPS_PROXY=${VA_ASHBURN1_PROXY}
+  # Virginia Proxies
+  crawler_ashburn:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${VA_ASHBURN1_PROXY}
+      - HTTPS_PROXY=${VA_ASHBURN1_PROXY}
 
-  # crawler_reston:
-  #   <<: *crawler-common
-  #   environment:
-  #     - HTTP_PROXY=${VA_RESTON1_PROXY}
-  #     - HTTPS_PROXY=${VA_RESTON1_PROXY}
-
+  crawler_reston:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${VA_RESTON1_PROXY}
+      - HTTPS_PROXY=${VA_RESTON1_PROXY}
 
   # =========== 
 
@@ -176,16 +176,16 @@ services:
       - rabbitmq
       - postgres
     command: [ "python", "-m", "components.db_service.main" ]
-  # scheduler:
-  #   container_name: scheduler
-  #   build:
-  #     context: .
-  #     dockerfile: components/scheduler/Dockerfile
-  #   env_file: .env
-  #   depends_on:
-  #     - rabbitmq
-  #     - postgres
-  #   command: [ "python", "-m", "components.scheduler.main" ]
+  scheduler:
+    container_name: scheduler
+    build:
+      context: .
+      dockerfile: components/scheduler/Dockerfile
+    env_file: .env
+    depends_on:
+      - rabbitmq
+      - postgres
+    command: [ "python", "-m", "components.scheduler.main" ]
   # ===========================================
   # Testing services for proxies/vpn services
   # ===========================================

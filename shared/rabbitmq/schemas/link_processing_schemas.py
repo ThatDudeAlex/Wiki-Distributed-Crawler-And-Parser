@@ -1,22 +1,12 @@
-from pydantic import BaseModel, HttpUrl
-from datetime import datetime
+from dataclasses import dataclass
+from shared.rabbitmq.types import QueueMsgSchemaInterface
+from shared.rabbitmq.schemas.parsing_task_schemas import LinkData, ProcessDiscoveredLinks
 
 
 # === Save Link Record (Scheduler → DB Writer) ===
 
-class LinkRecord(BaseModel):
-    source_page_url: HttpUrl | None  # only None when seeded or imported
-    url: HttpUrl
-    depth: int
-    is_internal: bool = False
-    anchor_text: str | None
-
-    id_attribute:    str | None
-    rel_attribute:   str | None
-    title_attribute: str | None
-    link_type: str | None
-    discovered_at: datetime
-
-
-class SaveLinksPayload(BaseModel):
-    links: list[LinkRecord]
+@dataclass
+class SaveProcessedLinks(ProcessDiscoveredLinks):
+    # Only inherits from ProcessDiscoveredLinks beccause it's
+    # semantically different but structurally the same
+    pass

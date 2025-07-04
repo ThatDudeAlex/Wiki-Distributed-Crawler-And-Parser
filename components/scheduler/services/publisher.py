@@ -2,8 +2,11 @@ from datetime import datetime
 import logging
 from typing import List
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
-from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
+from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
+from shared.rabbitmq.schemas.parsing_task_schemas import LinkData
+from shared.rabbitmq.schemas.link_processing_schemas import SaveProcessedLinks
 from shared.rabbitmq.queue_service import QueueService
+from shared.utils import get_timestamp_eastern_time
 
 
 class PublishingService:
@@ -12,9 +15,30 @@ class PublishingService:
         self._logger = logger
         pass
 
-    # TODO: Scheduler - Implement retry mechanism and dead-letter
-    def publish_store_processed_links(self):
+    # TODO: Implement retry mechanism and dead-letter
+    def publish_save_parsed_data(self, links_to_save: List[LinkData]):
+        message = SaveProcessedLinks(links=links_to_save)
+        message.validate_publish()
 
-        # TODO: Implement
+        self._queue_service.publish(
+            SchedulerQueueChannels.SAVE_PROCESSED_LINKS, message)
 
-        self._logger.info("Published: Store Processed Links")
+        self._logger.info("Published: Save Parsed Data")
+
+    # TODO: Implement retry mechanism and dead-letter
+    def publish_crawl_tasks(self, links_to_crawl: List[LinkData]):
+        link_count = 0
+
+        for link in links_to_crawl:
+            message = CrawlTask(
+                url=link.url,
+                scheduled_at=get_timestamp_eastern_time(),
+                depth=link.depth
+            )
+            message.validate_publish()
+
+            self._queue_service.publish(
+                SchedulerQueueChannels.ADD_TO_QUEUE.value, message)
+            link_count += 1
+
+        self._logger.info("Published: %s Crawl Tasks", link_count)
