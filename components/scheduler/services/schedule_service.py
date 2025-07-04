@@ -3,7 +3,7 @@ import time
 from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
 from shared.redis.cache_service import CacheService
 from shared.rabbitmq.queue_service import QueueService
-from components.scheduler.core.filter import is_filtered
+from components.scheduler.core.filter import FilteringService
 from components.scheduler.services.publisher import PublishingService
 
 
@@ -13,6 +13,7 @@ class ScheduleService:
         self._queue_service = queue_service
         self.cache = CacheService(self._logger)
         self._publisher = PublishingService(self._queue_service, self._logger)
+        self.filter = FilteringService(self._logger)
 
         self._logger.info("Schedule Service Initiation Completed")
 
@@ -36,7 +37,7 @@ class ScheduleService:
                 continue
 
             # 2. Apply Filter Rules
-            if is_filtered(link, self._logger):
+            if self.filter.is_filtered(link):
                 self._logger.info("Link %d: Filtered Out - %s", idx, link.url)
                 continue
 

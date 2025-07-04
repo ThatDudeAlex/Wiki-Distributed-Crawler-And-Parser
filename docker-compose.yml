@@ -107,24 +107,24 @@ services:
       - HTTPS_PROXY=${FL_BOCA_RATON_PROXY}
 
   # Nevada
-  crawler_las_vegas:
-    <<: *crawler-common
-    environment:
-      - HTTP_PROXY=${NV_LAS_VEGAS1_PROXY}
-      - HTTPS_PROXY=${NV_LAS_VEGAS1_PROXY}
+  # crawler_las_vegas:
+  #   <<: *crawler-common
+  #   environment:
+  #     - HTTP_PROXY=${NV_LAS_VEGAS1_PROXY}
+  #     - HTTPS_PROXY=${NV_LAS_VEGAS1_PROXY}
 
   # New York Proxies
-  crawler_buffalo:
-    <<: *crawler-common
-    environment:
-      - HTTP_PROXY=${NY_BUFFALO1_PROXY}
-      - HTTPS_PROXY=${NY_BUFFALO1_PROXY}
+  # crawler_buffalo:
+  #   <<: *crawler-common
+  #   environment:
+  #     - HTTP_PROXY=${NY_BUFFALO1_PROXY}
+  #     - HTTPS_PROXY=${NY_BUFFALO1_PROXY}
 
-  crawler_nyc:
-    <<: *crawler-common
-    environment:
-      - HTTP_PROXY=${NY_NEW_YORK1_PROXY}
-      - HTTPS_PROXY=${NY_NEW_YORK1_PROXY}
+  # crawler_nyc:
+  #   <<: *crawler-common
+  #   environment:
+  #     - HTTP_PROXY=${NY_NEW_YORK1_PROXY}
+  #     - HTTPS_PROXY=${NY_NEW_YORK1_PROXY}
 
   # Texas Proxies
   crawler_dallas:
@@ -133,11 +133,11 @@ services:
       - HTTP_PROXY=${TX_DALLAS1_PROXY}
       - HTTPS_PROXY=${TX_DALLAS1_PROXY}
 
-  crawler_victoria:
-    <<: *crawler-common
-    environment:
-      - HTTP_PROXY=${TX_VICTORIA1_PROXY}
-      - HTTPS_PROXY=${TX_VICTORIA1_PROXY}
+  # crawler_victoria:
+  #   <<: *crawler-common
+  #   environment:
+  #     - HTTP_PROXY=${TX_VICTORIA1_PROXY}
+  #     - HTTPS_PROXY=${TX_VICTORIA1_PROXY}
 
   # Virginia Proxies
   crawler_ashburn:
@@ -146,11 +146,11 @@ services:
       - HTTP_PROXY=${VA_ASHBURN1_PROXY}
       - HTTPS_PROXY=${VA_ASHBURN1_PROXY}
 
-  crawler_reston:
-    <<: *crawler-common
-    environment:
-      - HTTP_PROXY=${VA_RESTON1_PROXY}
-      - HTTPS_PROXY=${VA_RESTON1_PROXY}
+  # crawler_reston:
+  #   <<: *crawler-common
+  #   environment:
+  #     - HTTP_PROXY=${VA_RESTON1_PROXY}
+  #     - HTTPS_PROXY=${VA_RESTON1_PROXY}
 
   # =========== 
 
