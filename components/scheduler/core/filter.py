@@ -3,7 +3,6 @@ from urllib.robotparser import RobotFileParser
 from shared.rabbitmq.schemas.parsing_task_schemas import LinkData
 from shared.config import MAX_DEPTH, BASE_HEADERS, ROBOTS_TXT
 from shared.utils import is_external_link, has_excluded_prefix, is_home_page
-from components.scheduler.services.robot_checker import robot_blocks_crawling
 import logging
 
 

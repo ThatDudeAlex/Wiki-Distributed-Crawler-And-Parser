@@ -54,7 +54,7 @@ def consume_save_parsed_content(ch, method, properties, body, logger: logging.Lo
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
-def consume_save_save_processed_Links(ch, method, properties, body, logger: logging.Logger):
+def consume_save_processed_Links(ch, method, properties, body, logger: logging.Logger):
     try:
         message_str = body.decode('utf-8')
         message_dict = json.loads(message_str)
@@ -86,6 +86,9 @@ def start_db_writer_listener(queue_service: QueueService, logger: logging.Logger
     save_parsed_content_partial = partial(
         consume_save_parsed_content, logger=logger
     )
+    save_save_processed_Links_partial = partial(
+        consume_save_processed_Links, logger=logger
+    )
 
     # Save Page Metadata
     queue_service.channel.basic_consume(
@@ -97,6 +100,12 @@ def start_db_writer_listener(queue_service: QueueService, logger: logging.Logger
     queue_service.channel.basic_consume(
         queue=DbServiceQueueChannels.SAVE_PARSED_DATA,
         on_message_callback=save_parsed_content_partial,
+        auto_ack=False
+    )
+    # Save Processed Links
+    queue_service.channel.basic_consume(
+        queue=DbServiceQueueChannels.SAVE_PROCESSED_LINKS,
+        on_message_callback=save_save_processed_Links_partial,
         auto_ack=False
     )
 
