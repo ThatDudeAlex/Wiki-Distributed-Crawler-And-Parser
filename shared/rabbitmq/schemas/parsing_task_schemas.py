@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
-from shared.rabbitmq.schemas.crawling_task_schemas import ValidationError
-from shared.rabbitmq.types import QueueMsgSchemaInterface
+from shared.rabbitmq.types import QueueMsgSchemaInterface, ValidationError
 
 
 # === Parsing Task (Crawler → Parser) ===

@@ -7,10 +7,10 @@ from sqlalchemy import case
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 from database.engine import SessionLocal
-from database.db_models.models import Category, Link, Page, PageContent
+from database.db_models.models import Category, Link, Page, PageContent, SeenUrlCache
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
-from shared.rabbitmq.schemas.link_processing_schemas import SaveProcessedLinks
+from shared.rabbitmq.schemas.link_processing_schemas import CacheSeenUrls, SaveProcessedLinks
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 
 
@@ -27,10 +27,12 @@ def get_db(session_factory=None):
     finally:
         db.close()
 
-# TODO: Remove if not needed
+
+# TODO: Update all insert queries to do bulk inserts like cache_seen_url()
 
 
 def fetch_page_metadata(url: str, logger: logging.Logger, session_factory=None):
+    # TODO: Remove function if not needed
     with get_db(session_factory=session_factory) as db:
         try:
             # Try finding an existing page by URL
@@ -47,7 +49,6 @@ def fetch_page_metadata(url: str, logger: logging.Logger, session_factory=None):
                 "Unexpected error while fetching page metadata: %s", url)
 
 
-# TODO: UPDATE the on_conflict_do_update to only change what's needed!
 def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logger, session_factory=None):
     with get_db(session_factory=session_factory) as db:
         try:
@@ -165,6 +166,32 @@ def save_parsed_data(page_data: ParsedContent, logger: logging.Logger, session_f
             logger.exception(
                 "Unexpected error while saving parsed content: %s", page_data.source_page_url)
             return False
+
+
+def cache_seen_url(seen_urls: CacheSeenUrls, logger: logging.Logger, session_factory=None) -> None:
+    with get_db(session_factory=session_factory) as db:
+        values = []
+        for seen_url in seen_urls.seen_urls:
+            values.append({
+                "url": seen_url.url,
+                "last_seen": seen_url.last_seen,
+            })
+
+        # Skip if no values
+        if not values:
+            logger.warning(
+                'Skipped URL caching into the DB: no values received')
+            return
+
+        # Single bulk INSERT ... ON CONFLICT DO NOTHING
+        stmt = insert(SeenUrlCache).values(values)
+        stmt = stmt.on_conflict_do_nothing(index_elements=['url'])
+
+        try:
+            db.execute(stmt)
+        except Exception:
+            logger.exception("Bulk insert into seen_url_cache failed")
+            raise
 
 
 # Makes sure Category objects exist for each name in the list.
