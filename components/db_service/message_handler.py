@@ -5,7 +5,7 @@ from components.db_service.core.db_service import save_page_metadata, save_parse
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import DbServiceQueueChannels
 from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
-from shared.rabbitmq.schemas.link_processing_schemas import List[str]
+from shared.rabbitmq.schemas.link_processing_schemas import SaveProcessedLinks
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 
 
@@ -59,7 +59,7 @@ def consume_save_save_processed_Links(ch, method, properties, body, logger: logg
         message_str = body.decode('utf-8')
         message_dict = json.loads(message_str)
 
-        task = List[str](**message_dict)
+        task = SaveProcessedLinks(**message_dict)
         task.validate_consume()
 
         save_processed_links(task, logger)
