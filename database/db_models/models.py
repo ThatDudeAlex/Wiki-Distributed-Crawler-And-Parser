@@ -26,6 +26,8 @@ crawl_status_enum = SqlEnum(
     create_type=True,
 )
 
+# TODO: split tables into their own files
+
 """****  TABLE DEFINITIONS  ****"""
 
 
@@ -50,7 +52,7 @@ class Page(Base):
         server_default=func.now(),
         nullable=False,
     )
-    # TODO: see if this column is needed or if i can do it without it
+    # TODO: uncomment once recrawl is implemented
     # next_crawl_at = Column(DateTime(timezone=True), nullable=True)
 
     total_crawl_attempts = Column(Integer, nullable=False, default=1)
@@ -188,3 +190,10 @@ class Category(Base):
         secondary=page_category_association,
         back_populates="categories"
     )
+
+
+class SeenUrlCache(Base):
+    __tablename__ = 'seen_url_cache'
+
+    url = Column(String, primary_key=True)
+    last_seen = Column(DateTime, server_default=func.now())
