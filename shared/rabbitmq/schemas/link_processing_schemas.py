@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List
-from components.db_service.core.db_service import datetime
+from components.db_writer.core.db_writer import datetime
 from shared.rabbitmq.types import QueueMsgSchemaInterface, ValidationError
 from shared.rabbitmq.schemas.parsing_task_schemas import LinkData, ProcessDiscoveredLinks
 

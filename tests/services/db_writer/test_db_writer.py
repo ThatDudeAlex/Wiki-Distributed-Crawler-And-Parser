@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from database.db_models.models import Base, CrawlStatus, Page, PageContent
-from components.db_service.core.db_service import save_crawl_data, save_parsed_data
+from components.db_writer.core.db_writer import save_crawl_data, save_parsed_data
 
 
 # Set up logger

@@ -8,8 +8,8 @@ COPY database/      ./database/
 COPY shared/        ./shared/
 
 # service-specific code
-COPY components/db_service/     ./components/db_service/
+COPY components/db_writer/     ./components/db_writer/
 
-RUN pip install --no-cache-dir -r components/db_service/requirements.txt
+RUN pip install --no-cache-dir -r components/db_writer/requirements.txt
 
-CMD ["python", "-m", "components.db_service.main"]
+CMD ["python", "-m", "components.db_writer.main"]

@@ -168,16 +168,16 @@ services:
     command: [ "python", "-m", "components.parser.main" ]
     volumes:
       - compressed_html_data:${DL_HTML_PATH}
-  db_service:
-    container_name: db_service
+  db_writer:
+    container_name: db_writer
     build:
       context: .
-      dockerfile: components/db_service/Dockerfile
+      dockerfile: components/db_writer/Dockerfile
     env_file: .env
     depends_on:
       - rabbitmq
       - postgres
-    command: [ "python", "-m", "components.db_service.main" ]
+    command: [ "python", "-m", "components.db_writer.main" ]
 
   db_reader:
     container_name: db_reader
