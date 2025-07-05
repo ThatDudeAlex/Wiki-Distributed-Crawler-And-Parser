@@ -1,11 +1,8 @@
 from datetime import datetime
 import hashlib
-from typing import Any, Dict
 from urllib.parse import urlparse, urljoin, urlunparse
 from zoneinfo import ZoneInfo
 from shared.config import EXCLUDED_PREFIXES, WIKI_BASE
-from jsonschema.exceptions import ValidationError
-import jsonschema
 
 # TODO: pull any common utility function into the
 # my python-utilities package

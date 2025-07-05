@@ -15,6 +15,7 @@ class QueueNames(str, Enum):
 
     # Queues For 'Link Processing Task'
     SAVE_PROCESSED_LINKS = 'save_processed_links'
+    CACHE_PROCESSED_LINKS = 'cache_processed_links'
 
 
 class EnumCommonMethods:
@@ -62,6 +63,7 @@ class DbServiceQueueChannels(EnumCommonMethods, str, Enum):
     SAVE_CRAWL_DATA = QueueNames.SAVE_PAGE_DATA.value,
     SAVE_PARSED_DATA = QueueNames.SAVE_PARSED_DATA.value,
     SAVE_PROCESSED_LINKS = QueueNames.SAVE_PROCESSED_LINKS.value
+    CACHE_PROCESSED_LINKS = QueueNames.CACHE_PROCESSED_LINKS.value
 
 
 # Scheduler queue channels
@@ -69,3 +71,4 @@ class SchedulerQueueChannels(EnumCommonMethods, str, Enum):
     ADD_TO_QUEUE = QueueNames.CRAWL_TASK.value,
     PROCESS_LINKS = QueueNames.PROCESS_LINKS.value,
     SAVE_PROCESSED_LINKS = QueueNames.SAVE_PROCESSED_LINKS.value
+    CACHE_PROCESSED_LINKS = QueueNames.CACHE_PROCESSED_LINKS.value

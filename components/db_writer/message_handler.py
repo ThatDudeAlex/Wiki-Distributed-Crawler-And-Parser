@@ -111,6 +111,9 @@ def start_db_service_listener(queue_service: QueueService, logger: logging.Logge
     save_save_processed_Links_partial = partial(
         consume_save_processed_Links, logger=logger
     )
+    save_cache_seen_url_partial = partial(
+        consume_cache_seen_url, logger=logger
+    )
 
     # Save Page Metadata
     queue_service.channel.basic_consume(
@@ -128,6 +131,12 @@ def start_db_service_listener(queue_service: QueueService, logger: logging.Logge
     queue_service.channel.basic_consume(
         queue=DbServiceQueueChannels.SAVE_PROCESSED_LINKS,
         on_message_callback=save_save_processed_Links_partial,
+        auto_ack=False
+    )
+    # Cache Processed Links
+    queue_service.channel.basic_consume(
+        queue=DbServiceQueueChannels.CACHE_PROCESSED_LINKS,
+        on_message_callback=save_cache_seen_url_partial,
         auto_ack=False
     )
 

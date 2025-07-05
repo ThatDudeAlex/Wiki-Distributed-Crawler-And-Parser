@@ -1,19 +1,25 @@
 import logging
+import os
 import time
 from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
 from shared.redis.cache_service import CacheService
 from shared.rabbitmq.queue_service import QueueService
+from components.scheduler.core.deduplication import has_duplicates
 from components.scheduler.core.filter import FilteringService
 from components.scheduler.services.publisher import PublishingService
+from dotenv import load_dotenv
 
 
 class ScheduleService:
     def __init__(self, queue_service: QueueService, logger: logging.Logger):
+        load_dotenv()
         self._logger = logger
         self._queue_service = queue_service
         self.cache = CacheService(self._logger)
         self._publisher = PublishingService(self._queue_service, self._logger)
         self.filter = FilteringService(self._logger)
+        # self._db_reader_host = os.getenv('DB_READER_HOST')
+        self._db_reader_host = "http://db_reader:8001"
 
         self._logger.info("Schedule Service Initiation Completed")
 
@@ -31,10 +37,14 @@ class ScheduleService:
                               idx, total_links, link.url)
 
             # 1. Check For Duplicates
-            if self.cache.is_in_seen(link.url):
+            if has_duplicates(link.url, self._db_reader_host, self.cache, self._logger):
                 self._logger.info(
                     "Discarding link %d: Duplicate URL - %s", idx, link.url)
                 continue
+            # if self.cache.is_seen_url(link.url):
+            #     self._logger.info(
+            #         "Discarding link %d: Duplicate URL - %s", idx, link.url)
+            #     continue
 
             # 2. Apply Filter Rules
             if self.filter.is_filtered(link):
@@ -62,4 +72,5 @@ class ScheduleService:
 
         self._logger.info("Publishing %d valid links", len(valid_links))
         self._publisher.publish_save_processed_links(valid_links)
+        self._publisher.publish_cache_urls(valid_links)
         self._publisher.publish_crawl_tasks(valid_links)
