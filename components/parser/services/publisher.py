@@ -19,7 +19,7 @@ class PublishingService:
         message.validate_publish()
 
         self._queue_service.publish(
-            ParserQueueChannels.SAVE_PARSED_DATA.value, message)
+            ParserQueueChannels.PARSED_CONTENT_TO_SAVE.value, message)
 
         self._logger.info("Published: Save Parsed Data")
 
@@ -30,6 +30,6 @@ class PublishingService:
         message.validate_publish()
 
         self._queue_service.publish(
-            ParserQueueChannels.PROCESS_LINKS.value, message)
+            ParserQueueChannels.LINKS_TO_SCHEDULE.value, message)
 
         self._logger.debug("Published: Process Links")

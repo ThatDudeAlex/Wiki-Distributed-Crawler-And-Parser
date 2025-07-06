@@ -20,7 +20,7 @@ class PublishingService:
             message.validate_publish()
 
             self._queue_service.publish(
-                CrawlerQueueChannels.SAVE_PAGE_DATA.value, message
+                CrawlerQueueChannels.PAGE_METADATA_TO_SAVE.value, message
             )
 
             if message.status == CrawlStatus.SUCCESS:
@@ -75,7 +75,8 @@ class PublishingService:
         message.validate_publish()
 
         # convert message to dict to so that it's JSON serializable
-        self._queue_service.publish(CrawlerQueueChannels.PARSE.value, message)
+        self._queue_service.publish(
+            CrawlerQueueChannels.PAGES_TO_PARSE.value, message)
         self._logger.debug(
             "Published: Parsing Task - %s", compressed_filepath
         )

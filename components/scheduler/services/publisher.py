@@ -33,7 +33,7 @@ class PublishingService:
         message.validate_publish()
 
         self._queue_service.publish(
-            SchedulerQueueChannels.CACHE_PROCESSED_LINKS, message)
+            SchedulerQueueChannels.SEEN_LINKS_TO_CACHE, message)
 
         # self._logger.info("Published: Cache Processed Links")
 
@@ -43,7 +43,7 @@ class PublishingService:
         message.validate_publish()
 
         self._queue_service.publish(
-            SchedulerQueueChannels.SAVE_PROCESSED_LINKS, message)
+            SchedulerQueueChannels.SCHEDULED_LINKS_TO_SAVE, message)
 
         # self._logger.info("Published: Save Processed Links")
 
@@ -60,7 +60,7 @@ class PublishingService:
             message.validate_publish()
 
             self._queue_service.publish(
-                SchedulerQueueChannels.ADD_TO_QUEUE.value, message)
+                SchedulerQueueChannels.URLS_TO_CRAWL.value, message)
             link_count += 1
 
         # self._logger.info("Published: %s Crawl Tasks", link_count)

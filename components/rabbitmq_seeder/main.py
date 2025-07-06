@@ -18,5 +18,5 @@ if __name__ == "__main__":
     )
     message.validate_publish()
 
-    queue.publish(QueueNames.CRAWL_TASK.value, message)
+    queue.publish(QueueNames.URLS_TO_CRAWL.value, message)
     logger.info("Seeded Queue with URL: %s", SEED_URL)

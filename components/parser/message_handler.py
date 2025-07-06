@@ -42,7 +42,7 @@ def start_parser_listener(queue_service: QueueService, parsing_service: ParsingS
     )
 
     queue_service.channel.basic_consume(
-        queue=ParserQueueChannels.LISTEN.value,
+        queue=ParserQueueChannels.PAGES_TO_PARSE.value,
         on_message_callback=handle_message_partial,
         auto_ack=False
     )

@@ -44,7 +44,7 @@ def start_crawl_listener(queue_service: QueueService, crawler_service: CrawlerSe
     )
 
     queue_service.channel.basic_consume(
-        queue=CrawlerQueueChannels.LISTEN.value,
+        queue=CrawlerQueueChannels.URLS_TO_CRAWL.value,
         on_message_callback=handle_message_partial,
         auto_ack=False
     )

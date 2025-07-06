@@ -3,7 +3,7 @@ import json
 import logging
 from components.db_writer.core.db_writer import cache_seen_url, save_page_metadata, save_parsed_data, save_processed_links
 from shared.rabbitmq.queue_service import QueueService
-from shared.rabbitmq.enums.queue_names import DbServiceQueueChannels
+from shared.rabbitmq.enums.queue_names import DbWriterQueueChannels
 from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
 from shared.rabbitmq.schemas.link_processing_schemas import CacheSeenUrls, SaveProcessedLinks
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
@@ -117,25 +117,25 @@ def start_db_service_listener(queue_service: QueueService, logger: logging.Logge
 
     # Save Page Metadata
     queue_service.channel.basic_consume(
-        queue=DbServiceQueueChannels.SAVE_CRAWL_DATA,
+        queue=DbWriterQueueChannels.PAGE_METADATA_TO_SAVE,
         on_message_callback=save_page_metadata_partial,
         auto_ack=False
     )
     # Save Parsed Content
     queue_service.channel.basic_consume(
-        queue=DbServiceQueueChannels.SAVE_PARSED_DATA,
+        queue=DbWriterQueueChannels.PARSED_CONTENT_TO_SAVE,
         on_message_callback=save_parsed_content_partial,
         auto_ack=False
     )
     # Save Processed Links
     queue_service.channel.basic_consume(
-        queue=DbServiceQueueChannels.SAVE_PROCESSED_LINKS,
+        queue=DbWriterQueueChannels.SCHEDULED_LINKS_TO_SAVE,
         on_message_callback=save_save_processed_Links_partial,
         auto_ack=False
     )
     # Cache Processed Links
     queue_service.channel.basic_consume(
-        queue=DbServiceQueueChannels.CACHE_PROCESSED_LINKS,
+        queue=DbWriterQueueChannels.SEEN_LINKS_TO_CACHE,
         on_message_callback=save_cache_seen_url_partial,
         auto_ack=False
     )

@@ -39,7 +39,7 @@ def start_schedule_listener(scheduler_service: ScheduleService, queue_service: Q
 
     # listen for crawl results
     queue_service.channel.basic_consume(
-        queue=SchedulerQueueChannels.PROCESS_LINKS.value,
+        queue=SchedulerQueueChannels.LINKS_TO_SCHEDULE.value,
         on_message_callback=process_discovered_links_partial,
         auto_ack=False
     )
