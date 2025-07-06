@@ -1,13 +1,16 @@
+import concurrent.futures
 import logging
-import os
 import time
+from components.scheduler.services.db_client import DBReaderClient
 from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
 from shared.redis.cache_service import CacheService
 from shared.rabbitmq.queue_service import QueueService
-from components.scheduler.core.deduplication import has_duplicates
-from components.scheduler.core.filter import FilteringService
+from components.scheduler.core.filter import FilteringService, LinkData
 from components.scheduler.services.publisher import PublishingService
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
+
+MAX_WORKERS = 50
 
 
 class ScheduleService:
@@ -18,56 +21,89 @@ class ScheduleService:
         self.cache = CacheService(self._logger)
         self._publisher = PublishingService(self._queue_service, self._logger)
         self.filter = FilteringService(self._logger)
-        # self._db_reader_host = os.getenv('DB_READER_HOST')
-        self._db_reader_host = "http://db_reader:8001"
+        self._dbclient = DBReaderClient()
 
         self._logger.info("Schedule Service Initiation Completed")
 
     def process_links(self, page_links: ProcessDiscoveredLinks):
         total_links = len(page_links.links)
-        valid_links = []
-
-        self._logger.info(
-            "Link Processing Initiated — %d links received", total_links)
+        # quick and dirty way to get some metrics on what the link processing is doing
+        # TODO: If keeping this, move it into it's own proper dataclass
+        metric_counts = {
+            'redi_add': 0,
+            'duplicates': 0,
+            'filtered': 0,
+            'db_reader_cache_calls': 0,
+            'db_reader_cache_success': 0,
+            'db_reader_cache_fail': 0,
+            'batch_seen_hits': 0,
+            'batch_seen_misses': 0
+        }
 
         start_time = time.perf_counter()
+        valid_links = []
 
-        for idx, link in enumerate(page_links.links, start=1):
-            self._logger.info("Processing link %d/%d - %s",
-                              idx, total_links, link.url)
+        all_links = page_links.links
+        all_urls = [link.url for link in all_links]
 
-            # 1. Check For Duplicates
-            if has_duplicates(link.url, self._db_reader_host, self.cache, self._logger):
-                self._logger.info(
-                    "Discarding link %d: Duplicate URL - %s", idx, link.url)
-                continue
-            # if self.cache.is_seen_url(link.url):
-            #     self._logger.info(
-            #         "Discarding link %d: Duplicate URL - %s", idx, link.url)
-            #     continue
+        # Batch check seen URLs using Redis
+        try:
+            seen_flags = self.cache.batch_is_seen_url(all_urls)
+            unseen_links = [
+                link for link, seen in zip(all_links, seen_flags) if not seen
+            ]
+            metric_counts['batch_seen_hits'] = seen_flags.count(True)
+            metric_counts['batch_seen_misses'] = seen_flags.count(False)
+        except Exception as e:
+            self._logger.error("Redis batch seen check failed: %s", str(e))
+            unseen_links = all_links  # Fail-safe
 
-            # 2. Apply Filter Rules
-            if self.filter.is_filtered(link):
-                self._logger.info("Link %d: Filtered Out - %s", idx, link.url)
-                continue
+        def process_single_link(link: LinkData, idx: int):
+            try:
+                # 1. Filter noise
+                if self.filter.is_filtered(link):
+                    metric_counts['filtered'] += 1
+                    return None
 
-            # 3. Add to 'seen' set
-            self.cache.add_to_seen_set(link.url)
-            self._logger.debug("Link %d added to seen set - %s", idx, link.url)
+                # 2. Final dedup gate: atomic Redis set
+                was_added = self.cache.add_to_seen_set(link.url)
+                if not was_added:
+                    metric_counts['duplicates'] += 1
+                    return None
+                metric_counts['redi_add'] += 1
 
-            # 4. Add to list of valid links
-            valid_links.append(link)
-            self._logger.debug("Link %d appended to valid links", idx)
+                # 3. Check DB cache
+                metric_counts['db_reader_cache_calls'] += 1
+                if self._dbclient.in_db_cache(link.url):
+                    metric_counts['db_reader_cache_success'] += 1
+                    return None
+                metric_counts['db_reader_cache_fail'] += 1
+
+                return link
+
+            except Exception as e:
+                self._logger.error(
+                    "Error processing link %d (%s): %s", idx, link.url, str(e))
+                return None
+
+        # Run processing loop in parallel
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            futures = [
+                executor.submit(process_single_link, link, idx)
+                for idx, link in enumerate(unseen_links, start=1)
+            ]
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    valid_links.append(result)
 
         elapsed = time.perf_counter() - start_time
-        self._logger.info(
-            "Link Processing Completed — %d links processed in %.2f seconds",
-            total_links, elapsed
-        )
+        self._logger.info("Link Processing Completed — %d valid out of %d in %.2fs",
+                          len(valid_links), total_links, elapsed)
+        self._logger.info(f"Metrics: {metric_counts}")
 
         if not valid_links:
-            self._logger.info(
-                "No valid links found after filtering — skipping publish.")
+            self._logger.info("No valid links found — skipping publish.")
             return
 
         self._logger.info("Publishing %d valid links", len(valid_links))

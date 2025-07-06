@@ -4,9 +4,7 @@ from enum import Enum
 class QueueNames(str, Enum):
     # Queues For 'Crawling Task'
     CRAWL_TASK = 'crawl_tasks'
-    CRAWL_REPORT = 'crawl_report'
     SAVE_PAGE_DATA = 'save_crawl_data'
-    FETCH_PAGE_DATA = 'fetch_page_metadata'
 
     # Queues For 'Parsing Task'
     PARSE_TASK = 'parse_tasks'

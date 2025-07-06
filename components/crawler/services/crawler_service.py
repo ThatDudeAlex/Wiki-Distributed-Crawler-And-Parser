@@ -13,12 +13,10 @@ from shared.utils import get_timestamp_eastern_time, create_hash
 
 
 class CrawlerService:
-    def __init__(self, queue_service: QueueService, logger: logging.Logger, max_depth: int):
+    def __init__(self, queue_service: QueueService, logger: logging.Logger):
 
         # TODO: Use a config_service instead of using load_dotenv()
         load_dotenv()
-
-        self.max_depth = max_depth
 
         # logger setup
         self._logger = logger
@@ -32,13 +30,6 @@ class CrawlerService:
         self._logger.info('Crawler Service Initiation Complete')
 
     def run(self, task: CrawlTask):
-        # skip task if it exceeds the max depth
-        if task.depth > self.max_depth:
-            self._logger.info(
-                f"Current Depth '{task.depth}' Exceeded Max Depth '{self.max_depth}' - Skipping '{task.url}'"
-            )
-            return
-
         self._logger.info('STAGE 1: Fetch URL: %s', task.url)
         fetched_response: FetchResponse = crawl(task.url, self._logger)
 

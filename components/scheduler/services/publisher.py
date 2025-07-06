@@ -9,6 +9,9 @@ from shared.rabbitmq.queue_service import QueueService
 from shared.utils import get_timestamp_eastern_time
 
 
+# TODO: I temporarily commented out logging to test how it affects performace
+#       put them back when needed
+
 class PublishingService:
     def __init__(self, queue_service: QueueService, logger: logging.Logger):
         self._queue_service = queue_service
@@ -32,7 +35,7 @@ class PublishingService:
         self._queue_service.publish(
             SchedulerQueueChannels.CACHE_PROCESSED_LINKS, message)
 
-        self._logger.info("Published: Cache Processed Links")
+        # self._logger.info("Published: Cache Processed Links")
 
     # TODO: Implement retry mechanism and dead-letter
     def publish_save_processed_links(self, links_to_save: List[LinkData]):
@@ -42,7 +45,7 @@ class PublishingService:
         self._queue_service.publish(
             SchedulerQueueChannels.SAVE_PROCESSED_LINKS, message)
 
-        self._logger.info("Published: Save Processed Links")
+        # self._logger.info("Published: Save Processed Links")
 
     # TODO: Implement retry mechanism and dead-letter
     def publish_crawl_tasks(self, links_to_crawl: List[LinkData]):
@@ -60,4 +63,4 @@ class PublishingService:
                 SchedulerQueueChannels.ADD_TO_QUEUE.value, message)
             link_count += 1
 
-        self._logger.info("Published: %s Crawl Tasks", link_count)
+        # self._logger.info("Published: %s Crawl Tasks", link_count)

@@ -2,7 +2,9 @@ WIKI_BASE = "https://en.wikipedia.org"
 
 SEED_URL = 'https://en.wikipedia.org/wiki/Computer_science'
 
-MAX_DEPTH = 2
+# TODO: changed to 4 to test how the system handles the increased load.
+#       lower or increase depending on the results
+MAX_DEPTH = 4
 
 ROBOTS_TXT = 'https://en.wikipedia.org/robots.txt'
 

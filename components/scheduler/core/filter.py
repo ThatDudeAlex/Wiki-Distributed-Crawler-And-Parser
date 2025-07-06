@@ -5,6 +5,9 @@ from shared.config import MAX_DEPTH, BASE_HEADERS, ROBOTS_TXT
 from shared.utils import is_external_link, has_excluded_prefix, is_home_page
 import logging
 
+# TODO: I temporarily commented out logging to test how it affects performace
+#       put them back when needed
+
 
 class FilteringService:
     def __init__(self, logger: logging.Logger):
@@ -28,25 +31,25 @@ class FilteringService:
 
     def _exceeds_max_depth(self, link: LinkData) -> bool:
         if link.depth > MAX_DEPTH:
-            self._logger.info(
-                "FILTERED: Exceeds max depth — depth=%s > MAX_DEPTH=%s — URL: %s",
-                link.depth, MAX_DEPTH, link.url
-            )
+            # self._logger.info(
+            #     "FILTERED: Exceeds max depth — depth=%s > MAX_DEPTH=%s — URL: %s",
+            #     link.depth, MAX_DEPTH, link.url
+            # )
             return True
         return False
 
     def _is_external(self, link: LinkData) -> bool:
         if is_external_link(link.url):
-            self._logger.info("FILTERED: External link — URL: %s", link.url)
+            # self._logger.info("FILTERED: External link — URL: %s", link.url)
             return True
         return False
 
     def _is_not_article_page(self, link: LinkData) -> bool:
         if has_excluded_prefix(link.url):
-            self._logger.info("FILTERED: Excluded prefix — URL: %s", link.url)
+            # self._logger.info("FILTERED: Excluded prefix — URL: %s", link.url)
             return True
         if is_home_page(link.url):
-            self._logger.info("FILTERED: Home page — URL: %s", link.url)
+            # self._logger.info("FILTERED: Home page — URL: %s", link.url)
             return True
         return False
 
@@ -58,6 +61,6 @@ class FilteringService:
         if is_allowed:
             return False
 
-        self._logger.info(
-            "FILTERED: Blocked by robots.txt — URL: %s", link.url)
+        # self._logger.info(
+        #     "FILTERED: Blocked by robots.txt — URL: %s", link.url)
         return True

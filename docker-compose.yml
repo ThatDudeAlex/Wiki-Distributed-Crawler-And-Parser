@@ -5,9 +5,7 @@ x-crawler-common: &crawler-common
     dockerfile: components/crawler/Dockerfile
   depends_on:
     - postgres
-    - postgres_initiator
     - rabbitmq
-    - rabbitmq_seeder
     - redis
   env_file: .env
   command: [ "python", "-m", "components.crawler.main" ]
@@ -64,6 +62,8 @@ services:
       - "5050:80"
     depends_on:
       - postgres
+    volumes:
+      - pgadmin:/data/pgadmin
 
   postgres_initiator:
     container_name: postgres_initiator
@@ -79,7 +79,7 @@ services:
     image: redis:alpine
     container_name: redis
     restart: unless-stopped
-    command: redis-server --maxmemory 2147483648 --maxmemory-policy allkeys-lru #2GiB of ram
+    command: redis-server --maxmemory 4294967296 --maxmemory-policy allkeys-lru #4GiB of ram
     ports:
       - "6379:6379"
 
@@ -161,12 +161,12 @@ services:
       dockerfile: components/parser/Dockerfile
     depends_on:
       - postgres
-      - postgres_initiator
       - rabbitmq
     env_file: .env
     command: [ "python", "-m", "components.parser.main" ]
     volumes:
       - compressed_html_data:${DL_HTML_PATH}
+
   db_writer:
     container_name: db_writer
     build:
@@ -174,7 +174,6 @@ services:
       dockerfile: components/db_writer/Dockerfile
     env_file: .env
     depends_on:
-      - rabbitmq
       - postgres
     command: [ "python", "-m", "components.db_writer.main" ]
 
@@ -187,11 +186,11 @@ services:
     ports:
       - "8001:8001"
     depends_on:
-      # - rabbitmq
       - postgres
     command: [ "python", "-m", "components.db_reader.main" ]
+
   scheduler:
-    container_name: scheduler
+    # container_name: scheduler
     build:
       context: .
       dockerfile: components/scheduler/Dockerfile
@@ -199,23 +198,14 @@ services:
     depends_on:
       - rabbitmq
       - postgres
+    environment:
+      - DB_READER_HOST="${DB_READER_HOST}"
+      - HTTPS_PROXY=${VA_RESTON1_PROXY}
     command: [ "python", "-m", "components.scheduler.main" ]
-  # ===========================================
-  # Testing services for proxies/vpn services
-  # ===========================================
-
-  # testapp:
-  #   image: curlimages/curl
-  #   container_name: testapp
-  # environment:
-  #   - HTTP_PROXY=${TX_DALLAS2_PROXY}
-  #   - HTTPS_PROXY=${TX_DALLAS2_PROXY}
-  #   - NO_PROXY=localhost,127.0.0.1,rabbitmq,redis,postgres,192.168.0.0/16
-  # command: [ "curl", "-sS", "https://am.i.mullvad.net/json" ]
-  # command: [ "curl", "-sS", "http://192.168.86.15:15672/" ]
 
 volumes:
   pg_data:
+  pgadmin:
   compressed_html_data:
   rabbitmq_data:
     driver: local

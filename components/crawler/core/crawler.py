@@ -4,26 +4,11 @@ from ratelimit import limits, sleep_and_retry
 
 from components.crawler.configs.types import FetchResponse
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
-from components.crawler.configs.app_configs import ROBOTS_TXT, BASE_HEADERS
+from components.crawler.configs.app_configs import BASE_HEADERS
 
-
-# # TODO: remove after moving it to scheduler
-# def _robot_blocks_crawling(url: str, logger: logging.Logger) -> bool:
-#     """
-#     Returns True if robots.txt blocks crawling the URL; otherwise, False.
-#     """
-#     rp = urllib.robotparser.RobotFileParser()
-#     rp.set_url(ROBOTS_TXT)
-#     rp.read()
-
-#     if rp.can_fetch(BASE_HEADERS['user-agent'], url):
-#         return False
-#     else:
-#         logger.warning(f"robots.txt blocked crawling: {url}")
-#         return True
 
 @sleep_and_retry
-@limits(calls=2, period=1)
+@limits(calls=1, period=1)
 def _fetch(url: str) -> requests.Response:
     """
     Make a GET request to the given URL with default headers
@@ -38,10 +23,6 @@ def crawl(url: str, logger: logging.Logger) -> FetchResponse:
     Perform a crawl of the specified URL, respecting robots.txt, and return a CrawlerResponse
     """
     try:
-        # logger.info('Verifying that robots.txt allows crawling URL: %s', url)
-
-        # if _robot_blocks_crawling(url, logger):
-        #     return FetchResponse(False, url, CrawlStatus.SKIPPED)
 
         response = _fetch(url)
         logger.info('Successfully Fetched URL: %s', url)

@@ -15,7 +15,8 @@ class QueueService:
         logger: logging.Logger,
         queue_names: list,
         retry_interval: int = 10,
-        max_retries: int = 6
+        max_retries: int = 6,
+        prefetch_count: int = 1
     ):
         load_dotenv()
         self._logger = logger
@@ -23,6 +24,7 @@ class QueueService:
         self._max_retries = max_retries
         self._connection = None
         self.channel = None
+        self.prefetch_count = prefetch_count
 
         self._wait_for_rabbit(queue_names)
 
@@ -43,7 +45,7 @@ class QueueService:
                 self._connection = pika.BlockingConnection(
                     pika.ConnectionParameters("rabbitmq", port=5672, credentials=creds))
                 self.channel = self._connection.channel()
-                self.channel.basic_qos(prefetch_count=1)
+                self.channel.basic_qos(prefetch_count=self.prefetch_count)
                 self._declare_queues(queue_names)
 
                 self._logger.info("RabbitMQ connection established")
