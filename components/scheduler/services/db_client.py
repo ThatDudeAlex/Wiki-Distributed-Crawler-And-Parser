@@ -3,17 +3,20 @@ import os
 from urllib.parse import urljoin
 from dotenv import load_dotenv
 
+load_dotenv()
+
 
 class DBReaderClient:
     """
-    Uses a single Session for communication between with the db_reader. This
-    is done in order to optimize performance by prevening the creation a new
-    session on every request
+    Uses a single Session for communication with the db_reader
+    This is done to optimize performance by preventing the creation of a new session on every request
     """
 
-    def __init__(self, host: str):
-        load_dotenv()
-        self._base_url = host if host else os.getenv('DB_READER_HOST')
+    def __init__(self, host: str = None):
+        self._base_url = host or os.getenv('DB_READER_HOST')
+        if not self._base_url:
+            raise ValueError(
+                "DB_READER_HOST must be provided either as an argument or environment variable")
         self._session = requests.Session()
 
     def in_db_cache(self, url: str) -> bool:

@@ -25,6 +25,9 @@ class ScheduleService:
 
         self._logger.info("Schedule Service Initiation Completed")
 
+    def schedule_links(self, page_links: ProcessDiscoveredLinks):
+        self._publisher.publish_urls_to_schedule(page_links)
+
     def process_links(self, page_links: ProcessDiscoveredLinks):
         total_links = len(page_links.links)
         # quick and dirty way to get some metrics on what the link processing is doing

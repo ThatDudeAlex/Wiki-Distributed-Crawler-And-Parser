@@ -1,9 +1,9 @@
 from datetime import datetime
 import logging
 from typing import List
-from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
+from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels, SchedulerLeakyBucket
 from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
-from shared.rabbitmq.schemas.parsing_task_schemas import LinkData
+from shared.rabbitmq.schemas.parsing_task_schemas import LinkData, ProcessDiscoveredLinks
 from shared.rabbitmq.schemas.link_processing_schemas import CacheSeenUrls, SaveProcessedLinks, SeenUrl
 from shared.rabbitmq.queue_service import QueueService
 from shared.utils import get_timestamp_eastern_time
@@ -16,7 +16,22 @@ class PublishingService:
     def __init__(self, queue_service: QueueService, logger: logging.Logger):
         self._queue_service = queue_service
         self._logger = logger
-        pass
+
+    # TODO: Implement retry mechanism and dead-letter
+    def publish_urls_to_schedule(self, page_links: ProcessDiscoveredLinks):
+        BASE_INTERVAL_MS = 30  # for ~33 URLs/sec
+
+        for i, link in enumerate(page_links.links):
+            ttl = BASE_INTERVAL_MS * (i + 1)  # staggered TTLs
+            link.validate_publish()
+
+            # self._logger.debug("Publishing to delay queue: %s", link.url)
+
+            self._queue_service.publish_with_ttl(
+                queue_name=SchedulerLeakyBucket.LEAKY_BUCKET.value,
+                message=link,
+                ttl_ms=ttl
+            )
 
     # TODO: Implement retry mechanism and dead-letter
     def publish_cache_urls(self, links_to_cache: List[LinkData]):
@@ -33,7 +48,7 @@ class PublishingService:
         message.validate_publish()
 
         self._queue_service.publish(
-            SchedulerQueueChannels.SEEN_LINKS_TO_CACHE, message)
+            SchedulerQueueChannels.SEEN_LINKS_TO_CACHE.value, message)
 
         # self._logger.info("Published: Cache Processed Links")
 
@@ -43,7 +58,7 @@ class PublishingService:
         message.validate_publish()
 
         self._queue_service.publish(
-            SchedulerQueueChannels.SCHEDULED_LINKS_TO_SAVE, message)
+            SchedulerQueueChannels.SCHEDULED_LINKS_TO_SAVE.value, message)
 
         # self._logger.info("Published: Save Processed Links")
 

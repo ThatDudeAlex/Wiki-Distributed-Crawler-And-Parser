@@ -125,7 +125,7 @@ services:
     <<: *crawler-common
     environment:
       - HTTP_PROXY=${NY_NEW_YORK1_PROXY}
-  #     - HTTPS_PROXY=${NY_NEW_YORK1_PROXY}
+      - HTTPS_PROXY=${NY_NEW_YORK1_PROXY}
 
   # Texas Proxies
   crawler_dallas:

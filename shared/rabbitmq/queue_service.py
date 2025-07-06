@@ -67,6 +67,36 @@ class QueueService:
         )
         self._logger.debug(f"Message published to {queue_name}: {message}")
 
+    def setup_delay_queue(self, delay_queue_name: str, processing_queue_name: str, exchange: str = ''):
+        """
+        Declare a delay queue with dead-letter routing and fixed TTL for rate limiting.
+
+        Args:
+            delay_queue_name (str): Name of the delay queue to create.
+            processing_queue_name (str): Queue to route messages to after delay.
+            exchange (str, optional): DLX to route to; '' = default exchange.
+        """
+        arguments = {
+            'x-dead-letter-exchange': exchange,
+            'x-dead-letter-routing-key': processing_queue_name,
+        }
+
+        self.channel.queue_declare(
+            queue=delay_queue_name,
+            durable=True,
+            arguments=arguments
+        )
+
+    def publish_with_ttl(self, queue_name: str, message: QueueMsgSchemaInterface, ttl_ms: int):
+        properties = pika.BasicProperties(expiration=str(ttl_ms))
+        self.channel.basic_publish(
+            exchange='',
+            routing_key=queue_name,
+            body=json.dumps(message.to_dict()),
+            properties=properties
+        )
+        self._logger.debug(f"TTL Message published to {queue_name}: {message}")
+
     def close(self):
         if self._connection and self._connection.is_open:
             self._connection.close()
