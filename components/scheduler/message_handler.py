@@ -35,12 +35,12 @@ def scheduled_links_to_process(ch, method, properties, body, scheduler: Schedule
         message_str = body.decode('utf-8')
         message_dict = json.loads(message_str)
 
-        link = LinkData(**message_dict)
-        link.validate_consume()
+        task = ProcessDiscoveredLinks(**message_dict)
+        task.validate_consume()
 
-        logger.info('GOT FROM LEAKY BUCKET: %s', link.url)
+        # logger.info('GOT FROM LEAKY BUCKET: %s', link.url)
 
-        # scheduler.process_links(link)
+        scheduler.process_links(task)
 
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)

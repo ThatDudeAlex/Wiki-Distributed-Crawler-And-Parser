@@ -1,10 +1,11 @@
 from datetime import datetime
 import logging
+from time import sleep
 from typing import List
-from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels, SchedulerLeakyBucket
+from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels, DelayQueues
 from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
 from shared.rabbitmq.schemas.parsing_task_schemas import LinkData, ProcessDiscoveredLinks
-from shared.rabbitmq.schemas.link_processing_schemas import CacheSeenUrls, SaveProcessedLinks, SeenUrl
+from shared.rabbitmq.schemas.link_processing_schemas import CacheSeenUrls, SaveProcessedLinks, SeenUrl, AddLinksToSchedule
 from shared.rabbitmq.queue_service import QueueService
 from shared.utils import get_timestamp_eastern_time
 
@@ -17,21 +18,21 @@ class PublishingService:
         self._queue_service = queue_service
         self._logger = logger
 
-    # TODO: Implement retry mechanism and dead-letter
     def publish_urls_to_schedule(self, page_links: ProcessDiscoveredLinks):
-        BASE_INTERVAL_MS = 30  # for ~33 URLs/sec
+        # BASE_INTERVAL_MS = 1000  # for ~33 URLs/sec
 
-        for i, link in enumerate(page_links.links):
-            ttl = BASE_INTERVAL_MS * (i + 1)  # staggered TTLs
-            link.validate_publish()
+        # for i, link in enumerate(page_links.links):
+        # ttl = BASE_INTERVAL_MS * (i + 1)  # staggered TTLs
+        message = page_links
+        message.validate_publish()
 
-            # self._logger.debug("Publishing to delay queue: %s", link.url)
+        # self._logger.debug("Publishing to delay queue: %s", link.url)
 
-            self._queue_service.publish_with_ttl(
-                queue_name=SchedulerLeakyBucket.LEAKY_BUCKET.value,
-                message=link,
-                ttl_ms=ttl
-            )
+        self._queue_service.publish_with_ttl(
+            queue_name=DelayQueues.SCHEDULER_DELAY_30MS.value,
+            message=message,
+            ttl_ms=1000
+        )
 
     # TODO: Implement retry mechanism and dead-letter
     def publish_cache_urls(self, links_to_cache: List[LinkData]):
@@ -62,20 +63,45 @@ class PublishingService:
 
         # self._logger.info("Published: Save Processed Links")
 
-    # TODO: Implement retry mechanism and dead-letter
-    def publish_crawl_tasks(self, links_to_crawl: List[LinkData]):
-        link_count = 0
+    # def publish_Add_links_to_schedule(self, links_to_save: List[LinkData]):
+    #     message = AddLinksToSchedule(links=links_to_save)
+    #     message.validate_publish()
 
+    #     self._queue_service.publish(
+    #         SchedulerQueueChannels.ADD_LINKS_TO_SCHEDULE.value, message)
+
+    # TODO: Implement retry mechanism and dead-letter
+    def publish_links_to_schedule(self, links_to_crawl: List[LinkData]):
+        link_count = 0
+        scheduled_links = []
         for link in links_to_crawl:
-            message = CrawlTask(
+            task = CrawlTask(
                 url=link.url,
                 scheduled_at=get_timestamp_eastern_time(),
                 depth=link.depth
             )
+
+            scheduled_links.append(task)
+        message = AddLinksToSchedule(links=scheduled_links)
+        message.validate_publish()
+
+        self._queue_service.publish(
+            SchedulerQueueChannels.ADD_LINKS_TO_SCHEDULE.value, message)
+        # sleep(0.04)
+        link_count += 1
+
+        self._logger.info("Published: %s Links Scheduled", link_count)
+
+    def publish_crawl_tasks(self, links_to_crawl: List[CrawlTask]):
+        link_count = 0
+        self._logger.info("Publishing links to crawl: %s", links_to_crawl)
+
+        for link in links_to_crawl:
+            message = link
             message.validate_publish()
 
             self._queue_service.publish(
                 SchedulerQueueChannels.URLS_TO_CRAWL.value, message)
             link_count += 1
 
-        # self._logger.info("Published: %s Crawl Tasks", link_count)
+            self._logger.info("Published: %s Links To Crawl", link_count)

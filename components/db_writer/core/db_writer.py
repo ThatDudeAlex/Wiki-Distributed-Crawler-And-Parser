@@ -7,10 +7,10 @@ from sqlalchemy import case
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 from database.engine import SessionLocal
-from database.db_models.models import Category, Link, Page, PageContent, SeenUrlCache
+from database.db_models.models import Category, Link, Page, PageContent, ScheduledLinks, SeenUrlCache
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
-from shared.rabbitmq.schemas.link_processing_schemas import CacheSeenUrls, SaveProcessedLinks
+from shared.rabbitmq.schemas.link_processing_schemas import CacheSeenUrls, SaveProcessedLinks, AddLinksToSchedule
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 
 
@@ -171,6 +171,33 @@ def cache_seen_url(seen_urls: CacheSeenUrls, logger: logging.Logger, session_fac
             db.execute(stmt)
         except Exception:
             logger.exception("Bulk insert into seen_url_cache failed")
+            raise
+
+
+def add_links_to_schedule(links_to_schedule: AddLinksToSchedule, logger: logging.Logger, session_factory=None) -> None:
+    with get_db(session_factory=session_factory) as db:
+        values = []
+        for link in links_to_schedule.links:
+            values.append({
+                "url": link.url,
+                "scheduled_at": link.scheduled_at,
+                'depth': link.depth
+            })
+
+        # Skip if no values
+        if not values:
+            logger.warning(
+                'Skipped scheduling links into the DB: no values received')
+            return
+
+        # Single bulk INSERT ... ON CONFLICT DO NOTHING
+        stmt = insert(ScheduledLinks).values(values)
+        stmt = stmt.on_conflict_do_nothing(index_elements=['url'])
+
+        try:
+            db.execute(stmt)
+        except Exception:
+            logger.exception("Bulk insert into schedule_links failed")
             raise
 
 

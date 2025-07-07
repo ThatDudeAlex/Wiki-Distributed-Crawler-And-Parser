@@ -47,8 +47,10 @@ class CacheService:
         try:
             if url:
                 # cache url temporarily
-                self._redis.set(url, 1, ex=self._expiration_seconds, nx=True)
-                return True
+                was_added = self._redis.set(
+                    url, 1, ex=self._expiration_seconds, nx=True
+                )
+                return was_added is True
             return False
         except redis.exceptions.RedisError as e:
             self._logger.warning(

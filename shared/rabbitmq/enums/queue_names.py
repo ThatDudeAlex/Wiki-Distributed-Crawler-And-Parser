@@ -29,6 +29,7 @@ class QueueNames(str, Enum):
     SCHEDULED_LINKS_TO_PROCESS = 'scheduled_urls_to_process'
     SCHEDULED_LINKS_TO_SAVE = 'scheduled_links_to_save'
     SEEN_LINKS_TO_CACHE = 'seen_links_to_cache'
+    ADD_LINKS_TO_SCHEDULE = 'add_links_to_schedule'
 
 
 class EnumCommonMethods:
@@ -74,6 +75,7 @@ class CrawlerQueueChannels(EnumCommonMethods, str, Enum):
     - pages_to_parse
     """
     URLS_TO_CRAWL = QueueNames.URLS_TO_CRAWL.value
+    START_TO_CRAWL = 'start_crawl'
     PAGE_METADATA_TO_SAVE = QueueNames.PAGE_METADATA_TO_SAVE.value
     PAGES_TO_PARSE = QueueNames.PAGES_TO_PARSE.value
 
@@ -117,6 +119,7 @@ class DbWriterQueueChannels(EnumCommonMethods, str, Enum):
     PARSED_CONTENT_TO_SAVE = QueueNames.PARSED_CONTENT_TO_SAVE.value
     SCHEDULED_LINKS_TO_SAVE = QueueNames.SCHEDULED_LINKS_TO_SAVE.value
     SEEN_LINKS_TO_CACHE = QueueNames.SEEN_LINKS_TO_CACHE.value
+    ADD_LINKS_TO_SCHEDULE = QueueNames.ADD_LINKS_TO_SCHEDULE.value
 
 
 # Scheduler queue channels
@@ -144,7 +147,9 @@ class SchedulerQueueChannels(EnumCommonMethods, str, Enum):
     URLS_TO_CRAWL = QueueNames.URLS_TO_CRAWL.value
     SCHEDULED_LINKS_TO_SAVE = QueueNames.SCHEDULED_LINKS_TO_SAVE.value
     SEEN_LINKS_TO_CACHE = QueueNames.SEEN_LINKS_TO_CACHE.value
+    ADD_LINKS_TO_SCHEDULE = QueueNames.ADD_LINKS_TO_SCHEDULE.value
 
 
-class SchedulerLeakyBucket(EnumCommonMethods, str, Enum):
-    LEAKY_BUCKET = 'leaky_bucket'
+class DelayQueues(EnumCommonMethods, str, Enum):
+    SCHEDULER_DELAY_30MS = 'scheduler_delay_30ms'
+    CRAWLER_DELAY_30MS = 'crawler_delay_30ms'

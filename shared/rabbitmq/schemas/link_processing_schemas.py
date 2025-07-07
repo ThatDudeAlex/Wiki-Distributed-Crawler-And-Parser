@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 from datetime import datetime
+from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
 from shared.rabbitmq.types import QueueMsgSchemaInterface, ValidationError
 from shared.rabbitmq.schemas.parsing_task_schemas import LinkData, ProcessDiscoveredLinks
 
@@ -12,6 +13,44 @@ class SaveProcessedLinks(ProcessDiscoveredLinks):
     # Only inherits from ProcessDiscoveredLinks beccause it's
     # semantically different but structurally the same
     pass
+
+
+@dataclass
+class AddLinksToSchedule(QueueMsgSchemaInterface):
+    links: List[CrawlTask]
+
+    def _validate(self) -> None:
+        if not isinstance(self.links, list) or not self.links:
+            raise ValidationError(
+                "links must be a non-empty list", field="links")
+
+    def validate_publish(self) -> None:
+        self._validate()
+
+        # Validate each SeenUrl using publish context
+        for i, link in enumerate(self.links):
+            if not isinstance(link, CrawlTask):
+                raise ValidationError(
+                    f"links[{i}] must be a CrawlTask instance", field=f"links[{i}]")
+            try:
+                link.validate_publish()
+            except ValidationError as e:
+                raise ValidationError(str(e), field=f"links[{i}]")
+
+    def validate_consume(self) -> None:
+        # Convert url dicts to CrawlTask instances
+        for i, task in enumerate(self.links):
+            if isinstance(task, dict):
+                try:
+                    self.links[i] = CrawlTask(**task)
+                except Exception as e:
+                    raise ValidationError(
+                        f"Failed to parse url[{i}]: {e}", field=f"links[{i}]")
+
+            try:
+                self.links[i].validate_consume()
+            except ValidationError as e:
+                raise ValidationError(str(e), field=f"links[{i}]")
 
 
 @dataclass

@@ -1,7 +1,9 @@
 import concurrent.futures
 import logging
+import threading
 import time
 from components.scheduler.services.db_client import DBReaderClient
+from components.scheduler.services.dispatcher import Dispatcher
 from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
 from shared.redis.cache_service import CacheService
 from shared.rabbitmq.queue_service import QueueService
@@ -22,11 +24,47 @@ class ScheduleService:
         self._publisher = PublishingService(self._queue_service, self._logger)
         self.filter = FilteringService(self._logger)
         self._dbclient = DBReaderClient()
+        self._dispatcher = Dispatcher(
+            self._queue_service, self._dbclient, self._publisher, self._logger)
+        self._dispatcher.run()
+        # self._dispatcher_thread = threading.Thread(
+        #     target=self._dispatcher.run)
+        # self._dispatcher_thread.start()
 
         self._logger.info("Schedule Service Initiation Completed")
 
+    def shutdown(self):
+        self._dispatcher.stop()
+        self._dispatcher_thread.join()
+
     def schedule_links(self, page_links: ProcessDiscoveredLinks):
         self._publisher.publish_urls_to_schedule(page_links)
+
+    # def process_link(self, link: LinkData):
+    #     try:
+    #         # 1. Filter noise
+    #         if self.filter.is_filtered(link):
+    #             return None
+    #         # self._logger.info("Pass Filtering")
+
+    #         # 2. Final dedup gate: atomic Redis set
+    #         was_added = self.cache.add_to_seen_set(link.url)
+    #         if not was_added:
+    #             return None
+    #         # self._logger.info("Not In redis")
+
+    #         # 3. Check DB cache
+    #         if self._dbclient.in_db_cache(link.url):
+    #             return None
+    #         # self._logger.info("Not In DB Cache")
+
+    #         self._publisher.publish_save_processed_links(link)
+    #         self._publisher.publish_cache_urls(link)
+    #         self._publisher.publish_crawl_tasks(link)
+    #     except Exception as e:
+    #         self._logger.error(
+    #             "Error processing link (%s): %s", link.url, str(e))
+    #         return None
 
     def process_links(self, page_links: ProcessDiscoveredLinks):
         total_links = len(page_links.links)
@@ -49,7 +87,7 @@ class ScheduleService:
         all_links = page_links.links
         all_urls = [link.url for link in all_links]
 
-        # Batch check seen URLs using Redis
+        # # Batch check seen URLs using Redis
         try:
             seen_flags = self.cache.batch_is_seen_url(all_urls)
             unseen_links = [
@@ -112,4 +150,4 @@ class ScheduleService:
         self._logger.info("Publishing %d valid links", len(valid_links))
         self._publisher.publish_save_processed_links(valid_links)
         self._publisher.publish_cache_urls(valid_links)
-        self._publisher.publish_crawl_tasks(valid_links)
+        self._publisher.publish_links_to_schedule(valid_links)

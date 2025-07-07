@@ -125,6 +125,18 @@ class Link(Base):
     )
 
 
+class ScheduledLinks(Base):
+    __tablename__ = "scheduled_links"
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    url = Column(String(2048), unique=True, nullable=False)
+    depth = Column(Integer, nullable=False)
+    scheduled_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+
 # Association table for many-to-many relationship
 page_category_association = Table(
     'page_categories',

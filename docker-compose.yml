@@ -199,7 +199,7 @@ services:
       - rabbitmq
       - postgres
     environment:
-      - DB_READER_HOST="${DB_READER_HOST}"
+      - DB_READER_HOST=${DB_READER_HOST}
       - HTTPS_PROXY=${VA_RESTON1_PROXY}
     command: [ "python", "-m", "components.scheduler.main" ]
 
