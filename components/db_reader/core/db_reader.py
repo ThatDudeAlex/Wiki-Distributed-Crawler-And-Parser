@@ -49,7 +49,6 @@ def pop_links_from_schedule(count: int, logger: logging.Logger, session_factory=
             .all()
         )
 
-        # return [{'somebs': True}]
         if not scheduled_links:
             return []
 

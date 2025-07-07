@@ -83,7 +83,12 @@ done
 echo "🚀 Step 6: Seeding Queue..."
 docker compose build --no-cache rabbitmq_seeder
 docker compose up -d rabbitmq_seeder --remove-orphans
-echo "⏳ Waiting 7s for core infra to settle..."
+echo "⏳ Waiting 7s for seeder to settle..."
 sleep 7
+
+echo "🚀 Step 7: Turning Up Dispatcher..."
+docker compose build --no-cache dispatcher
+docker compose up -d dispatcher --remove-orphans
+sleep 2
 
 echo "🎉 All components deployed successfully!"

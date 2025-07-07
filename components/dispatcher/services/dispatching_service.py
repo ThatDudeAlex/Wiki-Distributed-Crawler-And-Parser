@@ -22,7 +22,7 @@ class Dispatcher:
         while True:
             try:
                 # TODO: make dynamic with crawler heartbeat
-                links = self._dbclient.pop_links_from_schedule(5)
+                links = self._dbclient.pop_links_from_schedule(34)
 
                 if links:
                     self._logger.info("========== Got Some Links ==========")
@@ -37,7 +37,7 @@ class Dispatcher:
                     ]
                     self._publisher.publish_crawl_tasks(tasks)
 
-                sleep(3)
+                sleep(1)
             except Exception as e:
                 self._logger.error(
                     "Dispatcher encountered an error: %s", str(e))
