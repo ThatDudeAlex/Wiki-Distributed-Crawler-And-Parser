@@ -200,8 +200,21 @@ services:
       - postgres
     environment:
       - DB_READER_HOST=${DB_READER_HOST}
-      - HTTPS_PROXY=${VA_RESTON1_PROXY}
     command: [ "python", "-m", "components.scheduler.main" ]
+
+  dispatcher:
+    container_name: dispatcher
+    build:
+      context: .
+      dockerfile: components/dispatcher/Dockerfile
+    env_file: .env
+    depends_on:
+      - rabbitmq
+      - postgres
+      - db_reader
+    environment:
+      - DB_READER_HOST=${DB_READER_HOST}
+    command: [ "python", "-m", "components.dispatcher.main" ]
 
 volumes:
   pg_data:

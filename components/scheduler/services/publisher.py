@@ -92,16 +92,16 @@ class PublishingService:
 
         self._logger.info("Published: %s Links Scheduled", link_count)
 
-    def publish_crawl_tasks(self, links_to_crawl: List[CrawlTask]):
-        link_count = 0
-        self._logger.info("Publishing links to crawl: %s", links_to_crawl)
+    # def publish_crawl_tasks(self, links_to_crawl: List[CrawlTask]):
+    #     link_count = 0
+    #     self._logger.info("Publishing links to crawl: %s", links_to_crawl)
 
-        for link in links_to_crawl:
-            message = link
-            message.validate_publish()
+    #     for link in links_to_crawl:
+    #         message = link
+    #         message.validate_publish()
 
-            self._queue_service.publish(
-                SchedulerQueueChannels.URLS_TO_CRAWL.value, message)
-            link_count += 1
+    #         self._queue_service.publish(
+    #             SchedulerQueueChannels.URLS_TO_CRAWL.value, message)
+    #         link_count += 1
 
-            self._logger.info("Published: %s Links To Crawl", link_count)
+    #         self._logger.info("Published: %s Links To Crawl", link_count)

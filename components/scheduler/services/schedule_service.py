@@ -3,7 +3,6 @@ import logging
 import threading
 import time
 from components.scheduler.services.db_client import DBReaderClient
-from components.scheduler.services.dispatcher import Dispatcher
 from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
 from shared.redis.cache_service import CacheService
 from shared.rabbitmq.queue_service import QueueService
@@ -24,18 +23,8 @@ class ScheduleService:
         self._publisher = PublishingService(self._queue_service, self._logger)
         self.filter = FilteringService(self._logger)
         self._dbclient = DBReaderClient()
-        self._dispatcher = Dispatcher(
-            self._queue_service, self._dbclient, self._publisher, self._logger)
-        self._dispatcher.run()
-        # self._dispatcher_thread = threading.Thread(
-        #     target=self._dispatcher.run)
-        # self._dispatcher_thread.start()
 
         self._logger.info("Schedule Service Initiation Completed")
-
-    def shutdown(self):
-        self._dispatcher.stop()
-        self._dispatcher_thread.join()
 
     def schedule_links(self, page_links: ProcessDiscoveredLinks):
         self._publisher.publish_urls_to_schedule(page_links)

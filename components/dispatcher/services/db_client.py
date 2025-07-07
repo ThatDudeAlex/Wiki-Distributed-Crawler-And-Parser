@@ -18,13 +18,16 @@ class DBReaderClient:
                 "DB_READER_HOST must be provided either as an argument or environment variable")
         self._session = requests.Session()
 
-    def in_db_cache(self, url: str) -> bool:
+    def pop_links_from_schedule(self, count) -> list:
         try:
-            db_url = urljoin(self._base_url, '/url_cache')
+            db_url = urljoin(self._base_url, '/get_scheduled_links')
             response = self._session.get(
-                db_url, params={"url": url}, timeout=5.0)
+                db_url, params={"count": count}, timeout=5.0)
             response.raise_for_status()
-            data = response.json()
-            return data.get('is_cached', False)
-        except requests.RequestException:
-            return False
+            return response.json()
+        except requests.RequestException as e:
+            print(self._base_url)
+            print(f"Exception: {e}")
+            if e.response:
+                print(f"Status code: {e.response.status_code}")
+                print(f"Response body: {e.response.text}")

@@ -149,6 +149,21 @@ class SchedulerQueueChannels(EnumCommonMethods, str, Enum):
     SEEN_LINKS_TO_CACHE = QueueNames.SEEN_LINKS_TO_CACHE.value
     ADD_LINKS_TO_SCHEDULE = QueueNames.ADD_LINKS_TO_SCHEDULE.value
 
+# Scheduler queue channels
+
+
+class DispatcherQueueChannels(EnumCommonMethods, str, Enum):
+    """
+    Dispatcher Queue Channels
+
+    Describes which queues are consumed or published by the Dispatcher
+
+    Publishes
+    ---------
+    - urls_to_crawl
+    """
+    URLS_TO_CRAWL = QueueNames.URLS_TO_CRAWL.value
+
 
 class DelayQueues(EnumCommonMethods, str, Enum):
     SCHEDULER_DELAY_30MS = 'scheduler_delay_30ms'

@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+echo "🚀 Step 0: Teardown Current Containers"
+docker compose down -v
+echo "⏳ Waiting 2s for core infra init"
+sleep 2
+
 echo "🚀 Step 1: Building & Deploying Core Infrastructure..."
 docker compose build --no-cache rabbitmq postgres pgadmin postgres_initiator redis
 docker compose up -d rabbitmq postgres pgadmin postgres_initiator redis --remove-orphans
@@ -40,6 +45,12 @@ sleep 2
 echo "🚀 Step 6: Seeding Queue..."
 docker compose build --no-cache rabbitmq_seeder
 docker compose up -d rabbitmq_seeder --remove-orphans
+echo "⏳ Waiting 2s before Dispatcher..."
+sleep 2
+
+echo "🚀 Step 7: Turning Up Dispatcher..."
+docker compose build --no-cache dispatcher
+docker compose up -d dispatcher --remove-orphans
 
 echo "🎉 All components deployed successfully!"
 sleep 2
