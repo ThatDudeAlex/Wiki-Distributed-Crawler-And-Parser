@@ -75,7 +75,6 @@ class CrawlerQueueChannels(EnumCommonMethods, str, Enum):
     - pages_to_parse
     """
     URLS_TO_CRAWL = QueueNames.URLS_TO_CRAWL.value
-    START_TO_CRAWL = 'start_crawl'
     PAGE_METADATA_TO_SAVE = QueueNames.PAGE_METADATA_TO_SAVE.value
     PAGES_TO_PARSE = QueueNames.PAGES_TO_PARSE.value
 

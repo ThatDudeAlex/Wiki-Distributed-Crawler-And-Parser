@@ -1,13 +1,21 @@
 #!/bin/bash
 set -e
 
+
+# ========== Infrastructure Services Init & Deployment ==========
+
+
 echo "🚀 Step 1: Building & Deploying Core Infrastructure..."
 docker compose build --no-cache rabbitmq postgres pgadmin postgres_initiator redis
 docker compose up -d rabbitmq postgres pgadmin postgres_initiator redis --remove-orphans
 echo "⏳ Waiting 7s for core infra to settle..."
 sleep 7
 
-db_writer_count=1
+
+# ========== DB Writer/Reader Init & Deployment ==========
+
+
+db_writer_count=4
 db_reader_count=1
 
 echo "🚀 Step 2: Building & Deploying DB Services (db_reader + db_writer)..."
@@ -16,11 +24,15 @@ docker compose up -d --scale db_writer=$db_writer_count --scale db_reader=$db_re
 echo "⏳ Waiting 7s for db_reader/db_writer to boot..."
 sleep 7
 
+
+# ========== Schedulers Init & Deployment ==========
+
+
 echo "🚀 Step 3: Building & Gradually Scaling Scheduler (2 → 8)..."
 docker compose build --no-cache scheduler
 
 current_scheduler_count=2
-max_scheduler_count=8
+max_scheduler_count=10
 
 while [ $current_scheduler_count -le $max_scheduler_count ]; do
     echo "🚀 Scaling Scheduler to $current_scheduler_count..."
@@ -33,11 +45,15 @@ done
 echo "⏳ Waiting 10s before scaling parsers..."
 sleep 10
 
+
+# ========== Parsers Init & Deployment ==========
+
+
 echo "🚀 Step 4: Building & Gradually Scaling Parsers (2 → 14)..."
 docker compose build --no-cache parser
 
 current_parser_scale=2
-max_parser_scale=14
+max_parser_scale=8
 
 while [ $current_parser_scale -le $max_parser_scale ]; do
     echo "🚀 Scaling parser to $current_parser_scale..."
@@ -51,6 +67,10 @@ echo "✅ Parsers deployed at scale $max_parser_scale."
 
 echo "⏳ Waiting 10s before scaling schedulers..."
 sleep 10
+
+
+# ========== Crawlers Init & Deployment ==========
+
 
 crawler_proxy_instances=3
 
@@ -80,11 +100,19 @@ for crawler in "${CRAWLERS[@]}"; do
   sleep 15
 done
 
+
+# ========== Queue Seeder ==========
+
+
 echo "🚀 Step 6: Seeding Queue..."
 docker compose build --no-cache rabbitmq_seeder
 docker compose up -d rabbitmq_seeder --remove-orphans
 echo "⏳ Waiting 7s for seeder to settle..."
 sleep 7
+
+
+# ========== Dispatcher Init & Deployment ==========
+
 
 echo "🚀 Step 7: Turning Up Dispatcher..."
 docker compose build --no-cache dispatcher

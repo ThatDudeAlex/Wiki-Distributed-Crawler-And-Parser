@@ -79,7 +79,7 @@ services:
     image: redis:alpine
     container_name: redis
     restart: unless-stopped
-    command: redis-server --maxmemory 4294967296 --maxmemory-policy allkeys-lru #4GiB of ram
+    command: redis-server --maxmemory 2147483648 --maxmemory-policy allkeys-lru #4GiB of ram
     ports:
       - "6379:6379"
 
@@ -168,7 +168,7 @@ services:
       - compressed_html_data:${DL_HTML_PATH}
 
   db_writer:
-    container_name: db_writer
+    # container_name: db_writer
     build:
       context: .
       dockerfile: components/db_writer/Dockerfile
