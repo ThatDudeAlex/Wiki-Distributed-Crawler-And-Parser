@@ -26,6 +26,7 @@ class FilteringService:
             self._exceeds_max_depth(link) or
             self._is_external(link) or
             self._is_not_article_page(link) or
+            self._is_cross_language_domain(link) or
             self._is_blocked_by_robot(link)
         )
 
@@ -50,6 +51,12 @@ class FilteringService:
             return True
         if is_home_page(link.url):
             # self._logger.info("FILTERED: Home page — URL: %s", link.url)
+            return True
+        return False
+
+    def _is_cross_language_domain(self, link: LinkData) -> bool:
+        parsed = urlparse(link.url)
+        if parsed.netloc != "en.wikipedia.org":
             return True
         return False
 
