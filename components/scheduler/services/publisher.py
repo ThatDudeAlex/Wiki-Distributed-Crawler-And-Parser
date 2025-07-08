@@ -18,7 +18,7 @@ class PublishingService:
         self._queue_service = queue_service
         self._logger = logger
 
-    def publish_urls_to_schedule(self, page_links: ProcessDiscoveredLinks):
+    def publish_links_to_schedule(self, page_links: ProcessDiscoveredLinks):
         # BASE_INTERVAL_MS = 1000  # for ~33 URLs/sec
 
         # for i, link in enumerate(page_links.links):
@@ -35,25 +35,6 @@ class PublishingService:
         )
 
     # TODO: Implement retry mechanism and dead-letter
-    def publish_cache_urls(self, links_to_cache: List[LinkData]):
-        cache_list = []
-
-        for link in links_to_cache:
-            seen_url = SeenUrl(
-                link.url,
-                last_seen=get_timestamp_eastern_time()
-            )
-            cache_list.append(seen_url)
-
-        message = CacheSeenUrls(seen_urls=cache_list)
-        message.validate_publish()
-
-        self._queue_service.publish(
-            SchedulerQueueChannels.SEEN_LINKS_TO_CACHE.value, message)
-
-        # self._logger.info("Published: Cache Processed Links")
-
-    # TODO: Implement retry mechanism and dead-letter
     def publish_save_processed_links(self, links_to_save: List[LinkData]):
         message = SaveProcessedLinks(links=links_to_save)
         message.validate_publish()
@@ -62,13 +43,6 @@ class PublishingService:
             SchedulerQueueChannels.SCHEDULED_LINKS_TO_SAVE.value, message)
 
         # self._logger.info("Published: Save Processed Links")
-
-    # def publish_Add_links_to_schedule(self, links_to_save: List[LinkData]):
-    #     message = AddLinksToSchedule(links=links_to_save)
-    #     message.validate_publish()
-
-    #     self._queue_service.publish(
-    #         SchedulerQueueChannels.ADD_LINKS_TO_SCHEDULE.value, message)
 
     # TODO: Implement retry mechanism and dead-letter
     def publish_links_to_schedule(self, links_to_crawl: List[LinkData]):
@@ -87,21 +61,6 @@ class PublishingService:
 
         self._queue_service.publish(
             SchedulerQueueChannels.ADD_LINKS_TO_SCHEDULE.value, message)
-        # sleep(0.04)
         link_count += 1
 
         self._logger.info("Published: %s Links Scheduled", link_count)
-
-    # def publish_crawl_tasks(self, links_to_crawl: List[CrawlTask]):
-    #     link_count = 0
-    #     self._logger.info("Publishing links to crawl: %s", links_to_crawl)
-
-    #     for link in links_to_crawl:
-    #         message = link
-    #         message.validate_publish()
-
-    #         self._queue_service.publish(
-    #             SchedulerQueueChannels.URLS_TO_CRAWL.value, message)
-    #         link_count += 1
-
-    #         self._logger.info("Published: %s Links To Crawl", link_count)

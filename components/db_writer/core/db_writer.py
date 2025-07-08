@@ -148,32 +148,6 @@ def save_parsed_data(page_data: ParsedContent, logger: logging.Logger, session_f
             return False
 
 
-def cache_seen_url(seen_urls: CacheSeenUrls, logger: logging.Logger, session_factory=None) -> None:
-    with get_db(session_factory=session_factory) as db:
-        values = []
-        for seen_url in seen_urls.seen_urls:
-            values.append({
-                "url": seen_url.url,
-                "last_seen": seen_url.last_seen,
-            })
-
-        # Skip if no values
-        if not values:
-            logger.warning(
-                'Skipped URL caching into the DB: no values received')
-            return
-
-        # Single bulk INSERT ... ON CONFLICT DO NOTHING
-        stmt = insert(SeenUrlCache).values(values)
-        stmt = stmt.on_conflict_do_nothing(index_elements=['url'])
-
-        try:
-            db.execute(stmt)
-        except Exception:
-            logger.exception("Bulk insert into seen_url_cache failed")
-            raise
-
-
 def add_links_to_schedule(links_to_schedule: AddLinksToSchedule, logger: logging.Logger, session_factory=None) -> None:
     with get_db(session_factory=session_factory) as db:
         values = []

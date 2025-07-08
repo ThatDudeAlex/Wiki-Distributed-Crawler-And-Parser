@@ -202,10 +202,3 @@ class Category(Base):
         secondary=page_category_association,
         back_populates="categories"
     )
-
-
-class SeenUrlCache(Base):
-    __tablename__ = 'seen_url_cache'
-
-    url = Column(String, primary_key=True)
-    last_seen = Column(DateTime, server_default=func.now())
