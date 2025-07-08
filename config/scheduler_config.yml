@@ -7,6 +7,8 @@ default:
     redis_cache_ttl: 43200 #12 Hrs
 
   filters:
+    max_depth: 4
+
     allow_domains:
       - en.wikipedia.org
 
