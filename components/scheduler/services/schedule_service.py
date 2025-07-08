@@ -48,7 +48,7 @@ class ScheduleService:
         all_links = page_links.links
         all_urls = [link.url for link in all_links]
 
-        # # Batch check seen URLs using Redis
+        # Batch check seen URLs using Redis
         try:
             seen_flags = self.cache.batch_is_seen_url(all_urls)
             unseen_links = [

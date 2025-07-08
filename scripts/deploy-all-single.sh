@@ -14,13 +14,9 @@ sleep 7
 
 # ========== DB Writer/Reader Init & Deployment ==========
 
-
-db_writer_count=4
-db_reader_count=1
-
 echo "🚀 Step 2: Building & Deploying DB Services (db_reader + db_writer)..."
 docker compose build --no-cache db_reader db_writer
-docker compose up -d --scale db_writer=$db_writer_count --scale db_reader=$db_reader_count db_reader db_writer --remove-orphans
+docker compose up -d --scale db_writer=$DB_WRITER_COUNT --scale db_reader=$DB_READER_COUNT db_reader db_writer --remove-orphans
 echo "⏳ Waiting 7s for db_reader/db_writer to boot..."
 sleep 7
 
@@ -32,9 +28,8 @@ echo "🚀 Step 3: Building & Gradually Scaling Scheduler (2 → 8)..."
 docker compose build --no-cache scheduler
 
 current_scheduler_count=2
-max_scheduler_count=14
 
-while [ $current_scheduler_count -le $max_scheduler_count ]; do
+while [ $current_scheduler_count -le $SCHEDULER_MAX_COUNT ]; do
     echo "🚀 Scaling Scheduler to $current_scheduler_count..."
     docker compose up --scale scheduler=$current_scheduler_count -d scheduler --remove-orphans
     echo "⏳ Sleeping 15s..."
@@ -53,9 +48,8 @@ echo "🚀 Step 4: Building & Gradually Scaling Parsers (2 → 14)..."
 docker compose build --no-cache parser
 
 current_parser_scale=2
-max_parser_scale=14
 
-while [ $current_parser_scale -le $max_parser_scale ]; do
+while [ $current_parser_scale -le $PARSER_MAX_COUNT ]; do
     echo "🚀 Scaling parser to $current_parser_scale..."
     docker compose up --scale parser=$current_parser_scale -d parser --remove-orphans
     echo "⏳ Sleeping 15s..."
@@ -63,7 +57,7 @@ while [ $current_parser_scale -le $max_parser_scale ]; do
     current_parser_scale=$((current_parser_scale + 2))
 done
 
-echo "✅ Parsers deployed at scale $max_parser_scale."
+echo "✅ Parsers deployed at scale $PARSER_MAX_COUNT."
 
 echo "⏳ Waiting 10s before scaling schedulers..."
 sleep 10
@@ -71,10 +65,7 @@ sleep 10
 
 # ========== Crawlers Init & Deployment ==========
 
-
-crawler_proxy_instances=3
-
-echo "🚀 Step 5: Building & Deploying Crawlers (11 regions × $crawler_proxy_instances)..."
+echo "🚀 Step 5: Building & Deploying Crawlers (11 regions × $CRAWLER_PROXY_COUNT)..."
 docker compose build --no-cache \
   crawler_noproxy crawler_la crawler_san_jose crawler_boca_raton \
   crawler_las_vegas crawler_buffalo crawler_nyc crawler_dallas
@@ -94,8 +85,8 @@ declare -a CRAWLERS=(
 )
 
 for crawler in "${CRAWLERS[@]}"; do
-  echo "🚀 Deploying $crawler with scale=$crawler_proxy_instances..."
-  docker compose up --scale $crawler=$crawler_proxy_instances -d $crawler --remove-orphans
+  echo "🚀 Deploying $crawler with scale=$CRAWLER_PROXY_COUNT..."
+  docker compose up --scale $crawler=$CRAWLER_PROXY_COUNT -d $crawler --remove-orphans
   echo "⏳ Sleeping 15s before next crawler..."
   sleep 15
 done
