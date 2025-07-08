@@ -20,7 +20,7 @@ def _fetch(url: str) -> requests.Response:
 
 def crawl(url: str, logger: logging.Logger) -> FetchResponse:
     """
-    Perform a crawl of the specified URL, respecting robots.txt, and return a CrawlerResponse
+    Perform a crawl of the specified URL, respecting robots.txt, and return a FetchResponse
     """
     try:
 

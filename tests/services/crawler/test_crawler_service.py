@@ -1,11 +1,21 @@
+from zoneinfo import ZoneInfo
 import pytest
 from unittest.mock import MagicMock, patch
 from components.crawler.services.crawler_service import CrawlerService
+from components.crawler.configs.types import FetchResponse
+from shared.rabbitmq.enums.crawl_status import CrawlStatus
+from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
+from datetime import datetime
 
 
 @pytest.fixture
-def mock_queue():
-    return MagicMock()
+def crawl_task():
+    return CrawlTask(
+        url="http://example.com",
+        depth=1,
+        scheduled_at=datetime.fromisoformat(
+            '2025-07-08T12:00:00Z')
+    )
 
 
 @pytest.fixture
@@ -14,94 +24,85 @@ def mock_logger():
 
 
 @pytest.fixture
-def crawler_service(mock_queue, mock_logger):
-    return CrawlerService(queue_service=mock_queue, logger=mock_logger, max_depth=2)
+def mock_queue_service():
+    return MagicMock()
 
 
-@patch('components.crawler.services.crawler_service.crawl')
-def test_run_skips_when_depth_exceeded(mock_crawl, crawler_service, mock_logger):
-    crawler_service.run("http://example.com", depth=3)
-    mock_crawl.assert_not_called()
+@pytest.fixture
+def mock_publisher():
+    publisher = MagicMock()
+    return publisher
 
 
-# @patch('components.crawler.services.crawler_service.crawl')
-# def test_run_failed_crawl_publishes_failed_task(mock_crawl, crawler_service, mock_queue):
-#     mock_crawl.return_value = CrawlerResponse(
-#         success=False,
-#         url="http://example.com",
-#         crawl_status=CrawlStatus.FAILED,
-#         data=None,
-#         error={'type': 'HTTPError', 'message': 'Request failed'}
-#     )
-#     crawler_service.run("http://example.com", depth=1)
+def test_run_success_path(crawl_task, mock_logger, mock_queue_service, mock_publisher):
+    html_content = "<html>test</html>"
 
-#     assert mock_queue.publish.call_count == 1
-#     args, kwargs = mock_queue.publish.call_args
+    with patch("components.crawler.services.crawler_service.crawl") as mock_crawl, \
+            patch("components.crawler.services.crawler_service.create_hash") as mock_create_hash, \
+            patch("components.crawler.services.crawler_service.download_compressed_html_content") as mock_download, \
+            patch("components.crawler.services.crawler_service.get_timestamp_eastern_time") as mock_timestamp:
 
-#     assert args[1]['crawl_status'].value == CrawlStatus.FAILED.value
-#     assert str(args[1]['url']) == "http://example.com/"
-#     assert args[1]['error_message'] == 'Request failed'
+        # Setup
+        mock_crawl.return_value = FetchResponse(
+            success=True,
+            url=crawl_task.url,
+            crawl_status=CrawlStatus.SUCCESS,
+            status_code=200,
+            headers={},
+            text=html_content
+        )
+        mock_create_hash.return_value = "html_hash"
+        mock_download.return_value = ("url_hash", "/tmp/file.html")
+        mock_timestamp.return_value = "2025-07-08T12:00:00Z"
 
+        service = CrawlerService(
+            queue_service=mock_queue_service, logger=mock_logger)
+        service.publisher = mock_publisher
 
-# @patch('services.crawler.service.crawler_service.get_timestamp_eastern_time', return_value='mocked_time')
-# @patch('services.crawler.service.crawler_service.download_compressed_html_content')
-# @patch('components.crawler.services.crawler_service.crawl')
-# def test_run_successful_crawl_publishes_all_tasks(mock_crawl, mock_download, mock_time, crawler_service, mock_queue):
-#     mock_crawl.return_value = CrawlerResponse(
-#         success=True,
-#         url="http://example.com",
-#         crawl_status=CrawlStatus.CRAWLED_SUCCESS,
-#         data=ResponseData(status_code=200, headers={}, text="<html></html>"),
-#         error=None
-#     )
-#     with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
-#         mock_download.return_value = ("hash123", Path(tmp_file.name))
+        # Act
+        service.run(crawl_task)
 
-#         crawler_service.run("http://example.com", depth=1)
-
-#         published_channels = [call_args[0][0]
-#                               for call_args in mock_queue.publish.call_args_list]
-#         assert set(published_channels) == {
-#             'save_crawled_pages', 'parse_tasks'
-#         }
+        # Assert
+        mock_crawl.assert_called_once_with(crawl_task.url, mock_logger)
+        mock_create_hash.assert_called_once_with(html_content)
+        mock_download.assert_called_once()
+        mock_timestamp.assert_called()
+        mock_publisher.store_successful_crawl.assert_called_once()
+        mock_publisher.publish_parsing_task.assert_called_once_with(
+            crawl_task.url, crawl_task.depth, "/tmp/file.html"
+        )
 
 
-# @patch('services.crawler.service.crawler_service.download_compressed_html_content', side_effect=Exception("Download failed"))
-# @patch('components.crawler.services.crawler_service.crawl')
-# def test_run_download_failure(mock_crawl, mock_download, crawler_service, mock_logger):
-#     mock_crawl.return_value = CrawlerResponse(
-#         success=True,
-#         url="http://example.com",
-#         crawl_status=CrawlStatus.CRAWLED_SUCCESS,
-#         data=ResponseData(status_code=200, headers={}, text="<html></html>"),
-#         error=None
-#     )
-#     with pytest.raises(Exception) as e:
-#         crawler_service.run("http://example.com", depth=1)
-#     assert str(e.value) == "Download failed"
+def test_run_failed_crawl(crawl_task, mock_logger, mock_queue_service, mock_publisher):
+    with patch("components.crawler.services.crawler_service.crawl") as mock_crawl, \
+            patch("components.crawler.services.crawler_service.get_timestamp_eastern_time") as mock_timestamp:
 
+        # Setup
+        mock_crawl.return_value = FetchResponse(
+            success=False,
+            url=crawl_task.url,
+            crawl_status=CrawlStatus.FAILED,
+            error_type="Timeout",
+            error_message="Request timed out"
+        )
+        mock_timestamp.return_value = "2025-07-08T12:00:00Z"
 
-# @patch('components.crawler.services.crawler_service.crawl')
-# def test_run_handles_empty_url_gracefully(mock_crawl, crawler_service):
-#     with pytest.raises(Exception):
-#         crawler_service.run("", depth=1)
+        service = CrawlerService(
+            queue_service=mock_queue_service, logger=mock_logger)
+        service.publisher = mock_publisher
 
+        # Act
+        service.run(crawl_task)
 
-# @patch('components.crawler.services.crawler_service.crawl')
-# def test_run_handles_none_url(mock_crawl, crawler_service):
-#     with pytest.raises(Exception):
-#         crawler_service.run(None, depth=1)
-
-
-# @patch.dict(os.environ, {}, clear=True)
-# @patch('components.crawler.services.crawler_service.crawl')
-# def test_run_missing_env_path(mock_crawl, crawler_service):
-#     mock_crawl.return_value = CrawlerResponse(
-#         success=True,
-#         url="http://example.com",
-#         crawl_status=CrawlStatus.CRAWLED_SUCCESS,
-#         data=ResponseData(status_code=200, headers={}, text="<html></html>"),
-#         error=None
-#     )
-#     with pytest.raises(TypeError):
-#         crawler_service.run("http://example.com", depth=1)
+        # Assert
+        mock_crawl.assert_called_once_with(crawl_task.url, mock_logger)
+        mock_timestamp.assert_called_once()
+        mock_publisher.store_failed_crawl.assert_called_once_with(
+            crawl_task.url,
+            CrawlStatus.FAILED,
+            "2025-07-08T12:00:00Z",
+            "Timeout",
+            "Request timed out"
+        )
+        mock_publisher.store_successful_crawl.assert_not_called()
+        mock_publisher.publish_parsing_task.assert_not_called()
