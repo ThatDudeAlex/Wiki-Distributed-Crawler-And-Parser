@@ -35,8 +35,14 @@ def crawl(url: str, logger: logging.Logger) -> FetchResponse:
     except requests.HTTPError as e:
         logger.error("HTTPError in '%s' - StatusCode: %s - %s", url,
                      e.response.status_code if e.response else "N/A", str(e))
-        return FetchResponse(success=False, url=url, crawl_status=CrawlStatus.FAILED, error=e)
+        return FetchResponse(
+            success=False, url=url, crawl_status=CrawlStatus.FAILED,
+            error_type=type(e).__name__, error_message=str(e)
+        )
 
     except requests.RequestException as e:
-        logger.error(f"RequestException in '{url}' - {e}")
-        return FetchResponse(success=False, url=url, crawl_status=CrawlStatus.SKIPPED, error=e)
+        logger.error(f"Unexpected error in '{url}' - {e}")
+        return FetchResponse(
+            success=False, url=url, crawl_status=CrawlStatus.FAILED,
+            error_type=type(e).__name__, error_message=str(e)
+        )
