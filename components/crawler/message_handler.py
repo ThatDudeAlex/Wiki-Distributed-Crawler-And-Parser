@@ -8,7 +8,7 @@ from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask, ValidationE
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 
 
-def handle_message(ch, method, properties, body, crawler_service: CrawlerService, logger: logging.Logger):
+def run_crawler(ch, method, properties, body, crawler_service: CrawlerService, logger: logging.Logger):
     try:
         message_str = body.decode('utf-8')
         message_dict = json.loads(message_str)
@@ -40,7 +40,7 @@ def start_crawl_listener(queue_service: QueueService, crawler_service: CrawlerSe
     # This allows me to inject the crawler & logger while still complying with
     # the RabbitMQ api for listening to messages
     handle_message_partial = partial(
-        handle_message, crawler_service=crawler_service, logger=logger
+        run_crawler, crawler_service=crawler_service, logger=logger
     )
 
     queue_service.channel.basic_consume(
