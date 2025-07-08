@@ -23,11 +23,6 @@ if __name__ == "__main__":
         scheduled_at=get_timestamp_eastern_time()
     )]
     message = AddLinksToSchedule(links=links)
-    # message = CrawlTask(
-    #     url=SEED_URL,
-    #     depth=0,
-    #     scheduled_at=get_timestamp_eastern_time()
-    # )
     message.validate_publish()
 
     # queue.publish(QueueNames.URLS_TO_CRAWL.value, message)

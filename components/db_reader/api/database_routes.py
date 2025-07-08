@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.applications import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from shared.logging_utils import get_logger
-from components.db_reader.core.db_reader import is_url_cached, pop_links_from_schedule
+from components.db_reader.core.db_reader import pop_links_from_schedule
 
 
 database_router = APIRouter()

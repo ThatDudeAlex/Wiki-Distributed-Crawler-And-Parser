@@ -1,7 +1,7 @@
 import logging
 from contextlib import contextmanager
 from database.engine import SessionLocal
-from database.db_models.models import ScheduledLinks, SeenUrlCache
+from database.db_models.models import ScheduledLinks
 
 
 @contextmanager

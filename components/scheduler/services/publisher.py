@@ -18,7 +18,7 @@ class PublishingService:
         self._queue_service = queue_service
         self._logger = logger
 
-    def publish_links_to_schedule(self, page_links: ProcessDiscoveredLinks):
+    def publish_links_to_delay_queue(self, page_links: ProcessDiscoveredLinks):
         # BASE_INTERVAL_MS = 1000  # for ~33 URLs/sec
 
         # for i, link in enumerate(page_links.links):
@@ -26,7 +26,7 @@ class PublishingService:
         message = page_links
         message.validate_publish()
 
-        # self._logger.debug("Publishing to delay queue: %s", link.url)
+        self._logger.debug("Publishing to delay queue: %s", page_links.links)
 
         self._queue_service.publish_with_ttl(
             queue_name=DelayQueues.SCHEDULER_DELAY_30MS.value,

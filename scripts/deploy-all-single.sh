@@ -1,5 +1,8 @@
 #!/bin/bash
 set -e
+set -a
+source .env
+set +a
 
 
 # ========== Infrastructure Services Init & Deployment ==========

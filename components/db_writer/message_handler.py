@@ -1,7 +1,7 @@
 from functools import partial
 import json
 import logging
-from components.db_writer.core.db_writer import cache_seen_url, save_page_metadata, save_parsed_data, save_processed_links, add_links_to_schedule
+from components.db_writer.core.db_writer import save_page_metadata, save_parsed_data, save_processed_links, add_links_to_schedule
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import DbWriterQueueChannels
 from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
@@ -76,28 +76,6 @@ def consume_save_processed_Links(ch, method, properties, body, logger: logging.L
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
-def consume_cache_seen_url(ch, method, properties, body, logger: logging.Logger):
-    try:
-        message_str = body.decode('utf-8')
-        message_dict = json.loads(message_str)
-
-        task = CacheSeenUrls(**message_dict)
-        task.validate_consume()
-
-        cache_seen_url(task, logger)
-
-        # acknowledge success
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-    except ValueError as e:
-        logger.error("Message Skipped - Invalid task message: %s", e)
-        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-    except Exception as e:
-        # TODO: look into if retrying could help the situation
-        # maybe requeue for OperationalError or add a dead-letter queue
-        logger.error("Error processing message: %s", e)
-        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-
-
 def consume_add_links_to_schedule(ch, method, properties, body, logger: logging.Logger):
     try:
         message_str = body.decode('utf-8')
@@ -105,6 +83,7 @@ def consume_add_links_to_schedule(ch, method, properties, body, logger: logging.
 
         task = AddLinksToSchedule(**message_dict)
         task.validate_consume()
+        logger.info('got a message: %s', task)
 
         add_links_to_schedule(task, logger)
 
@@ -133,9 +112,6 @@ def start_db_service_listener(queue_service: QueueService, logger: logging.Logge
     save_save_processed_Links_partial = partial(
         consume_save_processed_Links, logger=logger
     )
-    save_cache_seen_url_partial = partial(
-        consume_cache_seen_url, logger=logger
-    )
     add_links_to_schedule_partial = partial(
         consume_add_links_to_schedule, logger=logger
     )
@@ -156,12 +132,6 @@ def start_db_service_listener(queue_service: QueueService, logger: logging.Logge
     queue_service.channel.basic_consume(
         queue=DbWriterQueueChannels.SCHEDULED_LINKS_TO_SAVE,
         on_message_callback=save_save_processed_Links_partial,
-        auto_ack=False
-    )
-    # Cache Processed Links
-    queue_service.channel.basic_consume(
-        queue=DbWriterQueueChannels.SEEN_LINKS_TO_CACHE,
-        on_message_callback=save_cache_seen_url_partial,
         auto_ack=False
     )
     # Cache Processed Links

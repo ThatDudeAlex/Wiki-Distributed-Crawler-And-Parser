@@ -7,10 +7,10 @@ from sqlalchemy import case
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 from database.engine import SessionLocal
-from database.db_models.models import Category, Link, Page, PageContent, ScheduledLinks, SeenUrlCache
+from database.db_models.models import Category, Link, Page, PageContent, ScheduledLinks
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
-from shared.rabbitmq.schemas.link_processing_schemas import CacheSeenUrls, SaveProcessedLinks, AddLinksToSchedule
+from shared.rabbitmq.schemas.link_processing_schemas import SaveProcessedLinks, AddLinksToSchedule
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 
 
@@ -28,7 +28,6 @@ def get_db(session_factory=None):
         db.close()
 
 
-# TODO: Update all insert queries to do bulk inserts like cache_seen_url()
 def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logger, session_factory=None):
     with get_db(session_factory=session_factory) as db:
         try:
@@ -167,7 +166,7 @@ def add_links_to_schedule(links_to_schedule: AddLinksToSchedule, logger: logging
         # Single bulk INSERT ... ON CONFLICT DO NOTHING
         stmt = insert(ScheduledLinks).values(values)
         stmt = stmt.on_conflict_do_nothing(index_elements=['url'])
-
+        logger.info('Bulk Insert!')
         try:
             db.execute(stmt)
         except Exception:

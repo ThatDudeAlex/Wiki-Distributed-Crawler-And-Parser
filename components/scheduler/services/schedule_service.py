@@ -25,7 +25,7 @@ class ScheduleService:
         self._logger.info("Schedule Service Initiation Completed")
 
     def schedule_links(self, page_links: ProcessDiscoveredLinks):
-        self._publisher.publish_links_to_schedule(page_links)
+        self._publisher.publish_links_to_delay_queue(page_links)
 
     def process_links(self, page_links: ProcessDiscoveredLinks):
         total_links = len(page_links.links)
