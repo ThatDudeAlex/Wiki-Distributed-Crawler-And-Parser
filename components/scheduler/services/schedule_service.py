@@ -2,7 +2,6 @@ import concurrent.futures
 import logging
 import threading
 import time
-from components.scheduler.services.db_client import DBReaderClient
 from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
 from shared.redis.cache_service import CacheService
 from shared.rabbitmq.queue_service import QueueService
@@ -22,38 +21,11 @@ class ScheduleService:
         self.cache = CacheService(self._logger)
         self._publisher = PublishingService(self._queue_service, self._logger)
         self.filter = FilteringService(self._logger)
-        self._dbclient = DBReaderClient()
 
         self._logger.info("Schedule Service Initiation Completed")
 
     def schedule_links(self, page_links: ProcessDiscoveredLinks):
         self._publisher.publish_urls_to_schedule(page_links)
-
-    # def process_link(self, link: LinkData):
-    #     try:
-    #         # 1. Filter noise
-    #         if self.filter.is_filtered(link):
-    #             return None
-    #         # self._logger.info("Pass Filtering")
-
-    #         # 2. Final dedup gate: atomic Redis set
-    #         was_added = self.cache.add_to_seen_set(link.url)
-    #         if not was_added:
-    #             return None
-    #         # self._logger.info("Not In redis")
-
-    #         # 3. Check DB cache
-    #         if self._dbclient.in_db_cache(link.url):
-    #             return None
-    #         # self._logger.info("Not In DB Cache")
-
-    #         self._publisher.publish_save_processed_links(link)
-    #         self._publisher.publish_cache_urls(link)
-    #         self._publisher.publish_crawl_tasks(link)
-    #     except Exception as e:
-    #         self._logger.error(
-    #             "Error processing link (%s): %s", link.url, str(e))
-    #         return None
 
     def process_links(self, page_links: ProcessDiscoveredLinks):
         total_links = len(page_links.links)
@@ -101,13 +73,6 @@ class ScheduleService:
                     metric_counts['duplicates'] += 1
                     return None
                 metric_counts['redi_add'] += 1
-
-                # 3. Check DB cache
-                metric_counts['db_reader_cache_calls'] += 1
-                if self._dbclient.in_db_cache(link.url):
-                    metric_counts['db_reader_cache_success'] += 1
-                    return None
-                metric_counts['db_reader_cache_fail'] += 1
 
                 return link
 

@@ -9,16 +9,6 @@ database_router = APIRouter()
 logger = get_logger("db_reader")
 
 
-@database_router.get("/url_cache")
-def is_url_cached_endpoint(url: str):
-    try:
-        return is_url_cached(url=url, logger=logger)
-    except Exception as e:
-        logger.error(
-            f"Exception in is_url_cached_endpoint: {e}", exc_info=True)
-        return {'url': url, "is_cached": False}
-
-
 @database_router.get("/get_scheduled_links")
 def pop_links(count: int):
     try:
