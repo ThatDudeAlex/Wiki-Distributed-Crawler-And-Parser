@@ -14,7 +14,7 @@ class CacheService:
 
         self._redis = redis.Redis(
             host='redis', port=6379, decode_responses=True)
-        self._expiration_seconds = 3600  # 1hr
+        # self._expiration_seconds = 3600  # 1hr
         self._logger = logger
 
     def batch_is_seen_url(self, urls: list[str]) -> list[bool]:
@@ -47,9 +47,7 @@ class CacheService:
         try:
             if url:
                 # cache url temporarily
-                was_added = self._redis.set(
-                    url, 1, ex=self._expiration_seconds, nx=True
-                )
+                was_added = self._redis.set(url, 1, nx=True)
                 return was_added is True
             return False
         except redis.exceptions.RedisError as e:

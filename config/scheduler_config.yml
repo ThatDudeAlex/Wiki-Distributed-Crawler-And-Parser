@@ -1,15 +1,27 @@
-excluded_prefixes:
-  - "/wiki/Special:"
-  - "/wiki/Help:"
-  - "/wiki/Portal:"
-  - "/wiki/File:"
-  - "/wiki/Template:"
-  - "/wiki/Template_talk:"
-  - "/wiki/Wikipedia:"
-  - "/wiki/Talk:"
-  - "/wiki/Category:"
-  - "/wiki/Book:"
-  - "/wiki/User:"
-  - "/wiki/Module:"
-  - "/wiki/Project:"
-  - "/wiki/Main_Page"
+default:
+  logging:
+    log_to_file: true
+    log_level: INFO
+
+  deduplication:
+    redis_cache_ttl: 43200 #12 Hrs
+
+  filters:
+    allow_domains:
+      - en.wikipedia.org
+
+    excluded_prefixes:
+      - "/wiki/Special:"
+      - "/wiki/Help:"
+      - "/wiki/Portal:"
+      - "/wiki/File:"
+      - "/wiki/Template:"
+      - "/wiki/Template_talk:"
+      - "/wiki/Wikipedia:"
+      - "/wiki/Talk:"
+      - "/wiki/Category:"
+      - "/wiki/Book:"
+      - "/wiki/User:"
+      - "/wiki/Module:"
+      - "/wiki/Project:"
+      - "/wiki/Main_Page"

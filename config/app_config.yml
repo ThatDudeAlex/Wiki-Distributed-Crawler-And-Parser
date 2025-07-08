@@ -1,28 +1,26 @@
-storage:
-  compressed_html_dir: /app/data/compressed_html_data
+default:
+  redis:
+    host: redis
+    port: 6379
+    db_seen: 0
+    decode_responses: true
 
-logging:
-  log_to_file: true
-  log_level: INFO
+  postgres:
+    host: postgres
+    port: 5432
+    db: ${POSTGRES_DB}
+    user: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    url: ${DATABASE_URL}
 
-redis:
-  host: redis
-  port: 6379
-  db_seen: 0
-  ttl: 3600
-  decode_responses: true
+  rabbitmq:
+    user: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+    host: rabbitmq
+    port: 5672
 
-postgres:
-  url: ${DATABASE_URL}
-
-rabbitmq:
-  user: ${RABBITMQ_USER}
-  password: ${RABBITMQ_PASSWORD}
-  host: rabbitmq
-  port: 5672
-
-wikipedia:
-  max_depth: 4
-  base_url: https://en.wikipedia.org
-  seed_url: https://en.wikipedia.org/wiki/Computer_science
-  robots_txt: https://en.wikipedia.org/robots.txt
+  wikipedia:
+    max_depth: 4
+    base_url: https://en.wikipedia.org
+    seed_url: https://en.wikipedia.org/wiki/Computer_science
+    robots_txt: https://en.wikipedia.org/robots.txt

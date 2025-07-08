@@ -1,41 +1,11 @@
-content_container_id: mw-content-text
+default:
+  logging:
+    log_to_file: true
+    log_level: INFO
 
-boilerplate_selectors:
-  - .mw-headline-anchor
-  - table.infobox
-  - table.metadata
-  - table.ambox
-  - div.hatnote
-  - div.rellink
-  - div.sistersitebox
-  - div.navbox
-  - div.thumb
-  - div.portal
-  - div.printfooter
-  - div.editsection
-  - div#toc
-  - div.citation
-  - sup.reference
-  - li.interlanguage-link
-  - div.mw-references-columns
-  - div.reflist
-  - ol.references
-  - div#catlinks
-  - div#mw-panel
-  - div#p-views
-  - span.mw-editsection
-  - div.mw-references-columns
-  - div#External_links
-  - div#See_also
-  - div#Notes
-  - div#References
-  - div#Further_reading
-  - div#Works_cited
-  - div#Bibliography
-  - div#References_and_notes
-image_extensions:
-  - .png
-  - .jpg
-  - .jpeg
-  - .gif
-  - .svg
+  selector_config_path: config/selectors/wiki.yaml
+
+  output:
+    store_link_graph: true
+    link_table_name: links
+  

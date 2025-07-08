@@ -153,6 +153,13 @@ services:
       - HTTP_PROXY=${VA_RESTON1_PROXY}
       - HTTPS_PROXY=${VA_RESTON1_PROXY}
 
+  # Washington DC
+  crawler_dc:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${DC_WASHINGTON1_PROXY}
+      - HTTPS_PROXY=${DC_WASHINGTON1_PROXY}
+
   # =========== 
 
   parser:
