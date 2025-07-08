@@ -20,7 +20,7 @@ class PublishingService:
 
     def publish_crawl_tasks(self, links_to_crawl: List[CrawlTask]):
         link_count = 0
-        self._logger.info("Publishing links to crawl: %s", links_to_crawl)
+        # self._logger.info("Publishing links to crawl: %s", links_to_crawl)
 
         for link in links_to_crawl:
             message = link

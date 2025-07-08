@@ -32,7 +32,7 @@ echo "🚀 Step 3: Building & Gradually Scaling Scheduler (2 → 8)..."
 docker compose build --no-cache scheduler
 
 current_scheduler_count=2
-max_scheduler_count=10
+max_scheduler_count=14
 
 while [ $current_scheduler_count -le $max_scheduler_count ]; do
     echo "🚀 Scaling Scheduler to $current_scheduler_count..."
@@ -53,7 +53,7 @@ echo "🚀 Step 4: Building & Gradually Scaling Parsers (2 → 14)..."
 docker compose build --no-cache parser
 
 current_parser_scale=2
-max_parser_scale=8
+max_parser_scale=14
 
 while [ $current_parser_scale -le $max_parser_scale ]; do
     echo "🚀 Scaling parser to $current_parser_scale..."

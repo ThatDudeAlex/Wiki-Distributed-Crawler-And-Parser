@@ -1,0 +1,12 @@
+rate_limit:
+  max_requests_per_sec: 1
+
+heartbeat:
+  enabled: true
+  interval_seconds: 60
+  ttl_seconds: 120
+
+headers:
+  accept: text/html
+  accept-language: en-US
+  user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36

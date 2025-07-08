@@ -22,10 +22,10 @@ class Dispatcher:
         while True:
             try:
                 # TODO: make dynamic with crawler heartbeat
-                links = self._dbclient.pop_links_from_schedule(34)
+                links = self._dbclient.pop_links_from_schedule(33)
 
                 if links:
-                    self._logger.info("========== Got Some Links ==========")
+                    # self._logger.info("========== Got Some Links ==========")
                     tasks = [
                         CrawlTask(
                             url=link['url'],
