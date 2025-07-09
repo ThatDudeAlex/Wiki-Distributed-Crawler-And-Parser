@@ -96,9 +96,6 @@ jobs:
             fi
           done
 
-      - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=${{ github.workspace }}" >> $GITHUB_ENV
-
       - name: Run test suite
         run: PYTHONPATH=${{ github.workspace }} pytest -m "not integration" tests/
         
