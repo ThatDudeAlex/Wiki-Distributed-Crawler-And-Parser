@@ -8,7 +8,9 @@ from shared.logging_utils import get_logger
 
 
 def main():
-    logger = get_logger("Crawler")
+    logger = get_logger(
+        configs.logging.logger_name, configs.logging.log_level
+    )
 
     queue_service = QueueService(logger, CrawlerQueueChannels.get_values())
 

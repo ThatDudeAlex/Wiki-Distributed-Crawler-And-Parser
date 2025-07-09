@@ -1,30 +1,31 @@
 from typing import TypedDict
 
 
-class _Logging(TypedDict):
+class Logging(TypedDict):
     log_to_file: bool
     log_level: str
+    logger_name: str
 
 
-class _Headers(TypedDict):
+class Headers(TypedDict):
     accept: str
     accept_language: str
     user_agent: str
 
 
-class _RateLimit(TypedDict):
+class RateLimit(TypedDict):
     max_requests_per_sec: int
 
 
-class _Heartbeat(TypedDict):
+class Heartbeat(TypedDict):
     enabled: bool
     interval_seconds: int
     ttl_seconds: int
 
 
 class CrawlerConfig(TypedDict):
-    logging: _Logging
-    headers: _Headers
-    rate_limit: _RateLimit
-    heartbeat: _Heartbeat
+    logging: Logging
+    headers: Headers
+    rate_limit: RateLimit
+    heartbeat: Heartbeat
     storage_path: str

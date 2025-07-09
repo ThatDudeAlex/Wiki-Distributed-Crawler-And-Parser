@@ -1,6 +1,7 @@
 logging:
   log_to_file: true
   log_level: INFO
+  logger_name: Dispatcher
 
 seed_urls:
   - https://en.wikipedia.org/wiki/Computer_science

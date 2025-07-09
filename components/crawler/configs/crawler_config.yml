@@ -2,6 +2,7 @@
 logging:
   log_to_file: true
   log_level: INFO
+  logger_name: Crawler
 
 rate_limit:
   max_requests_per_sec: 1

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.applications import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from shared.logging_utils import get_logger
