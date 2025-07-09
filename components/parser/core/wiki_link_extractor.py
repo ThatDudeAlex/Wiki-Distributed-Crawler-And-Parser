@@ -9,8 +9,9 @@ from shared.utils import get_timestamp_eastern_time
 from shared.utils import is_internal_link, normalize_url
 
 
-class _WikipediaLinkExtractor:
-    def __init__(self, logger: logging.Logger):
+class PageLinkExtractor:
+    def __init__(self, selectors, logger: logging.Logger):
+        self.selectors = selectors
         self.logger = logger
 
     def extract(self, source_page_url: str, html_content: str, depth: int) -> LinkData:
@@ -24,14 +25,14 @@ class _WikipediaLinkExtractor:
                 f"Failed to parse HTML for {source_page_url}: {e}", exc_info=True)
             return []
 
-        main = soup.find('div', id=WIKIPEDIA_MAIN_BODY_ID)
+        main = soup.select_one(self.selectors.content_container_id)
         if main is None:
             self.logger.warning(
-                f"No main body ('{WIKIPEDIA_MAIN_BODY_ID}') on {source_page_url}")
+                f"No main body ('{self.selectors.content_container_id}') on {source_page_url}")
             return []
 
         results: List[LinkData] = []
-        for a in main.find_all('a'):
+        for a in main.find_all(self.selectors.links):
             data = self._extract_link(a, source_page_url, depth)
             if data is not None:
                 results.append(data)
@@ -42,26 +43,29 @@ class _WikipediaLinkExtractor:
 
         return results
 
-    def _extract_link(self, tag: Tag, source_page_url: str, depth: str) -> LinkData:
+    def _extract_link(self, link_tag: Tag, source_page_url: str, depth: str) -> LinkData:
         """
         Extracts metadata from an <a> tag and returns structured LinkData
         """
-        href = tag.get('href')
+        href = link_tag.get('href')
         if not href:
             return None
 
         try:
             normalized_href = normalize_url(href)
             is_internal = is_internal_link(normalized_href)
-            text_content = tag.get_text(strip=True)
-            title_attribute = tag.get('title')
-            id_attribute = tag.get('id')
+            text_content = link_tag.get_text(strip=True)
 
-            rel_list = tag.get('rel')
-            rel_attribute = None if not rel_list else " ".join(rel_list)
+            # Dynamically extract attributes
+            link_attributes = {
+                attr: link_tag.get(attr) for attr in self.selectors.attributes
+            }
+
+            if link_attributes['rel']:
+                link_attributes['rel'] = " ".join(link_attributes['rel'])
 
             link_type = self._determine_type(
-                is_internal, normalized_href, href, rel_attribute, text_content
+                is_internal, normalized_href, href, text_content, link_attributes['rel']
             )
 
             return LinkData(
@@ -70,9 +74,9 @@ class _WikipediaLinkExtractor:
                 depth=depth + 1,  # update the depth of the link
                 discovered_at=get_timestamp_eastern_time(True),
                 anchor_text=text_content,
-                title_attribute=title_attribute,
-                rel_attribute=rel_attribute,
-                id_attribute=id_attribute,
+                title_attribute=link_attributes['title'],
+                rel_attribute=link_attributes['rel'],
+                id_attribute=link_attributes['id'],
                 link_type=link_type,
                 is_internal=is_internal
             )
@@ -87,12 +91,13 @@ class _WikipediaLinkExtractor:
         is_internal: bool,
         norm_url: str,
         raw_href: str,
-        rel: str,
-        text: str
+        text: str,
+        rel: str
     ) -> str:
         """
         Classifies a URL based on its structure, domain, and metadata
         """
+        # TODO: Organize these link types the yml configs
         try:
             if is_internal:
                 path = urlparse(norm_url).path
@@ -113,11 +118,3 @@ class _WikipediaLinkExtractor:
             self.logger.error(
                 f"Error determining link type for '{raw_href}': {e}", exc_info=True)
             return 'error_determining_type'
-
-
-def extract_wiki_page_links(source_page_url: str, html_content: str, depth: int, logger: logging.Logger) -> List[LinkData]:
-    """
-    Extracts and classifies anchor links from the main body of a Wikipedia page
-    """
-    extractor = _WikipediaLinkExtractor(logger)
-    return extractor.extract(source_page_url, html_content, depth)

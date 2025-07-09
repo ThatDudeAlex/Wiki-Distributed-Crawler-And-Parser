@@ -34,6 +34,7 @@ selectors:
     - div#Works_cited
     - div#Bibliography
     - div#References_and_notes
+
   image_extensions:
     - .png
     - .jpg

@@ -1,105 +1,127 @@
-
-WIKIPEDIA_MAIN_BODY_ID = 'mw-content-text'
-
-IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.gif', '.svg')
-
+logging:
+  log_to_file: true
+  log_level: INFO
+  logger_name: Parser
 
 # Specific Wikipedia boilerplate selectors
-WIKIPEDIA_BOILERPLATE_SELECTORS = [
+selectors:
+  title: title
+
+  content_container_id: '#mw-content-text'
+
+  categories_div_id: '#mw-normal-catlinks'
+
+  links: a
+
+  paragraphs: p
+
+  attributes:
+    - rel
+    - id
+    - title
+  
+  boilerplate_selectors:
     # Invisible anchors next to headings
-    ".mw-headline-anchor",
+    - .mw-headline-anchor
 
     # Information boxes (sidebars)
-    "table.infobox",
+    - table.infobox
 
     # Metadata tables
-    "table.metadata",
+    - table.metadata
 
     # Ambox templates (e.g., disambiguation, cleanup notices)
-    "table.ambox",
+    - table.ambox
 
     # Hatnotes (e.g., "For other uses, see...")
-    "div.hatnote",
+    - div.hatnote
 
     # Rellink templates (e.g., "Related research")
-    "div.rellink",
+    - div.rellink
 
     # Links to Wikimedia sister projects
-    "div.sistersitebox",
+    - div.sistersitebox
 
     # Navigation boxes (often at the bottom)
-    "div.navbox",
+    - div.navbox
 
     # Image containers with captions (often desired to remove if only text is needed)
-    "div.thumb",
+    - div.thumb
 
     # Portal links at the bottom
-    "div.portal",
+    - div.portal
 
     # Print-specific footer
-    "div.printfooter",
+    - div.printfooter
 
     # "edit" links next to headings
-    "div.editsection",
+    - div.editsection
 
     # Table of Contents
-    "div#toc",
+    - div#toc
 
     # Specific citation markup
-    "div.citation",
+    - div.citation
 
     # Superscript citation numbers (e.g., [1], [2])
-    "sup.reference",
+    - sup.reference
 
     # Language links
-    "li.interlanguage-link",
+    - li.interlanguage-link
 
     # References section, if main_content_div includes it
-    "div.mw-references-columns",
+    - div.mw-references-columns
 
     # Reflist for references
-    "div.reflist",
+    - div.reflist
 
     # Ordered list for references
-    "ol.references",
+    - ol.references
 
     # Categories at the bottom of the page
-    "div#catlinks",
+    - div#catlinks
 
     # Left sidebar navigation (though it might be outside main_content_div)
-    "div#mw-panel",
+    - div#mw-panel
 
     # View history, edit links (usually outside main_content_div)
-    "div#p-views",
+    - div#p-views
 
     # "edit" links next to section titles
-    "span.mw-editsection",
+    - span.mw-editsection
 
     # More specific sections often at the end that might not be 'main article text'
-    # For columns of references
-    "div.mw-references-columns",
+    - div.mw-references-columns
 
     # External links section, typically by heading but also containers
-    "div#External_links",
+    - div#External_links
 
     # See also section
-    "div#See_also",
+    - div#See_also
 
     # Notes section
-    "div#Notes",
+    - div#Notes
 
     # References section
-    "div#References",
+    - div#References
 
     # Further reading section
-    "div#Further_reading",
+    - div#Further_reading
 
     # Works cited section
-    "div#Works_cited",
+    - div#Works_cited
 
     # Bibliography section
-    "div#Bibliography",
+    - div#Bibliography
 
     # Combined refs and notes
-    "div#References_and_notes",
-]
+    - div#References_and_notes
+
+  image_extensions:
+    - .png
+    - .jpg
+    - .jpeg
+    - .gif
+    - .svg
+
+
