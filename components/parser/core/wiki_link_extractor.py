@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from typing import List
 
 from bs4 import BeautifulSoup, Tag
-from components.parser.configs.app_configs import WIKIPEDIA_MAIN_BODY_ID, IMAGE_EXTENSIONS
+from components.parser.configs.app_configs import IMAGE_EXTENSIONS
 from shared.rabbitmq.schemas.parsing_task_schemas import LinkData
 from shared.utils import get_timestamp_eastern_time
 from shared.utils import is_internal_link, normalize_url

@@ -1,6 +1,5 @@
 
 import logging
-import os
 
 from components.crawler.types.config_types import CrawlerConfig
 from components.crawler.types.crawler_types import FetchResponse

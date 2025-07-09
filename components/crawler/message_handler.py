@@ -1,4 +1,3 @@
-from datetime import datetime
 from functools import partial
 import json
 import logging
@@ -30,7 +29,7 @@ def run_crawler(ch, method, properties, body, crawler_service: CrawlerService, l
         logger.error("Invalid JSON format: %s", str(e))
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
-    except Exception as e:
+    except Exception:
         logger.exception("Unexpected error processing message:")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 

@@ -100,4 +100,4 @@ class ScheduleService:
 
         self._logger.info("Publishing %d valid links", len(valid_links))
         self._publisher.publish_save_processed_links(valid_links)
-        # self._publisher.publish_links_to_schedule(valid_links)
+        self._publisher.publish_links_to_schedule(valid_links)

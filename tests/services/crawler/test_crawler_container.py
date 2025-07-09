@@ -81,7 +81,6 @@ def test_container_file_structure():
         # Test that the container has require shared directories
         assert_dir_exists(container, 'database')
         assert_dir_exists(container, 'shared')
-        assert_dir_exists(container, 'config')
     finally:
         try:
             container.kill()

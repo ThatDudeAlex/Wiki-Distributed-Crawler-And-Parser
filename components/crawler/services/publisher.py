@@ -1,7 +1,5 @@
-from dataclasses import asdict
 from datetime import datetime
 import logging
-import os
 from components.crawler.types.crawler_types import FetchResponse
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask

@@ -1,11 +1,9 @@
-from datetime import datetime
 import logging
-from time import sleep
 from typing import List
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels, DelayQueues
 from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
 from shared.rabbitmq.schemas.parsing_task_schemas import LinkData, ProcessDiscoveredLinks
-from shared.rabbitmq.schemas.link_processing_schemas import CacheSeenUrls, SaveProcessedLinks, SeenUrl, AddLinksToSchedule
+from shared.rabbitmq.schemas.link_processing_schemas import SaveProcessedLinks, AddLinksToSchedule
 from shared.rabbitmq.queue_service import QueueService
 from shared.utils import get_timestamp_eastern_time
 

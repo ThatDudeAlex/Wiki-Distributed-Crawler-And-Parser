@@ -5,7 +5,6 @@ from components.parser.core.wiki_link_extractor import PageLinkExtractor
 from components.parser.services.compressed_html_reader import load_compressed_html
 from components.parser.services.publisher import PublishingService
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
-from shared.utils import get_timestamp_eastern_time
 
 
 class ParsingService:

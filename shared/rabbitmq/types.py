@@ -1,10 +1,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from datetime import datetime
-from typing import List, Optional
 from urllib.parse import urlparse
-from shared.rabbitmq.enums.crawl_status import CrawlStatus
 
 
 @dataclass

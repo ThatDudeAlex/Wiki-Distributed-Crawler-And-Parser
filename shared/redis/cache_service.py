@@ -1,7 +1,6 @@
 import logging
 import redis
 import redis.exceptions
-from shared.redis.cache_config import CacheSets
 
 # TODO: I temporarily commented out logging to test how it affects performace
 #       put them back when needed

@@ -1,4 +1,3 @@
-from datetime import datetime
 import logging
 from typing import List
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent, LinkData

@@ -5,7 +5,7 @@ from components.db_writer.core.db_writer import save_page_metadata, save_parsed_
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import DbWriterQueueChannels
 from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
-from shared.rabbitmq.schemas.link_processing_schemas import CacheSeenUrls, SaveProcessedLinks, AddLinksToSchedule
+from shared.rabbitmq.schemas.link_processing_schemas import SaveProcessedLinks, AddLinksToSchedule
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 
 

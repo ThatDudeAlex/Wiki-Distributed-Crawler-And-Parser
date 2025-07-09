@@ -3,7 +3,7 @@ from typing import List
 from datetime import datetime
 from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
 from shared.rabbitmq.types import QueueMsgSchemaInterface, ValidationError
-from shared.rabbitmq.schemas.parsing_task_schemas import LinkData, ProcessDiscoveredLinks
+from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
 
 
 # === Save Link Record (Scheduler → DB Writer) ===

@@ -4,7 +4,6 @@ import logging
 from components.scheduler.services.schedule_service import ScheduleService
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
-from shared.rabbitmq.schemas.link_processing_schemas import LinkData
 from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
 
 

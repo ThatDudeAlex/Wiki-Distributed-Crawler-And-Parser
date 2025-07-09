@@ -1,4 +1,3 @@
-import os
 from dotenv import load_dotenv
 from components.dispatcher.types.config_types import DispatcherConfig
 from shared.configs.load_config import Path, load_config

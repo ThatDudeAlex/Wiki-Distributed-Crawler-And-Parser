@@ -3,7 +3,6 @@ from shared.rabbitmq.enums.queue_names import QueueNames
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.queue_config import ALL_QUEUE_CHANNELS
 from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
-from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
 from shared.rabbitmq.schemas.link_processing_schemas import AddLinksToSchedule
 from shared.utils import get_timestamp_eastern_time
 from shared.config import SEED_URL
