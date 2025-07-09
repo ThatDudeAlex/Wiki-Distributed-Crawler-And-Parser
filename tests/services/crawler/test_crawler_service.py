@@ -1,15 +1,12 @@
-from zoneinfo import ZoneInfo
 import pytest
 from unittest.mock import MagicMock, patch
 from components.crawler.services.crawler_service import CrawlerService
 from components.crawler.types.crawler_types import FetchResponse
-from components.crawler.types.config_types import CrawlerConfig
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
-# from shared.config_loader import get_settings
 from datetime import datetime
-# from components.crawler.configs.crawler_config import configs as loaded_configs
-from shared.configs.load_config import Path, load_config
+from components.crawler.configs.crawler_config import configs as loaded_configs
+from shared.configs.load_config import Path
 
 # Gets the root of the project relative to this test file
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -23,16 +20,6 @@ def crawl_task():
         scheduled_at=datetime.fromisoformat(
             '2025-07-08T12:00:00Z')
     )
-
-
-@pytest.fixture
-def crawler_config() -> CrawlerConfig:
-    config_path = PROJECT_ROOT.joinpath(
-        "components", "crawler", "configs", "crawler_config.yml"
-    )
-    configs: CrawlerConfig = load_config(config_path)
-    configs.storage_path = 'test-path'
-    return configs
 
 
 @pytest.fixture
@@ -51,9 +38,9 @@ def mock_publisher():
     return publisher
 
 
-def test_config_loaded(mock_logger, mock_queue_service, crawler_config):
+def test_config_loaded(mock_logger, mock_queue_service):
     service = CrawlerService(
-        configs=crawler_config, queue_service=mock_queue_service, logger=mock_logger
+        configs=loaded_configs, queue_service=mock_queue_service, logger=mock_logger
     )
     assert service._configs is not None
     assert service._configs.rate_limit is not None
@@ -61,7 +48,7 @@ def test_config_loaded(mock_logger, mock_queue_service, crawler_config):
     assert service._configs.headers is not None
 
 
-def test_run_success_path(crawl_task, mock_logger, mock_queue_service, mock_publisher, crawler_config):
+def test_run_success_path(crawl_task, mock_logger, mock_queue_service, mock_publisher):
     html_content = "<html>test</html>"
 
     with patch("components.crawler.services.crawler_service.crawl") as mock_crawl, \
@@ -83,7 +70,7 @@ def test_run_success_path(crawl_task, mock_logger, mock_queue_service, mock_publ
         mock_timestamp.return_value = "2025-07-08T12:00:00Z"
 
         service = CrawlerService(
-            crawler_config, queue_service=mock_queue_service, logger=mock_logger)
+            loaded_configs, queue_service=mock_queue_service, logger=mock_logger)
         service.publisher = mock_publisher
 
         # Act
@@ -100,7 +87,7 @@ def test_run_success_path(crawl_task, mock_logger, mock_queue_service, mock_publ
         )
 
 
-def test_run_failed_crawl(crawl_task, mock_logger, mock_queue_service, mock_publisher, crawler_config):
+def test_run_failed_crawl(crawl_task, mock_logger, mock_queue_service, mock_publisher):
     with patch("components.crawler.services.crawler_service.crawl") as mock_crawl, \
             patch("components.crawler.services.crawler_service.get_timestamp_eastern_time") as mock_timestamp:
 
@@ -115,7 +102,7 @@ def test_run_failed_crawl(crawl_task, mock_logger, mock_queue_service, mock_publ
         mock_timestamp.return_value = "2025-07-08T12:00:00Z"
 
         service = CrawlerService(
-            crawler_config, queue_service=mock_queue_service, logger=mock_logger)
+            loaded_configs, queue_service=mock_queue_service, logger=mock_logger)
         service.publisher = mock_publisher
 
         # Act
