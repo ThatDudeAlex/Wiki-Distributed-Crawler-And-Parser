@@ -2,9 +2,9 @@ import logging
 import requests
 from ratelimit import limits, sleep_and_retry
 
-from components.crawler.configs.types import FetchResponse
+from components.crawler.types.crawler_types import FetchResponse
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
-from components.crawler.configs.app_configs import BASE_HEADERS
+from shared.config import BASE_HEADERS
 
 
 @sleep_and_retry

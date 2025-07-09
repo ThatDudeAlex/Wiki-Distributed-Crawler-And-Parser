@@ -6,6 +6,7 @@ WORKDIR /app
 COPY requirements-common.txt  ./requirements-common.txt
 COPY database/      ./database/
 COPY shared/        ./shared/
+COPY config/        ./config/
 
 # service-specific code
 COPY components/crawler/     ./components/crawler/

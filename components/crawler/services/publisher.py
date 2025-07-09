@@ -2,7 +2,7 @@ from dataclasses import asdict
 from datetime import datetime
 import logging
 import os
-from components.crawler.configs.types import FetchResponse
+from components.crawler.types.crawler_types import FetchResponse
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
 from shared.rabbitmq.schemas.crawling_task_schemas import CrawlStatus, SavePageMetadataTask, ValidationError

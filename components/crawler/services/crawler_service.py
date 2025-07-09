@@ -2,8 +2,8 @@
 import logging
 import os
 
-from dotenv import load_dotenv
-from components.crawler.configs.types import FetchResponse
+from components.crawler.types.config_types import CrawlerConfig
+from components.crawler.types.crawler_types import FetchResponse
 from components.crawler.services.downloader import download_compressed_html_content
 from components.crawler.services.publisher import PublishingService
 from components.crawler.core.crawler import crawl
@@ -13,10 +13,8 @@ from shared.utils import get_timestamp_eastern_time, create_hash
 
 
 class CrawlerService:
-    def __init__(self, queue_service: QueueService, logger: logging.Logger):
-
-        # TODO: Use a config_service instead of using load_dotenv()
-        load_dotenv()
+    def __init__(self, configs: CrawlerConfig, queue_service: QueueService, logger: logging.Logger):
+        self._configs = configs
 
         # logger setup
         self._logger = logger
@@ -54,7 +52,7 @@ class CrawlerService:
 
         self._logger.info('STAGE 3: Download Compressed Html File')
         url_hash, filepath = download_compressed_html_content(
-            os.getenv('DL_HTML_PATH'), url, html_content, self._logger)
+            self._configs.storage_path, url, html_content, self._logger)
 
         # Timestamp of when crawling finished
         fetched_at = get_timestamp_eastern_time()

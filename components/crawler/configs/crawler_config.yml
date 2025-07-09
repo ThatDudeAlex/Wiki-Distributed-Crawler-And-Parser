@@ -1,3 +1,4 @@
+
 logging:
   log_to_file: true
   log_level: INFO
@@ -15,6 +16,4 @@ headers:
   accept-language: en-US
   user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36
 
-output:
-  save_html: true
-  storage_path: ${DL_HTML_PATH}
+storage_path: ${DL_HTML_PATH}
