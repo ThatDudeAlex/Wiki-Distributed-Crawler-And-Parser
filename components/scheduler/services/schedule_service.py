@@ -1,6 +1,4 @@
-import concurrent.futures
 import logging
-import threading
 import time
 from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
 from shared.redis.cache_service import CacheService
@@ -8,19 +6,18 @@ from shared.rabbitmq.queue_service import QueueService
 from components.scheduler.core.filter import FilteringService, LinkData
 from components.scheduler.services.publisher import PublishingService
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dotenv import load_dotenv
 
 MAX_WORKERS = 50
 
 
 class ScheduleService:
-    def __init__(self, queue_service: QueueService, logger: logging.Logger):
-        load_dotenv()
+    def __init__(self, configs, queue_service: QueueService, logger: logging.Logger):
+        self.configs = configs
         self._logger = logger
         self._queue_service = queue_service
-        self.cache = CacheService(self._logger)
-        self._publisher = PublishingService(self._queue_service, self._logger)
-        self.filter = FilteringService(self._logger)
+        self.cache = CacheService(logger)
+        self._publisher = PublishingService(queue_service, logger)
+        self.filter = FilteringService(configs, logger)
 
         self._logger.info("Schedule Service Initiation Completed")
 
@@ -82,7 +79,7 @@ class ScheduleService:
                 return None
 
         # Run processing loop in parallel
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        with ThreadPoolExecutor(max_workers=self.configs.max_workers) as executor:
             futures = [
                 executor.submit(process_single_link, link, idx)
                 for idx, link in enumerate(unseen_links, start=1)
@@ -103,4 +100,4 @@ class ScheduleService:
 
         self._logger.info("Publishing %d valid links", len(valid_links))
         self._publisher.publish_save_processed_links(valid_links)
-        self._publisher.publish_links_to_schedule(valid_links)
+        # self._publisher.publish_links_to_schedule(valid_links)

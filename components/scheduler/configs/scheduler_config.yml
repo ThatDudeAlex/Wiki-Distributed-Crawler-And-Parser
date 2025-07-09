@@ -1,20 +1,25 @@
+
 logging:
   log_to_file: true
   log_level: INFO
+  logger_name: Scheduler
+
+max_workers: 50
 
 deduplication:
   redis_cache_ttl: 43200 #12 Hrs
 
 wikipedia:
   base_url: https://en.wikipedia.org
-  robots_txt: https://en.wikipedia.org/robots.txt
 
 filters:
+  robots_txt: https://en.wikipedia.org/robots.txt
+
   max_depth: 4
 
-  allow_domains:
+  allowed_domains:
     - en.wikipedia.org
-
+  
   excluded_prefixes:
     - "/wiki/Special:"
     - "/wiki/Help:"

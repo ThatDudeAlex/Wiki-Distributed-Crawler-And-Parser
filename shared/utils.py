@@ -41,6 +41,7 @@ def is_internal_link(href: str) -> bool:
         "wikipedia.org" in parsed.netloc
 
 
+# TODO: Move this into Scheduler (is part of filtering)
 def has_excluded_prefix(href: str) -> bool:
     """
     Excludes Non-Article Wikipedia Pages
