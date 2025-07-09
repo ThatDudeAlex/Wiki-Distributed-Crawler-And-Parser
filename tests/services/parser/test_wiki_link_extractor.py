@@ -1,41 +1,57 @@
-import unittest
-from unittest.mock import MagicMock
-from components.parser.configs.app_configs import WIKIPEDIA_MAIN_BODY_ID
-from components.parser.core.wiki_link_extractor import _WikipediaLinkExtractor
+from unittest.mock import Mock
+
+import pytest
+from components.parser.core.wiki_link_extractor import PageLinkExtractor
+from components.parser.configs.parser_config import configs as loaded_configs
 
 
-class TestWikipediaLinkExtractor(unittest.TestCase):
-    def setUp(self):
-        self.logger = MagicMock()
-        self.extractor = _WikipediaLinkExtractor(logger=self.logger)
+@pytest.fixture
+def logger():
+    return Mock()
 
-    def test_internal_link(self):
-        html = f'''<div id="{WIKIPEDIA_MAIN_BODY_ID}"><a href="/wiki/Python_(programming_language)">Python</a></div>'''
-        links = self.extractor.extract(
-            'https://en.wikipedia.org/wiki/Main_Page', html)
-        self.assertEqual(len(links), 1)
-        self.assertEqual(links[0].link_type, 'wikilink')
 
-    def test_external_link(self):
-        html = f'''<div id="{WIKIPEDIA_MAIN_BODY_ID}"><a href="http://example.com">Example</a></div>'''
-        links = self.extractor.extract(
-            'https://en.wikipedia.org/wiki/Main_Page', html)
-        self.assertEqual(links[0].link_type, 'external_link')
+@pytest.fixture
+def link_extractor(logger):
+    return PageLinkExtractor(loaded_configs.selectors, logger)
 
-    def test_category_link(self):
-        html = f'''<div id="{WIKIPEDIA_MAIN_BODY_ID}"><a href="/wiki/Category:Programming_languages">Category</a></div>'''
-        links = self.extractor.extract(
-            'https://en.wikipedia.org/wiki/Main_Page', html)
-        self.assertEqual(links[0].link_type, 'category_link')
 
-    def test_nofollow_external_link(self):
-        html = f'''<div id="{WIKIPEDIA_MAIN_BODY_ID}"><a href="http://example.com" rel="nofollow">NoFollow</a></div>'''
-        links = self.extractor.extract(
-            'https://en.wikipedia.org/wiki/Main_Page', html)
-        self.assertEqual(links[0].link_type, 'external_link_nofollow')
+@pytest.fixture
+def content_id():
+    return loaded_configs.selectors.content_container_id.lstrip('#')
 
-    def test_missing_href(self):
-        html = f'''<div id="{WIKIPEDIA_MAIN_BODY_ID}"><a>No href</a></div>'''
-        links = self.extractor.extract(
-            'https://en.wikipedia.org/wiki/Main_Page', html)
-        self.assertEqual(len(links), 0)
+
+def test_internal_link(link_extractor, content_id):
+    html = f'''<div id="{content_id}"><a href="/wiki/Python_(programming_language)">Python</a></div>'''
+    links = link_extractor.extract(
+        'https://en.wikipedia.org/wiki/Main_Page', html, 0)
+    assert len(links) == 1
+    assert links[0].link_type == 'wikilink'
+
+
+def test_external_link(link_extractor, content_id):
+    html = f'''<div id="{content_id}"><a href="http://example.com">Example</a></div>'''
+    links = link_extractor.extract(
+        'https://en.wikipedia.org/wiki/Main_Page', html, 1
+    )
+    assert links[0].link_type == 'external_link'
+
+
+def test_category_link(link_extractor, content_id):
+    html = f'''<div id="{content_id}"><a href="/wiki/Category:Programming_languages">Category</a></div>'''
+    links = link_extractor.extract(
+        'https://en.wikipedia.org/wiki/Main_Page', html, 1)
+    assert links[0].link_type == 'category_link'
+
+
+def test_nofollow_external_link(link_extractor, content_id):
+    html = f'''<div id="{content_id}"><a href="http://example.com" rel="nofollow">NoFollow</a></div>'''
+    links = link_extractor.extract(
+        'https://en.wikipedia.org/wiki/Main_Page', html, 1)
+    assert links[0].link_type == 'external_link_nofollow'
+
+
+def test_missing_href(link_extractor, content_id):
+    html = f'''<div id="{content_id}"><a>No href</a></div>'''
+    links = link_extractor.extract(
+        'https://en.wikipedia.org/wiki/Main_Page', html, 1)
+    assert len(links) == 0

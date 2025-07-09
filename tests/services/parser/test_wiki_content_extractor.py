@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import Mock, patch
-from components.parser.core.wiki_content_extractor import extract_wiki_page_content
+from components.parser.configs.parser_config import configs as loaded_configs
+from components.parser.core.wiki_content_extractor import PageContentExtractor
 
 # Sample HTML mimicking a basic Wikipedia-like structure
 SAMPLE_HTML = """
@@ -30,10 +31,15 @@ def logger():
     return Mock()
 
 
+@pytest.fixture
+def page_content_extractor(logger):
+    return PageContentExtractor(loaded_configs.selectors, logger)
+
+
 @patch("components.parser.core.wiki_content_extractor.create_hash", return_value="fakehash123")
 @patch("components.parser.core.wiki_content_extractor.clean_wiki_html_content", return_value="Cleaned content")
-def test_extract_wiki_page_content(mock_clean, mock_hash, logger):
-    result = extract_wiki_page_content(TEST_URL, SAMPLE_HTML, logger)
+def test_extract_wiki_page_content(mock_clean, mock_hash, page_content_extractor):
+    result = page_content_extractor.extract(TEST_URL, SAMPLE_HTML)
 
     assert result.title == "Test Page"
     assert result.categories == ["Category 1", "Category 2"]
@@ -44,9 +50,9 @@ def test_extract_wiki_page_content(mock_clean, mock_hash, logger):
 
 @patch("components.parser.core.wiki_content_extractor.create_hash")
 @patch("components.parser.core.wiki_content_extractor.clean_wiki_html_content")
-def test_no_main_content(mock_clean, mock_hash, logger):
+def test_no_main_content(mock_clean, mock_hash, page_content_extractor):
     html = "<html><body><h1 id='firstHeading'>Title</h1></body></html>"
-    result = extract_wiki_page_content(TEST_URL, html, logger)
+    result = page_content_extractor.extract(TEST_URL, html)
 
     assert result.summary is None
     assert result.text_content is None
@@ -55,7 +61,7 @@ def test_no_main_content(mock_clean, mock_hash, logger):
 
 @patch("components.parser.core.wiki_content_extractor.clean_wiki_html_content")
 @patch("components.parser.core.wiki_content_extractor.create_hash")
-def test_no_categories(mock_hash, mock_clean, logger):
+def test_no_categories(mock_hash, mock_clean, page_content_extractor):
     html = """
     <html>
         <h1 id="firstHeading">Test Page</h1>
@@ -69,9 +75,9 @@ def test_no_categories(mock_hash, mock_clean, logger):
     mock_soup = Mock()
     mock_soup.get_text.return_value = "Cleaned content"
     mock_clean.return_value = mock_soup
-    mock_hash.return_value = "mocked_hash_string"  # 🔧 fix here
+    mock_hash.return_value = "mocked_hash_string"
 
-    result = extract_wiki_page_content(TEST_URL, html, logger)
+    result = page_content_extractor.extract(TEST_URL, html)
 
     assert result.categories == []
     assert result.text_content_hash == "mocked_hash_string"
@@ -79,7 +85,7 @@ def test_no_categories(mock_hash, mock_clean, logger):
 
 @patch("components.parser.core.wiki_content_extractor.create_hash", return_value="hash123")
 @patch("components.parser.core.wiki_content_extractor.clean_wiki_html_content", return_value="Only paragraph available")
-def test_single_paragraph_summary(mock_clean, mock_hash, logger):
+def test_single_paragraph_summary(mock_clean, mock_hash, page_content_extractor):
     html = """
     <html>
         <h1 id="firstHeading">Only Title</h1>
@@ -89,7 +95,7 @@ def test_single_paragraph_summary(mock_clean, mock_hash, logger):
     </html>
     """
 
-    result = extract_wiki_page_content(TEST_URL, html, logger)
+    result = page_content_extractor.extract(TEST_URL, html)
 
     assert result.summary == "Only paragraph available"
     assert result.text_content == "Only paragraph available"
