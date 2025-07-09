@@ -8,6 +8,8 @@ import logging
 # TODO: I temporarily commented out logging to test how it affects performace
 #       put them back when needed
 
+# TODO: Implement global config loading for base headers
+
 
 class FilteringService:
     def __init__(self, configs, logger: logging.Logger):
