@@ -8,7 +8,7 @@ from components.crawler.services.downloader import download_compressed_html_cont
 def test_download_compressed_html_content_with_real_html():
     # Setup
     test_url = 'http://example.com'
-    html_file_path = "tests/data/sample_wikipedia_page.html"
+    html_file_path = "tests/data/sample_page.html"
 
     with open(html_file_path, "r", encoding="utf-8") as f:
         html_content = f.read()

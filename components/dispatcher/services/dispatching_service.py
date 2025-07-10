@@ -11,7 +11,6 @@ from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
 from shared.utils import get_timestamp_eastern_time
 
 
-# TODO: Implement redis client for hearbeat check
 class Dispatcher:
     def __init__(self, configs: DispatcherConfig, queue_service: QueueService, logger: logging.Logger):
         self.configs = configs
@@ -30,9 +29,6 @@ class Dispatcher:
         while True:
             try:
                 num_healthy = self._get_healthy_crawler_count()
-                # TODO: remove if no longer needed in the future
-                # self.logger.debug(f"Healthy Crawlers: {num_healthy}")
-
                 links = self._dbclient.pop_links_from_schedule(num_healthy)
 
                 if links:
@@ -59,7 +55,6 @@ class Dispatcher:
             self.configs.heartbeat_key_pattern, self.configs.scan_count
         )
 
-    # TODO: Implement to remove the rabbit_seeder (let dispatcher handle function)
     def seed_empty_queue(self):
         self.logger.info("Seeding Crawl Queue")
         seed_links = []
