@@ -31,3 +31,16 @@ class DBReaderClient:
             if e.response:
                 print(f"Status code: {e.response.status_code}")
                 print(f"Response body: {e.response.text}")
+
+    def tables_are_empty(self) -> bool:
+        try:
+            db_url = urljoin(self._base_url, '/tables/empty')
+            response = self._session.get(db_url, timeout=5.0)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(self._base_url)
+            print(f"Exception: {e}")
+            if e.response:
+                print(f"Status code: {e.response.status_code}")
+                print(f"Response body: {e.response.text}")

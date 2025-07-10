@@ -1,7 +1,7 @@
 import logging
 from contextlib import contextmanager
 from database.engine import SessionLocal
-from database.db_models.models import ScheduledLinks
+from database.db_models.models import Page, PageContent, ScheduledLinks
 
 
 @contextmanager
@@ -51,3 +51,19 @@ def pop_links_from_schedule(count: int, logger: logging.Logger, session_factory=
         db.commit()
 
         return links
+
+
+def are_tables_empty(logger: logging.Logger, session_factory=None) -> bool:
+    with get_db(session_factory=session_factory) as db:
+        # Count rows in the relevant tables
+        page_count = db.query(Page).count()
+        page_content_count = db.query(PageContent).count()
+        scheduled_links_count = db.query(ScheduledLinks).count()
+
+        # Check if all tables are empty (this is the trigger to seed the rabbitMQ queue)
+        if not page_count and not page_content_count and not scheduled_links_count:
+            logger.info(
+                "The DB tables are empty - this is a fresh instance of the DB")
+            return True
+
+        return False

@@ -53,7 +53,7 @@ class Page(Base):
         nullable=False,
     )
     # TODO: uncomment once recrawl is implemented
-    # next_crawl_at = Column(DateTime(timezone=True), nullable=True)
+    next_crawl_at = Column(DateTime(timezone=True), nullable=True)
 
     total_crawl_attempts = Column(Integer, nullable=False, default=1)
     failed_crawl_attempts = Column(Integer, nullable=False, default=0)
@@ -168,9 +168,6 @@ class PageContent(Base):
 
     # A hash of the entire page to help detect changes in the page content
     text_content_hash = Column(Text, nullable=True)
-
-    # List of article page categories/tags
-    # categories = Column(JSON, nullable=True)
 
     parsed_at = Column(DateTime(timezone=True),
                        server_default=func.now(), nullable=False)

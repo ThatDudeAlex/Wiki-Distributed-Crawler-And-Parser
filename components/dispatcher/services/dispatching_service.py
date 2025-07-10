@@ -8,6 +8,7 @@ from components.dispatcher.services.publisher import PublishingService
 from shared.redis.cache_service import CacheService
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
+from shared.utils import get_timestamp_eastern_time
 
 
 # TODO: Implement redis client for hearbeat check
@@ -19,6 +20,9 @@ class Dispatcher:
         self._dbclient = DBReaderClient()
         self._publisher = PublishingService(self._queue_service, self.logger)
         self._cache = CacheService(logger)
+
+        if self._dbclient.tables_are_empty():
+            self.seed_empty_queue()
 
     def run(self):
         """Main dispatcher loop — fetches links and emits crawl tasks at a controlled rate."""
@@ -57,4 +61,12 @@ class Dispatcher:
 
     # TODO: Implement to remove the rabbit_seeder (let dispatcher handle function)
     def seed_empty_queue(self):
-        pass
+        self.logger.info("Seeding Crawl Queue")
+        seed_links = []
+        for link in self.configs.seed_urls:
+            seed_links.append(CrawlTask(
+                url=link,
+                depth=0,
+                scheduled_at=get_timestamp_eastern_time()
+            ))
+            self._publisher.publish_crawl_tasks(seed_links)

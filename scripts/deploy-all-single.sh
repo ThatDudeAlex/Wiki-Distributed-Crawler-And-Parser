@@ -94,21 +94,10 @@ for crawler in "${CRAWLERS[@]}"; do
   sleep 15
 done
 
-
-# ========== Queue Seeder ==========
-
-
-echo "🚀 Step 6: Seeding Queue..."
-docker compose build --no-cache rabbitmq_seeder
-docker compose up -d rabbitmq_seeder --remove-orphans
-echo "⏳ Waiting 7s for seeder to settle..."
-sleep 7
-
-
 # ========== Dispatcher Init & Deployment ==========
 
 
-echo "🚀 Step 7: Turning Up Dispatcher..."
+echo "🚀 Step 6: Turning Up Dispatcher..."
 docker compose build --no-cache dispatcher
 docker compose up -d dispatcher --remove-orphans
 sleep 2

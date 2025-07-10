@@ -42,17 +42,11 @@ docker compose up -d crawler_noproxy --remove-orphans
 echo "⏳ Waiting 2s before Seeding Queue..."
 sleep 2
 
-echo "🚀 Step 6: Seeding Queue..."
-docker compose build --no-cache rabbitmq_seeder
-docker compose up -d rabbitmq_seeder --remove-orphans
-echo "⏳ Waiting 2s before Dispatcher..."
-sleep 2
-
-echo "🚀 Step 7: Turning Up Dispatcher..."
+echo "🚀 Step 5: Turning Up Dispatcher..."
 docker compose build --no-cache dispatcher
 docker compose up -d dispatcher --remove-orphans
 
 echo "🎉 All components deployed successfully!"
 sleep 2
 
-docker compose logs -f
+docker compose logs -f dispatcher
