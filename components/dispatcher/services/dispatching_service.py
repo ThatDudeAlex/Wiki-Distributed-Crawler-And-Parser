@@ -5,6 +5,7 @@ from time import sleep
 from components.dispatcher.types.config_types import DispatcherConfig
 from components.dispatcher.services.db_client import DBReaderClient
 from components.dispatcher.services.publisher import PublishingService
+from shared.redis.cache_service import CacheService
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
 
@@ -17,14 +18,18 @@ class Dispatcher:
         self.logger = logger
         self._dbclient = DBReaderClient()
         self._publisher = PublishingService(self._queue_service, self.logger)
+        self._cache = CacheService(logger)
 
     def run(self):
         """Main dispatcher loop — fetches links and emits crawl tasks at a controlled rate."""
         self.logger.info("Dispatcher started")
         while True:
             try:
-                # TODO: make dynamic with crawler heartbeat
-                links = self._dbclient.pop_links_from_schedule(32)
+                num_healthy = self._get_healthy_crawler_count()
+                # TODO: remove if no longer needed in the future
+                # self.logger.debug(f"Healthy Crawlers: {num_healthy}")
+
+                links = self._dbclient.pop_links_from_schedule(num_healthy)
 
                 if links:
                     tasks = [
@@ -44,6 +49,11 @@ class Dispatcher:
                     "Dispatcher encountered an error: %s", str(e))
             finally:
                 self.logger.info("Dispatcher shutting down cleanly.")
+
+    def _get_healthy_crawler_count(self) -> int:
+        return self._cache.get_heartbeat_count(
+            self.configs.heartbeat_key_pattern, self.configs.scan_count
+        )
 
     # TODO: Implement to remove the rabbit_seeder (let dispatcher handle function)
     def seed_empty_queue(self):

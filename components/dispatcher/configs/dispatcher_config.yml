@@ -3,5 +3,8 @@ logging:
   log_level: INFO
   logger_name: Dispatcher
 
+heartbeat_key_pattern: "crawler:*:heartbeat"
+scan_count: 100
+
 seed_urls:
   - https://en.wikipedia.org/wiki/Computer_science

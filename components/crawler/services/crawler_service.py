@@ -6,6 +6,7 @@ from components.crawler.types.crawler_types import FetchResponse
 from components.crawler.services.downloader import download_compressed_html_content
 from components.crawler.services.publisher import PublishingService
 from components.crawler.core.crawler import crawl
+from components.crawler.core.heartbeat import HeartBeat
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
 from shared.utils import get_timestamp_eastern_time, create_hash
@@ -20,6 +21,9 @@ class CrawlerService:
 
         # queue setup
         self.queue_service = queue_service
+
+        # setup hearbeat (simple component health-check)
+        self.heartbeat = HeartBeat(configs, logger)
 
         # queue publisher setup
         self.publisher = PublishingService(self.queue_service, self._logger)

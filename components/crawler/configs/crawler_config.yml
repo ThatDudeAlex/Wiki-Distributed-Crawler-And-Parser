@@ -9,8 +9,11 @@ rate_limit:
 
 heartbeat:
   enabled: true
-  interval_seconds: 60
-  ttl_seconds: 120
+  initial_ttl_seconds: 180
+  ttl_seconds: 90
+  key_template: "crawler:{crawler_id}:heartbeat"
+  key_pattern: "crawler:*:heartbeat"
+  scan_count: 100
 
 headers:
   accept: text/html

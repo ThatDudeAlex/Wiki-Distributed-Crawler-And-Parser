@@ -9,6 +9,8 @@ from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 
 def run_crawler(ch, method, properties, body, crawler_service: CrawlerService, logger: logging.Logger):
     try:
+        crawler_service.heartbeat.update_heartbeat()
+
         message_str = body.decode('utf-8')
         message_dict = json.loads(message_str)
 
