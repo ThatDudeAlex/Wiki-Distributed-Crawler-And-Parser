@@ -38,14 +38,23 @@ def mock_publisher():
     return publisher
 
 
+@pytest.fixture
+def mock_heartbeat():
+    heartbeat = MagicMock()
+    return heartbeat
+
+
 def test_config_loaded(mock_logger, mock_queue_service):
-    service = CrawlerService(
-        configs=loaded_configs, queue_service=mock_queue_service, logger=mock_logger
-    )
-    assert service._configs is not None
-    assert service._configs.rate_limit is not None
-    assert service._configs.heartbeat is not None
-    assert service._configs.headers is not None
+    with patch('components.crawler.core.heartbeat.CacheService') as MockCacheService:
+        mock_cache_instance = MagicMock()
+        MockCacheService.return_value = mock_cache_instance
+        service = CrawlerService(
+            configs=loaded_configs, queue_service=mock_queue_service, logger=mock_logger
+        )
+        assert service._configs is not None
+        assert service._configs.rate_limit is not None
+        assert service._configs.heartbeat is not None
+        assert service._configs.headers is not None
 
 
 def test_run_success_path(crawl_task, mock_logger, mock_queue_service, mock_publisher):
@@ -54,6 +63,7 @@ def test_run_success_path(crawl_task, mock_logger, mock_queue_service, mock_publ
     with patch("components.crawler.services.crawler_service.crawl") as mock_crawl, \
             patch("components.crawler.services.crawler_service.create_hash") as mock_create_hash, \
             patch("components.crawler.services.crawler_service.download_compressed_html_content") as mock_download, \
+            patch('components.crawler.core.heartbeat.CacheService') as MockCacheService, \
             patch("components.crawler.services.crawler_service.get_timestamp_eastern_time") as mock_timestamp:
 
         # Setup
@@ -68,6 +78,12 @@ def test_run_success_path(crawl_task, mock_logger, mock_queue_service, mock_publ
         mock_create_hash.return_value = "html_hash"
         mock_download.return_value = ("url_hash", "/tmp/file.html")
         mock_timestamp.return_value = "2025-07-08T12:00:00Z"
+
+        mock_cache_instance = MagicMock()
+        MockCacheService.return_value = mock_cache_instance
+        service = CrawlerService(
+            configs=loaded_configs, queue_service=mock_queue_service, logger=mock_logger
+        )
 
         service = CrawlerService(
             loaded_configs, queue_service=mock_queue_service, logger=mock_logger)
@@ -89,6 +105,7 @@ def test_run_success_path(crawl_task, mock_logger, mock_queue_service, mock_publ
 
 def test_run_failed_crawl(crawl_task, mock_logger, mock_queue_service, mock_publisher):
     with patch("components.crawler.services.crawler_service.crawl") as mock_crawl, \
+            patch('components.crawler.core.heartbeat.CacheService') as MockCacheService, \
             patch("components.crawler.services.crawler_service.get_timestamp_eastern_time") as mock_timestamp:
 
         # Setup
@@ -100,6 +117,12 @@ def test_run_failed_crawl(crawl_task, mock_logger, mock_queue_service, mock_publ
             error_message="Request timed out"
         )
         mock_timestamp.return_value = "2025-07-08T12:00:00Z"
+
+        mock_cache_instance = MagicMock()
+        MockCacheService.return_value = mock_cache_instance
+        service = CrawlerService(
+            configs=loaded_configs, queue_service=mock_queue_service, logger=mock_logger
+        )
 
         service = CrawlerService(
             loaded_configs, queue_service=mock_queue_service, logger=mock_logger)
