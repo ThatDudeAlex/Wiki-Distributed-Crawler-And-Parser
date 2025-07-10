@@ -8,3 +8,5 @@ scan_count: 100
 
 seed_urls:
   - https://en.wikipedia.org/wiki/Computer_science
+
+dispatch_tick: 1 #seconds between each dispatch

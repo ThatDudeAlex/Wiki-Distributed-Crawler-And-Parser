@@ -43,7 +43,7 @@ class Dispatcher:
                     ]
                     self._publisher.publish_crawl_tasks(tasks)
 
-                sleep(1)
+                sleep(self.configs.dispatch_tick)
             except Exception as e:
                 self.logger.error(
                     "Dispatcher encountered an error: %s", str(e))
