@@ -1,0 +1,39 @@
+services:
+  prometheus:
+    build:
+      context: ./configs/prometheus
+      dockerfile: Dockerfile
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    build:
+      context: ./configs/grafana
+      dockerfile: Dockerfile
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana # Still needed to persist dashboards/data
+    restart: unless-stopped
+
+  pgadmin:
+    build:
+      context: ./configs/pgadmin
+      dockerfile: Dockerfile
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin # Still needed to persist state
+    restart: unless-stopped
+
+volumes:
+  grafana-data:
+  pgadmin-data:

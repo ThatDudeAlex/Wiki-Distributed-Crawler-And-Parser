@@ -32,14 +32,16 @@ class PublishingService:
     def store_successful_crawl(
         self,
         fetched_response: FetchResponse,
-            url_hash: str,
-            html_content_hash: str,
-            compressed_filepath: str,
-            fetched_at: str
+        url_hash: str,
+        html_content_hash: str,
+        compressed_filepath: str,
+        fetched_at: datetime,
+        next_crawl: datetime
     ):
         page_metadata = SavePageMetadataTask(
             status=fetched_response.crawl_status,
             fetched_at=fetched_at,
+            next_crawl=next_crawl,
             url=fetched_response.url,
             http_status_code=fetched_response.status_code,
             url_hash=url_hash,

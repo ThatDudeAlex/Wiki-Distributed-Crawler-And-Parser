@@ -99,72 +99,37 @@ declare -a CRAWLERS=(
   crawler_san_jose
   crawler_la1
   crawler_la2
-#   crawler_la3
-#   crawler_la4
-#   crawler_la5
-#   crawler_la6
-#   crawler_la7
-#   crawler_la8
-#   crawler_la9
-#   crawler_la10
 
   # Florida
   crawler_boca_raton
 
   # Missouri
-  crawler_kansas_city
+#   crawler_kansas_city
 
-  # Louisiana
-  crawler_abbeville
+#   # Louisiana
+#   crawler_abbeville
 
-  # Nevada
-  crawler_las_vegas1
-#   crawler_las_vegas2
+#   # Nevada
+#   crawler_las_vegas1
 
   # New Jersey
-  crawler_piscataway1
-#   crawler_piscataway2
-#   crawler_piscataway3
+#   crawler_piscataway1
 
 #   # New York
-  crawler_buffalo1
-  crawler_buffalo2
-#   crawler_buffalo3
-#   crawler_buffalo4
-#   crawler_buffalo5
-  crawler_nyc1
-  crawler_nyc2
-#   crawler_nyc3
-#   crawler_nyc4
-#   crawler_nyc5
-#   crawler_nyc6
-#   crawler_nyc7
+#   crawler_buffalo1
+#   crawler_buffalo2
+#   crawler_nyc1
+#   crawler_nyc2
 
 #   # Texas
-  crawler_dallas1
-#   crawler_dallas2
-  crawler_victoria1
-#   crawler_victoria2
-#   crawler_victoria3
+#   crawler_dallas1
+#   crawler_victoria1
 
-#   # Utah
-#   crawler_orem1
-#   crawler_orem2
-
-  # Virginia
-  crawler_ashburn1
-#   crawler_ashburn2
-#   crawler_ashburn3
-#   crawler_ashburn4
-#   crawler_reston1
-#   crawler_reston2
-#   crawler_reston3
+#   # Virginia
+#   crawler_ashburn1
 
 #   # Washington DC
-  crawler_dc1
-#   crawler_dc2
-#   crawler_dc3
-#   crawler_dc4
+#   crawler_dc1
 )
 
 # Deploy all crawlers

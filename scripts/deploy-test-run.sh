@@ -49,4 +49,4 @@ docker compose up -d dispatcher --remove-orphans
 echo "🎉 All components deployed successfully!"
 sleep 2
 
-docker compose logs -f
+docker compose logs -f dispatcher

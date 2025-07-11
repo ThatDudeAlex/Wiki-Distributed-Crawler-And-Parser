@@ -84,8 +84,8 @@ def test_no_categories(mock_hash, mock_clean, page_content_extractor):
 
 
 @patch("components.parser.core.wiki_content_extractor.create_hash", return_value="hash123")
-@patch("components.parser.core.wiki_content_extractor.clean_wiki_html_content", return_value="Only paragraph available")
-def test_single_paragraph_summary(mock_clean, mock_hash, page_content_extractor):
+# @patch("components.parser.core.wiki_content_extractor.summary", return_value="Only paragraph available")
+def test_single_paragraph_summary(mock_hash, page_content_extractor):
     html = """
     <html>
         <h1 id="firstHeading">Only Title</h1>

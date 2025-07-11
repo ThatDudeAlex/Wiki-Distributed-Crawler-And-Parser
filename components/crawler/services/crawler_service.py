@@ -1,4 +1,5 @@
 
+from datetime import timedelta
 import logging
 
 from components.crawler.types.config_types import CrawlerConfig
@@ -22,8 +23,10 @@ class CrawlerService:
         # queue setup
         self.queue_service = queue_service
 
+        # TODO: Remove if hearbeat is no longer going to be use
         # setup hearbeat (simple component health-check)
-        self.heartbeat = HeartBeat(configs, logger)
+        # self.heartbeat = HeartBeat(configs, logger)
+        # self._last_heartbeat_post = time.time()
 
         # queue publisher setup
         self.publisher = PublishingService(self.queue_service, self._logger)
@@ -57,12 +60,15 @@ class CrawlerService:
         url_hash, filepath = download_compressed_html_content(
             self._configs.storage_path, url, html_content, self._logger)
 
-        # Timestamp of when crawling finished
+        # Timestamp of when crawling finished + next scheduled crawl
         fetched_at = get_timestamp_eastern_time()
+        next_crawl = (
+            fetched_at + timedelta(seconds=self._configs.recrawl_interval)
+        )
 
         self._logger.info('STAGE 4: Publish Page Metadata Report')
         self.publisher.store_successful_crawl(
-            fetched_response, url_hash, html_content_hash, filepath, fetched_at)
+            fetched_response, url_hash, html_content_hash, filepath, fetched_at, next_crawl)
 
         self._logger.info('STAGE 5: Tell Parsers to extract page content')
         self.publisher.publish_parsing_task(url, depth, filepath)

@@ -2,6 +2,7 @@
 from datetime import datetime
 import logging
 from time import sleep
+import time
 from components.dispatcher.types.config_types import DispatcherConfig
 from components.dispatcher.services.db_client import DBReaderClient
 from components.dispatcher.services.publisher import PublishingService
@@ -12,13 +13,15 @@ from shared.utils import get_timestamp_eastern_time
 
 
 class Dispatcher:
-    def __init__(self, configs: DispatcherConfig, queue_service: QueueService, logger: logging.Logger):
+    def __init__(self, configs, queue_service: QueueService, logger: logging.Logger):
         self.configs = configs
         self._queue_service = queue_service
         self.logger = logger
         self._dbclient = DBReaderClient()
         self._publisher = PublishingService(self._queue_service, self.logger)
         self._cache = CacheService(logger)
+        self._last_heartbeat_check = 0
+        self._cached_healthy_count = 0
 
         if self._dbclient.tables_are_empty():
             self.seed_empty_queue()
@@ -28,8 +31,12 @@ class Dispatcher:
         # self.logger.info("Dispatcher started")//
         while True:
             try:
+                # TODO: analyze why the redis health check causes a performance drop
+                # of messages sent (as is, it's not good enough to count as ready)
                 # num_healthy = self._get_healthy_crawler_count()
-                links = self._dbclient.pop_links_from_schedule(60)
+                # links = self._dbclient.pop_links_from_schedule(num_healthy)
+                links = self._dbclient.pop_links_from_schedule(
+                    self.configs.dispatch_count)
 
                 if links:
                     tasks = [
@@ -43,18 +50,22 @@ class Dispatcher:
                     ]
                     self._publisher.publish_crawl_tasks(tasks)
 
-                # sleep(self.configs.dispatch_tick)
-                sleep(1)
+                sleep(self.configs.dispatch_tick)
+                # sleep(1)
             except Exception as e:
                 self.logger.error(
                     "Dispatcher encountered an error: %s", str(e))
-            # finally:
-            #     self.logger.info("Dispatcher shutting down cleanly.")
 
     def _get_healthy_crawler_count(self) -> int:
-        return self._cache.get_heartbeat_count(
-            self.configs.heartbeat_key_pattern, self.configs.scan_count
-        )
+        if time.time() - self._last_heartbeat_check > 50:
+            self.logger.info('=== Getting Healthy Crawlers ===')
+            self._cached_healthy_count = self._cache.get_heartbeat_count(
+                self.configs.heartbeat_key_pattern, self.configs.scan_count
+            )
+            self._last_heartbeat_check = time.time()
+            self.logger.info('New Cache Check: %s', self._last_heartbeat_check)
+
+        return self._cached_healthy_count
 
     def seed_empty_queue(self):
         self.logger.info("Seeding Crawl Queue")

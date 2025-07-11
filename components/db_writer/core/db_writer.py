@@ -39,6 +39,7 @@ def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logg
                 html_content_hash=page_metadata.html_content_hash,
                 compressed_filepath=page_metadata.compressed_filepath,
                 last_crawled_at=page_metadata.fetched_at,
+                next_crawl_at=page_metadata.next_crawl,
                 total_crawl_attempts=1,
                 failed_crawl_attempts=0,
                 last_error_seen=page_metadata.error_message

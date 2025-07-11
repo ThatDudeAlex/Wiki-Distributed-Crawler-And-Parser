@@ -1,4 +1,3 @@
-# TODO: adjust after crawler refactoring
 x-crawler-common: &crawler-common
   build:
     context: .
@@ -15,6 +14,8 @@ x-crawler-common: &crawler-common
     - NO_PROXY=localhost,127.0.0.1,rabbitmq,redis,postgres,192.168.0.0/16
 
 services:
+  # === Infrastructutre ===
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -26,8 +27,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER}"
       RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+    # volumes:
+    #   - rabbitmq_data:/var/lib/rabbitmq
 
   rabbitmq_seeder:
     container_name: rabbitmq_seeder
@@ -53,18 +54,6 @@ services:
     ports:
       - "5432:5432"
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@domain.com
-      PGADMIN_DEFAULT_PASSWORD: adminpassword
-    ports:
-      - "5050:80"
-    depends_on:
-      - postgres
-    volumes:
-      - pgadmin:/data/pgadmin
-
   postgres_initiator:
     container_name: postgres_initiator
     build:
@@ -83,11 +72,12 @@ services:
     ports:
       - "6379:6379"
 
-  # ============= 
+  # === Crawlers ===
 
   crawler_noproxy:
     <<: *crawler-common
-    # California Proxies
+
+  # California Proxies
   crawler_santa_cruz1:
     <<: *crawler-common
     environment:
@@ -411,7 +401,7 @@ services:
       - HTTP_PROXY=${DC_WASHINGTON4_PROXY}
       - HTTPS_PROXY=${DC_WASHINGTON4_PROXY}
 
-  # =========== 
+  # === Parsers ===
 
   parser:
     build:
@@ -425,8 +415,9 @@ services:
     volumes:
       - compressed_html_data:${DL_HTML_PATH}
 
+  # === Database Services ===
+
   db_writer:
-    # container_name: db_writer
     build:
       context: .
       dockerfile: components/db_writer/Dockerfile
@@ -446,6 +437,8 @@ services:
     depends_on:
       - postgres
     command: [ "python", "-m", "components.db_reader.main" ]
+
+  # === Scheduler & Dispatcher ===
 
   scheduler:
     # container_name: scheduler
@@ -476,9 +469,37 @@ services:
       - DB_READER_HOST=${DB_READER_HOST}
     command: [ "python", "-m", "components.dispatcher.main" ]
 
+  # === Node & Host lvl-monitoring ===
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    restart: unless-stopped
+
 volumes:
   pg_data:
-  pgadmin:
   compressed_html_data:
-  rabbitmq_data:
-    driver: local
+    # rabbitmq_data:
+    #   driver: local

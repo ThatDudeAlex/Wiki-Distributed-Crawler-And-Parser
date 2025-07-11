@@ -62,6 +62,7 @@ class SavePageMetadataTask(QueueMsgSchemaInterface):
     url_hash: Optional[str] = None              # None if failed
     html_content_hash: Optional[str] = None     # None if failed
     compressed_filepath: Optional[str] = None   # None if failed
+    next_crawl: Optional[datetime] = None       # None if failed
     error_type: Optional[str] = None            # None if success
     error_message: Optional[str] = None         # None if success
 
@@ -99,8 +100,13 @@ class SavePageMetadataTask(QueueMsgSchemaInterface):
         if not isinstance(self.fetched_at, datetime):
             raise ValidationError(
                 "fetched_at must be a datetime object before publishing", field="fetched_at")
+        if self.next_crawl and not isinstance(self.next_crawl, datetime):
+            raise ValidationError(
+                "next_crawl must be a datetime object before publishing", field="next_crawl")
         # Convert field to ISO string for JSON serialization
         self.fetched_at = self.fetched_at.isoformat()
+        if self.next_crawl:
+            self.next_crawl = self.next_crawl.isoformat()
 
     def validate_consume(self) -> None:
         # Convert status from string to enum if needed
@@ -118,9 +124,14 @@ class SavePageMetadataTask(QueueMsgSchemaInterface):
         if not isinstance(self.fetched_at, str):
             raise ValidationError(
                 "fetched_at must be a string when consuming", field="fetched_at")
+        if self.next_crawl and not isinstance(self.next_crawl, str):
+            raise ValidationError(
+                "next_crawl must be a string when consuming", field="next_crawl")
 
         try:
             self.fetched_at = datetime.fromisoformat(self.fetched_at)
+            if self.next_crawl:
+                self.next_crawl = datetime.fromisoformat(self.next_crawl)
         except ValueError:
             raise ValidationError(
                 "fetched_at must be a valid ISO 8601 datetime string", field="fetched_at")

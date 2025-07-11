@@ -10,7 +10,8 @@ from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 def run_crawler(ch, method, properties, body, crawler_service: CrawlerService, logger: logging.Logger):
     try:
         # TODO: test performance with heartbeat & without it
-        # crawler_service.heartbeat.update_heartbeat()
+        # if time.time() - crawler_service._last_heartbeat_post > 80:
+        #     crawler_service.heartbeat.update_heartbeat()
 
         message_str = body.decode('utf-8')
         message_dict = json.loads(message_str)
