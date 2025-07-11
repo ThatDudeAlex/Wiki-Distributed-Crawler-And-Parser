@@ -1,8 +1,7 @@
 import logging
 from urllib.parse import urlparse
 from typing import List
-
-from bs4 import BeautifulSoup, Tag
+from lxml import html
 from components.parser.configs.app_configs import IMAGE_EXTENSIONS
 from shared.rabbitmq.schemas.parsing_task_schemas import LinkData
 from shared.utils import get_timestamp_eastern_time
@@ -18,32 +17,60 @@ class PageLinkExtractor:
         """
         Parses a Wikipedia HTML page and returns structured data for links within the main body
         """
-        try:
-            soup = BeautifulSoup(html_content, 'lxml')
-        except Exception as e:
-            self.logger.error(
-                f"Failed to parse HTML for {source_page_url}: {e}", exc_info=True)
-            return []
+        tree = html.fromstring(html_content)
+        main_list = tree.xpath(self.selectors.content_container_id)
 
-        main = soup.select_one(self.selectors.content_container_id)
-        if main is None:
+        if not main_list:
             self.logger.warning(
-                f"No main body ('{self.selectors.content_container_id}') on {source_page_url}")
+                "No main body while extracting links: %s", source_page_url)
             return []
 
-        results: List[LinkData] = []
-        for a in main.find_all(self.selectors.links):
-            data = self._extract_link(a, source_page_url, depth)
-            if data is not None:
-                results.append(data)
+        main_content = main_list[0]
+        all_links = main_content.xpath(self.selectors.all_links)
+        extracted_links: List[LinkData] = []
 
-        if not results:
-            self.logger.info(
-                f"No links found in main body of {source_page_url}")
+        for link in all_links:
+            data = self._construct_link_data(link, source_page_url, depth)
 
-        return results
+            if data:
+                extracted_links.append(data)
 
-    def _extract_link(self, link_tag: Tag, source_page_url: str, depth: str) -> LinkData:
+        if not extracted_links:
+            self.logger.warning(
+                "No links found in main body of %s", source_page_url)
+
+        return extracted_links
+
+    def _construct_link_data(self, link, source_page_url: str, depth: str):
+        href = link.get('href') or ''
+
+        if not href:
+            return None
+
+        anchor_text = link.text_content().strip()
+        normalized_href = normalize_url(href)
+        is_internal = is_internal_link(normalized_href)
+
+        title_attr = link.get('title') or ''
+        rel_attr = link.get('rel') or ''
+        id_attr = link.get('id') or ''
+        type = self._determine_type(
+            is_internal, normalized_href, href, anchor_text, rel_attr
+        )
+        return LinkData(
+            source_page_url=source_page_url,
+            url=normalized_href,
+            depth=depth + 1,  # update the depth of the link
+            discovered_at=get_timestamp_eastern_time(True),
+            anchor_text=anchor_text,
+            title_attribute=title_attr,
+            rel_attribute=rel_attr,
+            id_attribute=id_attr,
+            link_type=type,
+            is_internal=is_internal
+        )
+
+    def _extract_link(self, link_tag, source_page_url: str, depth: str) -> LinkData:
         """
         Extracts metadata from an <a> tag and returns structured LinkData
         """
@@ -81,9 +108,7 @@ class PageLinkExtractor:
                 is_internal=is_internal
             )
         except Exception as e:
-            self.logger.error(
-                f"Error extracting link '{href}' on page '{source_page_url}': {e}", exc_info=True
-            )
+            self.logger.error("Unexpected error extracting data: %s", e)
             return None
 
     def _determine_type(
@@ -97,23 +122,28 @@ class PageLinkExtractor:
         """
         Classifies a URL based on its structure, domain, and metadata
         """
-        # TODO: Organize these link types the yml configs
         try:
+            rel = (rel or "").lower()
+            text = (text or "").lower()
+            raw_href = (raw_href or "").lower()
+            path = urlparse(norm_url).path.lower()
+
             if is_internal:
-                path = urlparse(norm_url).path
-                if path.startswith('/wiki/Category:'):
+                if path.startswith('/wiki/category:'):
                     return 'category_link'
-                if path.startswith('/wiki/File:'):
+                if path.startswith('/wiki/file:'):
                     return 'file_link'
-                if path.startswith('/wiki/') and not path.lower().endswith(IMAGE_EXTENSIONS):
+                if path.startswith('/wiki/') and not path.endswith(IMAGE_EXTENSIONS):
                     return 'wikilink'
                 return 'internal_other'
-            else:
-                if raw_href.lower().endswith(IMAGE_EXTENSIONS) or text.lower().endswith(IMAGE_EXTENSIONS):
-                    return 'external_image_link'
-                if rel and 'nofollow' == rel:
-                    return 'external_link_nofollow'
-                return 'external_link'
+
+            # External link classification
+            if raw_href.endswith(IMAGE_EXTENSIONS) or text.endswith(IMAGE_EXTENSIONS):
+                return 'external_image_link'
+            if 'nofollow' in rel:
+                return 'external_link_nofollow'
+            return 'external_link'
+
         except Exception as e:
             self.logger.error(
                 f"Error determining link type for '{raw_href}': {e}", exc_info=True)

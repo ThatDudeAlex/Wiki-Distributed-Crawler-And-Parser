@@ -5,13 +5,17 @@ logging:
 
 # Specific Wikipedia boilerplate selectors
 selectors:
-  title: title
+  title: '//title/text()'
 
-  content_container_id: '#mw-content-text'
+  # content_container_id: '#mw-content-text'
+  content_container_id: '//div[@id="mw-content-text"]'
 
-  categories_div_id: '#mw-normal-catlinks'
+  # categories_div_id: '#mw-normal-catlinks'
+  categories_div_id: '//div[@id="mw-normal-catlinks"]'
+  categories_links: './/a/text()'
+  summary: './/p[normalize-space()][1]'
 
-  links: a
+  all_links: './/a'
 
   paragraphs: p
 

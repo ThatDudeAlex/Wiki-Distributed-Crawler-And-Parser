@@ -25,4 +25,4 @@ class PublishingService:
                 SchedulerQueueChannels.URLS_TO_CRAWL.value, message)
             link_count += 1
 
-            self._logger.info("Published: %s Links To Crawl", link_count)
+        # self._logger.info("Published: %s Links To Crawl", link_count)

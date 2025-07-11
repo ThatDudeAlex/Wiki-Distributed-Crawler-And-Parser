@@ -15,7 +15,7 @@ class HeartBeat:
         self.key = self._create_heartbeat_key(self.crawler_id, self.template)
         self.ttl = configs.heartbeat.ttl_seconds
         self._initial_heartbeat(configs.heartbeat.initial_ttl_seconds)
-        self.logger.info("Crawler: %s - Submitted Initial Heartbeat")
+        # self.logger.info("Crawler: %s - Submitted Initial Heartbeat")
 
     def _create_heartbeat_key(self, crawler_id: str, template: str):
         # Format the key
@@ -26,9 +26,9 @@ class HeartBeat:
 
     def update_heartbeat(self):
         self.cache.submit_heartbeat(self.key, self.ttl)
-        self.logger.info("Crawler: %s - Updated Heartbeat")
+        # self.logger.info("Crawler: %s - Updated Heartbeat")
 
     # TODO: Used for testing, remove or make private
     def inspect_heartbeat(self):
         heartbeat = self.cache.inspect_submitted_heartbeat(self.key)
-        self.logger.info("Heartbeat: %s", heartbeat)
+        # self.logger.info("Heartbeat: %s", heartbeat)

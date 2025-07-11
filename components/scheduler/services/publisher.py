@@ -24,7 +24,7 @@ class PublishingService:
         message = page_links
         message.validate_publish()
 
-        self._logger.debug("Publishing to delay queue: %s", page_links.links)
+        # self._logger.debug("Publishing to delay queue: %s", page_links.links)
 
         self._queue_service.publish_with_ttl(
             queue_name=DelayQueues.SCHEDULER_DELAY_30MS.value,
@@ -61,4 +61,4 @@ class PublishingService:
             SchedulerQueueChannels.ADD_LINKS_TO_SCHEDULE.value, message)
         link_count += 1
 
-        self._logger.info("Published: %s Links Scheduled", link_count)
+        # self._logger.info("Published: %s Links Scheduled", link_count)

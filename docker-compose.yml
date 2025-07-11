@@ -4,8 +4,8 @@ x-crawler-common: &crawler-common
     context: .
     dockerfile: components/crawler/Dockerfile
   depends_on:
-    - postgres
-    - rabbitmq
+    # - postgres
+    # - rabbitmq
     - redis
   env_file: .env
   command: [ "python", "-m", "components.crawler.main" ]
@@ -88,17 +88,89 @@ services:
   crawler_noproxy:
     <<: *crawler-common
     # California Proxies
-  crawler_la:
+  crawler_santa_cruz1:
     <<: *crawler-common
     environment:
-      - HTTP_PROXY=${CA_LA1_PROXY}
-      - HTTPS_PROXY=${CA_LA1_PROXY}
+      - HTTP_PROXY=${CA_SANTA_CRUZ1_PROXY}
+      - HTTPS_PROXY=${CA_SANTA_CRUZ1_PROXY}
+
+  crawler_santa_cruz2:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_SANTA_CRUZ2_PROXY}
+      - HTTPS_PROXY=${CA_SANTA_CRUZ2_PROXY}
+
+  crawler_santa_clara:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_SANTA_CLARA_PROXY}
+      - HTTPS_PROXY=${CA_SANTA_CLARA_PROXY}
 
   crawler_san_jose:
     <<: *crawler-common
     environment:
       - HTTP_PROXY=${CA_SAN_JOSE_PROXY}
       - HTTPS_PROXY=${CA_SAN_JOSE_PROXY}
+
+  crawler_la1:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_LA1_PROXY}
+      - HTTPS_PROXY=${CA_LA1_PROXY}
+
+  crawler_la2:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_LA2_PROXY}
+      - HTTPS_PROXY=${CA_LA2_PROXY}
+
+  crawler_la3:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_LA3_PROXY}
+      - HTTPS_PROXY=${CA_LA3_PROXY}
+
+  crawler_la4:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_LA4_PROXY}
+      - HTTPS_PROXY=${CA_LA4_PROXY}
+
+  crawler_la5:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_LA5_PROXY}
+      - HTTPS_PROXY=${CA_LA5_PROXY}
+
+  crawler_la6:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_LA6_PROXY}
+      - HTTPS_PROXY=${CA_LA6_PROXY}
+
+  crawler_la7:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_LA7_PROXY}
+      - HTTPS_PROXY=${CA_LA7_PROXY}
+
+  crawler_la8:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_LA8_PROXY}
+      - HTTPS_PROXY=${CA_LA8_PROXY}
+
+  crawler_la9:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_LA9_PROXY}
+      - HTTPS_PROXY=${CA_LA9_PROXY}
+
+  crawler_la10:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${CA_LA10_PROXY}
+      - HTTPS_PROXY=${CA_LA10_PROXY}
 
   # Florida Proxies
   crawler_boca_raton:
@@ -107,58 +179,237 @@ services:
       - HTTP_PROXY=${FL_BOCA_RATON_PROXY}
       - HTTPS_PROXY=${FL_BOCA_RATON_PROXY}
 
+  # Kansas
+  crawler_kansas_city:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${MO_KANSAS_CITY_PROXY}
+      - HTTPS_PROXY=${MO_KANSAS_CITY_PROXY}
+
+  # Louisiana
+  crawler_abbeville:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${LA_ABBEVILLE_PROXY}
+      - HTTPS_PROXY=${LA_ABBEVILLE_PROXY}
+
   # Nevada
-  crawler_las_vegas:
+  crawler_las_vegas1:
     <<: *crawler-common
     environment:
       - HTTP_PROXY=${NV_LAS_VEGAS1_PROXY}
       - HTTPS_PROXY=${NV_LAS_VEGAS1_PROXY}
 
-  # New York Proxies
-  crawler_buffalo:
+  crawler_las_vegas2:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NV_LAS_VEGAS2_PROXY}
+      - HTTPS_PROXY=${NV_LAS_VEGAS2_PROXY}
+
+  # New Jersey
+  crawler_piscataway1:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NJ_PISCATAWAY1_PROXY}
+      - HTTPS_PROXY=${NJ_PISCATAWAY1_PROXY}
+
+  crawler_piscataway2:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NJ_PISCATAWAY2_PROXY}
+      - HTTPS_PROXY=${NJ_PISCATAWAY2_PROXY}
+
+  crawler_piscataway3:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NJ_PISCATAWAY3_PROXY}
+      - HTTPS_PROXY=${NJ_PISCATAWAY3_PROXY}
+
+  # New York
+  crawler_buffalo1:
     <<: *crawler-common
     environment:
       - HTTP_PROXY=${NY_BUFFALO1_PROXY}
       - HTTPS_PROXY=${NY_BUFFALO1_PROXY}
 
-  crawler_nyc:
+  crawler_buffalo2:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NY_BUFFALO2_PROXY}
+      - HTTPS_PROXY=${NY_BUFFALO2_PROXY}
+
+  crawler_buffalo3:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NY_BUFFALO3_PROXY}
+      - HTTPS_PROXY=${NY_BUFFALO3_PROXY}
+
+  crawler_buffalo4:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NY_BUFFALO4_PROXY}
+      - HTTPS_PROXY=${NY_BUFFALO4_PROXY}
+
+  crawler_buffalo5:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NY_BUFFALO5_PROXY}
+      - HTTPS_PROXY=${NY_BUFFALO5_PROXY}
+
+  crawler_nyc1:
     <<: *crawler-common
     environment:
       - HTTP_PROXY=${NY_NEW_YORK1_PROXY}
       - HTTPS_PROXY=${NY_NEW_YORK1_PROXY}
 
+  crawler_nyc2:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NY_NEW_YORK2_PROXY}
+      - HTTPS_PROXY=${NY_NEW_YORK2_PROXY}
+
+  crawler_nyc3:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NY_NEW_YORK3_PROXY}
+      - HTTPS_PROXY=${NY_NEW_YORK3_PROXY}
+
+  crawler_nyc4:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NY_NEW_YORK4_PROXY}
+      - HTTPS_PROXY=${NY_NEW_YORK4_PROXY}
+
+  crawler_nyc5:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NY_NEW_YORK5_PROXY}
+      - HTTPS_PROXY=${NY_NEW_YORK5_PROXY}
+
+  crawler_nyc6:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NY_NEW_YORK6_PROXY}
+      - HTTPS_PROXY=${NY_NEW_YORK6_PROXY}
+
+  crawler_nyc7:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${NY_NEW_YORK7_PROXY}
+      - HTTPS_PROXY=${NY_NEW_YORK7_PROXY}
+
   # Texas Proxies
-  crawler_dallas:
+  crawler_dallas1:
     <<: *crawler-common
     environment:
       - HTTP_PROXY=${TX_DALLAS1_PROXY}
       - HTTPS_PROXY=${TX_DALLAS1_PROXY}
 
-  crawler_victoria:
+  crawler_dallas2:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${TX_DALLAS2_PROXY}
+      - HTTPS_PROXY=${TX_DALLAS2_PROXY}
+
+  crawler_victoria1:
     <<: *crawler-common
     environment:
       - HTTP_PROXY=${TX_VICTORIA1_PROXY}
       - HTTPS_PROXY=${TX_VICTORIA1_PROXY}
 
+  crawler_victoria2:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${TX_VICTORIA2_PROXY}
+      - HTTPS_PROXY=${TX_VICTORIA2_PROXY}
+
+  crawler_victoria3:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${TX_VICTORIA3_PROXY}
+      - HTTPS_PROXY=${TX_VICTORIA3_PROXY}
+
+  # Utah
+
+  crawler_orem1:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${UT_OREM1_PROXY}
+      - HTTPS_PROXY=${UT_OREM1_PROXY}
+
+  crawler_orem2:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${UT_OREM2_PROXY}
+      - HTTPS_PROXY=${UT_OREM2_PROXY}
+
   # Virginia Proxies
-  crawler_ashburn:
+  crawler_ashburn1:
     <<: *crawler-common
     environment:
       - HTTP_PROXY=${VA_ASHBURN1_PROXY}
       - HTTPS_PROXY=${VA_ASHBURN1_PROXY}
 
-  crawler_reston:
+  crawler_ashburn2:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${VA_ASHBURN2_PROXY}
+      - HTTPS_PROXY=${VA_ASHBURN2_PROXY}
+
+  crawler_ashburn3:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${VA_ASHBURN3_PROXY}
+      - HTTPS_PROXY=${VA_ASHBURN3_PROXY}
+
+  crawler_ashburn4:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${VA_ASHBURN4_PROXY}
+      - HTTPS_PROXY=${VA_ASHBURN4_PROXY}
+
+  crawler_reston1:
     <<: *crawler-common
     environment:
       - HTTP_PROXY=${VA_RESTON1_PROXY}
       - HTTPS_PROXY=${VA_RESTON1_PROXY}
 
+  crawler_reston2:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${VA_RESTON2_PROXY}
+      - HTTPS_PROXY=${VA_RESTON2_PROXY}
+
+  crawler_reston3:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${VA_RESTON3_PROXY}
+      - HTTPS_PROXY=${VA_RESTON3_PROXY}
+
   # Washington DC
-  crawler_dc:
+  crawler_dc1:
     <<: *crawler-common
     environment:
       - HTTP_PROXY=${DC_WASHINGTON1_PROXY}
       - HTTPS_PROXY=${DC_WASHINGTON1_PROXY}
+
+  crawler_dc2:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${DC_WASHINGTON2_PROXY}
+      - HTTPS_PROXY=${DC_WASHINGTON2_PROXY}
+
+  crawler_dc3:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${DC_WASHINGTON3_PROXY}
+      - HTTPS_PROXY=${DC_WASHINGTON3_PROXY}
+
+  crawler_dc4:
+    <<: *crawler-common
+    environment:
+      - HTTP_PROXY=${DC_WASHINGTON4_PROXY}
+      - HTTPS_PROXY=${DC_WASHINGTON4_PROXY}
 
   # =========== 
 

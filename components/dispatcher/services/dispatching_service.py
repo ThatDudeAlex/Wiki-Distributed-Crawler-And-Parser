@@ -25,11 +25,11 @@ class Dispatcher:
 
     def run(self):
         """Main dispatcher loop — fetches links and emits crawl tasks at a controlled rate."""
-        self.logger.info("Dispatcher started")
+        # self.logger.info("Dispatcher started")//
         while True:
             try:
-                num_healthy = self._get_healthy_crawler_count()
-                links = self._dbclient.pop_links_from_schedule(num_healthy)
+                # num_healthy = self._get_healthy_crawler_count()
+                links = self._dbclient.pop_links_from_schedule(60)
 
                 if links:
                     tasks = [
@@ -43,12 +43,13 @@ class Dispatcher:
                     ]
                     self._publisher.publish_crawl_tasks(tasks)
 
-                sleep(self.configs.dispatch_tick)
+                # sleep(self.configs.dispatch_tick)
+                sleep(1)
             except Exception as e:
                 self.logger.error(
                     "Dispatcher encountered an error: %s", str(e))
-            finally:
-                self.logger.info("Dispatcher shutting down cleanly.")
+            # finally:
+            #     self.logger.info("Dispatcher shutting down cleanly.")
 
     def _get_healthy_crawler_count(self) -> int:
         return self._cache.get_heartbeat_count(

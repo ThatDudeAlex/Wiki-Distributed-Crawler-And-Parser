@@ -3,3 +3,4 @@ pika
 bs4
 lxml
 pydantic
+readability-lxml
