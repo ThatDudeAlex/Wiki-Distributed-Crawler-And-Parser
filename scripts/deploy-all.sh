@@ -4,67 +4,63 @@ set -a
 source .env
 set +a
 
-
 # ========== Infrastructure Services Init & Deployment ==========
 
-
 echo "🚀 Step 1: Building & Deploying Core Infrastructure..."
-docker compose build --no-cache rabbitmq postgres pgadmin postgres_initiator redis
-docker compose up -d rabbitmq postgres pgadmin postgres_initiator redis --remove-orphans
+docker compose build --no-cache rabbitmq postgres postgres_initiator redis
+docker compose -f docker/docker-compose.yml up -d rabbitmq postgres postgres_initiator redis --remove-orphans
 echo "⏳ Waiting 7s for core infra to settle..."
-sleep 2
-
+sleep 7
 
 # ========== DB Writer/Reader Init & Deployment ==========
 
 echo "🚀 Step 2: Building & Deploying DB Services (db_reader + db_writer)..."
 docker compose build --no-cache db_reader db_writer
-docker compose up -d --scale db_writer=$DB_WRITER_COUNT --scale db_reader=$DB_READER_COUNT db_reader db_writer --remove-orphans
+docker compose -f docker/docker-compose.yml up -d \
+  --scale db_writer=$DB_WRITER_COUNT \
+  --scale db_reader=$DB_READER_COUNT \
+  db_reader db_writer --remove-orphans
 echo "⏳ Waiting 7s for db_reader/db_writer to boot..."
-sleep 2
-
+sleep 7
 
 # ========== Schedulers Init & Deployment ==========
 
-
-echo "🚀 Step 3: Building & Gradually Scaling Scheduler (2 → 8)..."
+echo "🚀 Step 3: Building & Gradually Scaling Scheduler (2 → $SCHEDULER_MAX_COUNT)..."
 docker compose build --no-cache scheduler
 
-current_scheduler_count=2
+current_scheduler_count=1
 
 while [ $current_scheduler_count -le $SCHEDULER_MAX_COUNT ]; do
     echo "🚀 Scaling Scheduler to $current_scheduler_count..."
-    docker compose up --scale scheduler=$current_scheduler_count -d scheduler --remove-orphans
+    docker compose -f docker/docker-compose.yml up -d \
+      --scale scheduler=$current_scheduler_count scheduler --remove-orphans
     echo "⏳ Sleeping 5s..."
-    sleep 2
-    current_scheduler_count=$((current_scheduler_count + 2))
+    sleep 5
+    current_scheduler_count=$((current_scheduler_count + 1))
 done
 
 echo "⏳ Waiting 5s before scaling parsers..."
-sleep 2
-
+sleep 5
 
 # ========== Parsers Init & Deployment ==========
 
-
-echo "🚀 Step 4: Building & Gradually Scaling Parsers (2 → 14)..."
+echo "🚀 Step 4: Building & Gradually Scaling Parsers (2 → $PARSER_MAX_COUNT)..."
 docker compose build --no-cache parser
 
-current_parser_scale=2
+current_parser_scale=1
 
 while [ $current_parser_scale -le $PARSER_MAX_COUNT ]; do
     echo "🚀 Scaling parser to $current_parser_scale..."
-    docker compose up --scale parser=$current_parser_scale -d parser --remove-orphans
+    docker compose -f docker/docker-compose.yml up -d \
+      --scale parser=$current_parser_scale parser --remove-orphans
     echo "⏳ Sleeping 5s..."
-    sleep 2
-    current_parser_scale=$((current_parser_scale + 2))
+    sleep 5
+    current_parser_scale=$((current_parser_scale + 1))
 done
 
 echo "✅ Parsers deployed at scale $PARSER_MAX_COUNT."
-
-echo "⏳ Waiting 5s before scaling schedulers..."
-sleep 2
-
+echo "⏳ Waiting 5s before scaling crawlers..."
+sleep 5
 
 # ========== Crawlers Init & Deployment ==========
 
@@ -88,7 +84,6 @@ docker compose build --no-cache \
   crawler_reston1 crawler_reston2 crawler_reston3 \
   crawler_dc1 crawler_dc2 crawler_dc3 crawler_dc4
 
-# Declare all crawler names
 declare -a CRAWLERS=(
   crawler_noproxy
 
@@ -104,48 +99,47 @@ declare -a CRAWLERS=(
   crawler_boca_raton
 
   # Missouri
-#   crawler_kansas_city
+  # crawler_kansas_city
 
-#   # Louisiana
-#   crawler_abbeville
+  # Louisiana
+  # crawler_abbeville
 
-#   # Nevada
-#   crawler_las_vegas1
+  # Nevada
+  # crawler_las_vegas1
 
   # New Jersey
-#   crawler_piscataway1
+  # crawler_piscataway1
 
-#   # New York
-#   crawler_buffalo1
-#   crawler_buffalo2
-#   crawler_nyc1
-#   crawler_nyc2
+  # New York
+  # crawler_buffalo1
+  # crawler_buffalo2
+  # crawler_nyc1
+  # crawler_nyc2
 
-#   # Texas
-#   crawler_dallas1
-#   crawler_victoria1
+  # Texas
+  # crawler_dallas1
+  # crawler_victoria1
 
-#   # Virginia
-#   crawler_ashburn1
+  # Virginia
+  # crawler_ashburn1
 
-#   # Washington DC
-#   crawler_dc1
+  # Washington DC
+  # crawler_dc1
 )
 
-# Deploy all crawlers
 for crawler in "${CRAWLERS[@]}"; do
   echo "🚀 Deploying $crawler with scale=$CRAWLER_PROXY_COUNT..."
-  docker compose up --scale $crawler=$CRAWLER_PROXY_COUNT -d $crawler --remove-orphans
+  docker compose -f docker/docker-compose.yml up -d \
+    --scale $crawler=$CRAWLER_PROXY_COUNT $crawler --remove-orphans
   echo "⏳ Sleeping 2s before next crawler..."
   sleep 2
 done
 
 # ========== Dispatcher Init & Deployment ==========
 
-
 echo "🚀 Step 6: Turning Up Dispatcher..."
 docker compose build --no-cache dispatcher
-docker compose up -d dispatcher --remove-orphans
+docker compose -f docker/docker-compose.yml up -d dispatcher --remove-orphans
 sleep 2
 
 echo "🎉 All components deployed successfully!"

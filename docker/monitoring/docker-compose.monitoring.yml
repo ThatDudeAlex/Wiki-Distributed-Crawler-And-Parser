@@ -16,7 +16,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - grafana-data:/var/lib/grafana # Still needed to persist dashboards/data
+      - grafana-data:/var/lib/grafana
     restart: unless-stopped
 
   pgadmin:
@@ -31,7 +31,7 @@ services:
     ports:
       - "5050:80"
     volumes:
-      - pgadmin-data:/var/lib/pgadmin # Still needed to persist state
+      - pgadmin-data:/var/lib/pgadmin
     restart: unless-stopped
 
 volumes:

@@ -6,7 +6,7 @@ x-crawler-common: &crawler-common
     - postgres
     - rabbitmq
     - redis
-  env_file: .env
+  env_file: ../.env
   command: [ "python", "-m", "components.crawler.main" ]
   volumes:
     - compressed_html_data:${DL_HTML_PATH}
@@ -20,7 +20,7 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     ports:
       - "15672:15672"
       - "5672:5672"
@@ -35,7 +35,7 @@ services:
     build:
       context: .
       dockerfile: components/rabbitmq_seeder/Dockerfile
-    env_file: .env
+    env_file: ../.env
     depends_on:
       - rabbitmq
     command: [ "python", "-m", "components.rabbitmq_seeder.main" ]
@@ -61,7 +61,7 @@ services:
       dockerfile: components/postgres_initiator/Dockerfile
     depends_on:
       - postgres
-    env_file: .env # Only used in local dev
+    env_file: ../.env # Only used in local dev
     command: [ "python", "-m", "components.postgres_initiator.main" ]
 
   redis:
@@ -410,7 +410,7 @@ services:
     depends_on:
       - postgres
       - rabbitmq
-    env_file: .env
+    env_file: ../.env
     command: [ "python", "-m", "components.parser.main" ]
     volumes:
       - compressed_html_data:${DL_HTML_PATH}
@@ -421,7 +421,7 @@ services:
     build:
       context: .
       dockerfile: components/db_writer/Dockerfile
-    env_file: .env
+    env_file: ../.env
     depends_on:
       - postgres
     command: [ "python", "-m", "components.db_writer.main" ]
@@ -431,7 +431,7 @@ services:
     build:
       context: .
       dockerfile: components/db_reader/Dockerfile
-    env_file: .env
+    env_file: ../.env
     ports:
       - "8001:8001"
     depends_on:
@@ -445,7 +445,7 @@ services:
     build:
       context: .
       dockerfile: components/scheduler/Dockerfile
-    env_file: .env
+    env_file: ../.env
     depends_on:
       - rabbitmq
       - postgres
@@ -458,7 +458,7 @@ services:
     build:
       context: .
       dockerfile: components/dispatcher/Dockerfile
-    env_file: .env
+    env_file: ../.env
     depends_on:
       - rabbitmq
       - postgres
