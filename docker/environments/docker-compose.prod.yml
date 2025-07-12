@@ -1,0 +1,33 @@
+services:
+  crawler_noproxy:
+    extends:
+      # TODO: investicate why this path instead of ../
+      file: ./docker-compose.yml
+      service: crawler_noproxy
+    build:
+      args:
+        APP_ENV: prod # Pass 'prod' to the Dockerfile
+
+  parser:
+    extends:
+      file: ./docker-compose.yml
+      service: parser
+    build:
+      args:
+        APP_ENV: prod
+
+  scheduler:
+    extends:
+      file: ./docker-compose.yml
+      service: scheduler
+    build:
+      args:
+        APP_ENV: prod
+
+  dispatcher:
+    extends:
+      file: ./docker-compose.yml
+      service: dispatcher
+    build:
+      args:
+        APP_ENV: prod
