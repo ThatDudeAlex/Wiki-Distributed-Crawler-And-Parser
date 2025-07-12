@@ -37,7 +37,7 @@ sleep 7
 # ========== DB Writer/Reader Init & Deployment ==========
 
 echo "🚀 Step 2: Building & Deploying DB Services (db_reader + db_writer)..."
-docker compose build --no-cache db_reader db_writer
+docker compose -f docker/docker-compose.yml build --no-cache db_reader db_writer
 docker compose -f docker/docker-compose.yml up -d \
   --scale db_writer=$DB_WRITER_COUNT \
   --scale db_reader=$DB_READER_COUNT \
@@ -48,7 +48,7 @@ sleep 7
 # ========== Schedulers Init & Deployment ==========
 
 echo "🚀 Step 3: Building & Gradually Scaling Scheduler (2 → $SCHEDULER_MAX_COUNT)..."
-docker compose build --no-cache scheduler
+docker compose -f docker/docker-compose.yml build --no-cache scheduler
 
 current_scheduler_count=2
 
@@ -67,7 +67,7 @@ sleep 5
 # ========== Parsers Init & Deployment ==========
 
 echo "🚀 Step 4: Building & Gradually Scaling Parsers (2 → $PARSER_MAX_COUNT)..."
-docker compose build --no-cache parser
+docker compose -f docker/docker-compose.yml build --no-cache parser
 
 current_parser_scale=2
 
@@ -87,7 +87,7 @@ sleep 5
 # ========== Crawlers Init & Deployment ==========
 
 echo "🚀 Step 5: Building & Deploying Crawlers (53 regions × $CRAWLER_PROXY_COUNT)..."
-docker compose build --no-cache \
+docker compose -f docker/docker-compose.yml build --no-cache \
   crawler_noproxy \
   crawler_santa_cruz1 crawler_santa_cruz2 crawler_santa_clara crawler_san_jose \
   crawler_la1 crawler_la2 crawler_la3 crawler_la4 crawler_la5 crawler_la6 \
@@ -160,7 +160,7 @@ done
 # ========== Dispatcher Init & Deployment ==========
 
 echo "🚀 Step 6: Turning Up Dispatcher..."
-docker compose build --no-cache dispatcher
+docker compose -f docker/docker-compose.yml build --no-cache dispatcher
 docker compose -f docker/docker-compose.yml up -d dispatcher --remove-orphans
 sleep 2
 
