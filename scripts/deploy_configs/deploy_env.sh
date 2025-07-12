@@ -30,7 +30,7 @@ set +a
 
 echo "🚀 Step 1: Building & Deploying Core Infrastructure..."
 docker compose -f docker/docker-compose.yml build --no-cache rabbitmq postgres postgres_initiator redis
-docker compose -f docker/docker-compose.yml up -d rabbitmq postgres postgres_initiator redis --remove-orphans
+docker compose -f docker/docker-compose.yml -f docker/environments/docker-compose.$DEPLOY_ENV.yml up -d rabbitmq postgres postgres_initiator redis --remove-orphans
 echo "⏳ Waiting 7s for core infra to settle..."
 sleep 7
 
@@ -38,7 +38,7 @@ sleep 7
 
 echo "🚀 Step 2: Building & Deploying DB Services (db_reader + db_writer)..."
 docker compose -f docker/docker-compose.yml build --no-cache db_reader db_writer
-docker compose -f docker/docker-compose.yml up -d \
+docker compose -f docker/docker-compose.yml -f docker/environments/docker-compose.$DEPLOY_ENV.yml up -d \
   --scale db_writer=$DB_WRITER_COUNT \
   --scale db_reader=$DB_READER_COUNT \
   db_reader db_writer --remove-orphans
@@ -54,7 +54,7 @@ current_scheduler_count=2
 
 while [ $current_scheduler_count -le $SCHEDULER_MAX_COUNT ]; do
     echo "🚀 Scaling Scheduler to $current_scheduler_count..."
-    docker compose -f docker/docker-compose.yml up -d \
+    docker compose -f docker/docker-compose.yml -f docker/environments/docker-compose.$DEPLOY_ENV.yml up -d \
       --scale scheduler=$current_scheduler_count scheduler --remove-orphans
     echo "⏳ Sleeping 5s..."
     sleep 5
@@ -73,7 +73,7 @@ current_parser_scale=2
 
 while [ $current_parser_scale -le $PARSER_MAX_COUNT ]; do
     echo "🚀 Scaling parser to $current_parser_scale..."
-    docker compose -f docker/docker-compose.yml up -d \
+    docker compose -f docker/docker-compose.yml -f docker/environments/docker-compose.$DEPLOY_ENV.yml up -d \
       --scale parser=$current_parser_scale parser --remove-orphans
     echo "⏳ Sleeping 5s..."
     sleep 5
@@ -151,7 +151,7 @@ declare -a CRAWLERS=(
 
 for crawler in "${CRAWLERS[@]}"; do
   echo "🚀 Deploying $crawler with scale=$CRAWLER_PROXY_COUNT..."
-  docker compose -f docker/docker-compose.yml up -d \
+  docker compose -f docker/docker-compose.yml -f docker/environments/docker-compose.$DEPLOY_ENV.yml up -d \
     --scale $crawler=$CRAWLER_PROXY_COUNT $crawler --remove-orphans
   echo "⏳ Sleeping 2s before next crawler..."
   sleep 2
@@ -161,7 +161,7 @@ done
 
 echo "🚀 Step 6: Turning Up Dispatcher..."
 docker compose -f docker/docker-compose.yml build --no-cache dispatcher
-docker compose -f docker/docker-compose.yml up -d dispatcher --remove-orphans
+docker compose -f docker/docker-compose.yml -f docker/environments/docker-compose.$DEPLOY_ENV.yml up -d dispatcher --remove-orphans
 sleep 2
 
 echo "🎉 All components deployed successfully!"
