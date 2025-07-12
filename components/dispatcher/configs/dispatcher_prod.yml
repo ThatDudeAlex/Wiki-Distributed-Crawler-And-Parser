@@ -1,0 +1,12 @@
+logging:
+  log_to_file: true
+  log_level: INFO
+  logger_name: Dispatcher
+
+dispatch_count: 70
+
+seed_urls:
+  - https://en.wikipedia.org/wiki/Computer_science
+
+# seconds between each dispatch
+dispatch_tick: 1 

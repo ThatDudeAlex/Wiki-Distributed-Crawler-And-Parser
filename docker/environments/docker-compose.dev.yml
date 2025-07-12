@@ -7,3 +7,11 @@ services:
     build:
       args:
         APP_ENV: dev # Pass 'dev' to the Dockerfile
+
+  dispatcher:
+    extends:
+      file: ./docker-compose.yml
+      service: dispatcher
+    build:
+      args:
+        APP_ENV: dev

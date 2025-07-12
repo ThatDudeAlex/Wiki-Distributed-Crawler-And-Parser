@@ -1,4 +1,3 @@
-import os
 from dotenv import load_dotenv
 from components.crawler.types.config_types import CrawlerConfig
 from shared.configs.load_config import Path, load_config

@@ -1,9 +1,10 @@
 logging:
   log_to_file: true
-  log_level: INFO
+  log_level: DEBUG
   logger_name: Dispatcher
 
-dispatch_count: 16
+dispatch_count: 1
+
 # TODO: remove heartbeat configs if its no longer needed
 # heartbeat_key_pattern: "crawler:*:heartbeat"
 # scan_count: 1000
@@ -11,4 +12,5 @@ dispatch_count: 16
 seed_urls:
   - https://en.wikipedia.org/wiki/Computer_science
 
-dispatch_tick: 1 #seconds between each dispatch
+# seconds between each dispatch
+dispatch_tick: 1

@@ -7,7 +7,7 @@ load_dotenv()
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 config_path = PROJECT_ROOT.joinpath(
-    'components', 'dispatcher', 'configs', 'dispatcher_config.yml'
+    'components', 'dispatcher', 'configs', 'config.yml'
 )
 
 configs: DispatcherConfig = load_config(config_path)
