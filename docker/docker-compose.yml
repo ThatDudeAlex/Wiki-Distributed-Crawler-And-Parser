@@ -1,12 +1,12 @@
 x-crawler-common: &crawler-common
   build:
-    context: .
+    context: ..
     dockerfile: components/crawler/Dockerfile
   depends_on:
     - postgres
     - rabbitmq
     - redis
-  env_file: ../.env
+  env_file: .env
   command: [ "python", "-m", "components.crawler.main" ]
   volumes:
     - compressed_html_data:${DL_HTML_PATH}
@@ -20,7 +20,7 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     restart: unless-stopped
-    env_file: ../.env
+    env_file: .env
     ports:
       - "15672:15672"
       - "5672:5672"
@@ -33,9 +33,9 @@ services:
   rabbitmq_seeder:
     container_name: rabbitmq_seeder
     build:
-      context: .
+      context: ..
       dockerfile: components/rabbitmq_seeder/Dockerfile
-    env_file: ../.env
+    env_file: .env
     depends_on:
       - rabbitmq
     command: [ "python", "-m", "components.rabbitmq_seeder.main" ]
@@ -57,11 +57,11 @@ services:
   postgres_initiator:
     container_name: postgres_initiator
     build:
-      context: .
+      context: ..
       dockerfile: components/postgres_initiator/Dockerfile
     depends_on:
       - postgres
-    env_file: ../.env # Only used in local dev
+    env_file: .env # Only used in local dev
     command: [ "python", "-m", "components.postgres_initiator.main" ]
 
   redis:
@@ -405,12 +405,12 @@ services:
 
   parser:
     build:
-      context: .
+      context: ..
       dockerfile: components/parser/Dockerfile
     depends_on:
       - postgres
       - rabbitmq
-    env_file: ../.env
+    env_file: .env
     command: [ "python", "-m", "components.parser.main" ]
     volumes:
       - compressed_html_data:${DL_HTML_PATH}
@@ -419,9 +419,9 @@ services:
 
   db_writer:
     build:
-      context: .
+      context: ..
       dockerfile: components/db_writer/Dockerfile
-    env_file: ../.env
+    env_file: .env
     depends_on:
       - postgres
     command: [ "python", "-m", "components.db_writer.main" ]
@@ -429,9 +429,9 @@ services:
   db_reader:
     container_name: db_reader
     build:
-      context: .
+      context: ..
       dockerfile: components/db_reader/Dockerfile
-    env_file: ../.env
+    env_file: .env
     ports:
       - "8001:8001"
     depends_on:
@@ -443,9 +443,9 @@ services:
   scheduler:
     # container_name: scheduler
     build:
-      context: .
+      context: ..
       dockerfile: components/scheduler/Dockerfile
-    env_file: ../.env
+    env_file: .env
     depends_on:
       - rabbitmq
       - postgres
@@ -456,9 +456,9 @@ services:
   dispatcher:
     container_name: dispatcher
     build:
-      context: .
+      context: ..
       dockerfile: components/dispatcher/Dockerfile
-    env_file: ../.env
+    env_file: .env
     depends_on:
       - rabbitmq
       - postgres

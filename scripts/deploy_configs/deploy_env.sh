@@ -1,13 +1,35 @@
 #!/bin/bash
 set -e
 set -a
-source .env
+
+# Get the directory where THIS SCRIPT (deploy_env.sh) is located
+DEPLOY_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+
+DEPLOY_ENV=$1
+
+if [[ ! "$DEPLOY_ENV" ]]; then
+    echo "Error: Deployment environment is missing"
+    exit 1
+fi
+
+
+# Construct the config file path relative to THIS SCRIPT'S directory
+CONFIG_FILE="${DEPLOY_SCRIPT_DIR}/${DEPLOY_ENV}.env"
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo "in if"
+    echo "Error: Config file '$CONFIG_FILE' does not exist"
+    exit 1
+fi
+
+source $CONFIG_FILE
 set +a
 
 # ========== Infrastructure Services Init & Deployment ==========
 
 echo "🚀 Step 1: Building & Deploying Core Infrastructure..."
-docker compose build --no-cache rabbitmq postgres postgres_initiator redis
+docker compose -f docker/docker-compose.yml build --no-cache rabbitmq postgres postgres_initiator redis
 docker compose -f docker/docker-compose.yml up -d rabbitmq postgres postgres_initiator redis --remove-orphans
 echo "⏳ Waiting 7s for core infra to settle..."
 sleep 7
@@ -28,7 +50,7 @@ sleep 7
 echo "🚀 Step 3: Building & Gradually Scaling Scheduler (2 → $SCHEDULER_MAX_COUNT)..."
 docker compose build --no-cache scheduler
 
-current_scheduler_count=1
+current_scheduler_count=2
 
 while [ $current_scheduler_count -le $SCHEDULER_MAX_COUNT ]; do
     echo "🚀 Scaling Scheduler to $current_scheduler_count..."
@@ -36,7 +58,7 @@ while [ $current_scheduler_count -le $SCHEDULER_MAX_COUNT ]; do
       --scale scheduler=$current_scheduler_count scheduler --remove-orphans
     echo "⏳ Sleeping 5s..."
     sleep 5
-    current_scheduler_count=$((current_scheduler_count + 1))
+    current_scheduler_count=$((current_scheduler_count + 2))
 done
 
 echo "⏳ Waiting 5s before scaling parsers..."
@@ -47,7 +69,7 @@ sleep 5
 echo "🚀 Step 4: Building & Gradually Scaling Parsers (2 → $PARSER_MAX_COUNT)..."
 docker compose build --no-cache parser
 
-current_parser_scale=1
+current_parser_scale=2
 
 while [ $current_parser_scale -le $PARSER_MAX_COUNT ]; do
     echo "🚀 Scaling parser to $current_parser_scale..."
@@ -55,7 +77,7 @@ while [ $current_parser_scale -le $PARSER_MAX_COUNT ]; do
       --scale parser=$current_parser_scale parser --remove-orphans
     echo "⏳ Sleeping 5s..."
     sleep 5
-    current_parser_scale=$((current_parser_scale + 1))
+    current_parser_scale=$((current_parser_scale + 2))
 done
 
 echo "✅ Parsers deployed at scale $PARSER_MAX_COUNT."

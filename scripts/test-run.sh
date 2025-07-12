@@ -4,7 +4,7 @@ set -e
 echo "🚀 Step 0: Teardown Current Containers"
 docker compose down -v
 echo "⏳ Waiting 2s for core infra init"
-sleep 2
+sleep 7
 
 echo "🚀 Step 1: Building & Deploying Core Infrastructure..."
 docker compose build --no-cache rabbitmq postgres postgres_initiator redis
