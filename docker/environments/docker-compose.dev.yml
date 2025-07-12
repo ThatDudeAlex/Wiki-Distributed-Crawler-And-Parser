@@ -8,6 +8,22 @@ services:
       args:
         APP_ENV: dev # Pass 'dev' to the Dockerfile
 
+  parser:
+    extends:
+      file: ./docker-compose.yml
+      service: parser
+    build:
+      args:
+        APP_ENV: dev
+
+  scheduler:
+    extends:
+      file: ./docker-compose.yml
+      service: scheduler
+    build:
+      args:
+        APP_ENV: dev
+
   dispatcher:
     extends:
       file: ./docker-compose.yml

@@ -1,6 +1,7 @@
 FROM python:3.13-slim
 
-ARG APP_ENV=development # Default to 'development' if not specified
+# Default to 'dev' if not specified
+ARG APP_ENV=dev 
 
 WORKDIR /app
 

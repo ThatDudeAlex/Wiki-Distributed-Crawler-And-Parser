@@ -49,4 +49,4 @@ docker compose -f docker/docker-compose.yml -f docker/environments/docker-compos
 echo "🎉 All components deployed successfully!"
 sleep 2
 
-docker compose -f docker/docker-compose.yml logs -f
+docker compose -f docker/docker-compose.yml logs -f parser

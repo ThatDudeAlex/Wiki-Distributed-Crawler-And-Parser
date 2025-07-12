@@ -1,7 +1,7 @@
 FROM python:3.13-slim
 
 # Default to 'development' if not specified
-ARG APP_ENV=development 
+ARG APP_ENV=dev
 
 WORKDIR /app
 
@@ -11,7 +11,6 @@ COPY database/      ./database/
 COPY shared/        ./shared/
 
 # service-specific code
-COPY components/dispatcher/                   ./components/dispatcher/
 COPY components/dispatcher/services           ./components/dispatcher/services
 COPY components/dispatcher/types              ./components/dispatcher/types
 COPY components/dispatcher/__init__.py        ./components/dispatcher/__init__.py

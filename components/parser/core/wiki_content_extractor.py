@@ -5,7 +5,6 @@ from lxml import html
 from readability import Document
 
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
-from components.parser.core.wiki_html_content_cleaner import clean_wiki_html_content
 from shared.utils import create_hash, get_timestamp_eastern_time
 
 
