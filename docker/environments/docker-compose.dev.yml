@@ -1,0 +1,9 @@
+services:
+  crawler_noproxy:
+    extends:
+      # TODO: investicate why this path instead of ../
+      file: ./docker-compose.yml
+      service: crawler_noproxy
+    build:
+      args:
+        APP_ENV: dev # Pass 'dev' to the Dockerfile

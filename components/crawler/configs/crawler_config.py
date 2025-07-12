@@ -8,8 +8,7 @@ load_dotenv()
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 config_path = PROJECT_ROOT.joinpath(
-    'components', 'crawler', 'configs', 'crawler_config.yml'
+    'components', 'crawler', 'configs', 'config.yml'
 )
 
 configs: CrawlerConfig = load_config(config_path)
-configs.storage_path = os.getenv('DL_HTML_PATH')

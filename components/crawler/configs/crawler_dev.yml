@@ -1,7 +1,7 @@
 
 logging:
   log_to_file: true
-  log_level: INFO
+  log_level: DEBUG
   logger_name: Crawler
 
 rate_limit:
@@ -23,4 +23,4 @@ headers:
   user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36
 
 # ${DL_HTML_PATH} is an env variable that has to be set (config loader does this)
-storage_path: ${DL_HTML_PATH}
+storage_path: /data/html

@@ -1,5 +1,7 @@
 FROM python:3.13-slim
 
+ARG APP_ENV=development # Default to 'development' if not specified
+
 WORKDIR /app
 
 # shared code
@@ -8,7 +10,18 @@ COPY database/      ./database/
 COPY shared/        ./shared/
 
 # service-specific code
-COPY components/crawler/     ./components/crawler/
+COPY components/crawler/core                ./components/crawler/core
+COPY components/crawler/services            ./components/crawler/services
+COPY components/crawler/types               ./components/crawler/types
+COPY components/crawler/__init__.py         ./components/crawler/__init__.py
+COPY components/crawler/Dockerfile          ./components/crawler/Dockerfile
+COPY components/crawler/main.py             ./components/crawler/main.py 
+COPY components/crawler/message_handler.py  ./components/crawler/message_handler.py 
+COPY components/crawler/requirements.txt    ./components/crawler/requirements.txt 
+
+# Conditionally copy the environment-specific config file and rename it
+COPY components/crawler/configs/crawler_config.py       ./components/crawler/configs/crawler_config.py
+COPY components/crawler/configs/crawler_${APP_ENV}.yml  ./components/crawler/configs/config.yml
 
 RUN pip install --no-cache-dir -r components/crawler/requirements.txt
 
