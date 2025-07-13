@@ -20,7 +20,6 @@ COPY components/crawler/main.py             ./components/crawler/main.py
 COPY components/crawler/requirements.txt    ./components/crawler/requirements.txt 
 
 # Conditionally copy the environment-specific config file and rename it
-COPY components/crawler/configs/crawler_config.py       ./components/crawler/configs/crawler_config.py
 COPY components/crawler/configs/crawler_${APP_ENV}.yml  ./components/crawler/configs/config.yml
 
 RUN pip install --no-cache-dir -r components/crawler/requirements.txt

@@ -3,7 +3,6 @@ from datetime import timedelta
 import logging
 import time
 
-from components.crawler.types.config_types import CrawlerConfig
 from components.crawler.types.crawler_types import FetchResponse
 from components.crawler.services.downloader import download_compressed_html_content
 from components.crawler.services.publisher import PublishingService
@@ -18,8 +17,8 @@ from components.crawler.core.metrics import CRAWL_PAGES_TOTAL, CRAWL_PAGES_FAILU
 
 
 class CrawlerService:
-    def __init__(self, configs: CrawlerConfig, queue_service: QueueService, logger: logging.Logger):
-        self._configs = configs
+    def __init__(self, configs, queue_service: QueueService, logger: logging.Logger):
+        self.configs = configs
 
         # logger setup
         self._logger = logger
@@ -75,12 +74,12 @@ class CrawlerService:
 
             self._logger.info('STAGE 3: Download Compressed Html File')
             url_hash, filepath = download_compressed_html_content(
-                self._configs.storage_path, url, html_content, self._logger)
+                self.configs['storage_path'], url, html_content, self._logger)
 
             # Timestamp of when crawling finished + next scheduled crawl
             fetched_at = get_timestamp_eastern_time()
             next_crawl = (
-                fetched_at + timedelta(seconds=self._configs.recrawl_interval)
+                fetched_at + timedelta(seconds=self.configs['recrawl_interval'])
             )
 
             self._logger.info('STAGE 4: Publish Page Metadata Report')

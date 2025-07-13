@@ -46,11 +46,11 @@ def start_crawler_listener(queue_service: QueueService, crawler_service: Crawler
         run_crawler, crawler_service=crawler_service, logger=logger
     )
 
-    queue_service.channel.basic_consume(
+    queue_service._channel.basic_consume(
         queue=CrawlerQueueChannels.URLS_TO_CRAWL.value,
         on_message_callback=handle_message_partial,
         auto_ack=False
     )
 
     logger.info("Listening for crawl requests...")
-    queue_service.channel.start_consuming()
+    queue_service._channel.start_consuming()

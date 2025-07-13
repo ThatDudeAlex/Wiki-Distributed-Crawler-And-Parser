@@ -1,18 +1,26 @@
 
+from pathlib import Path
 import signal
 from prometheus_client import start_http_server
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 from shared.rabbitmq.queue_service import QueueService
-from components.crawler.configs.crawler_config import configs
+from shared.configs.config_loader import config_loader
 from components.crawler.services.crawler_service import CrawlerService
 from components.crawler.services.message_handler import start_crawler_listener
 from shared.logging_utils import get_logger
 
+def get_config_path() -> Path:
+    PROJECT_ROOT = Path(__file__).resolve().parents[2]
+    return PROJECT_ROOT.joinpath(
+        'components', 'crawler', 'configs', 'config.yml'
+    )
 
 def main():
+    configs = config_loader(get_config_path())
     logger = get_logger(
-        configs.logging.logger_name, configs.logging.log_level
+        configs['logging']['logger_name'], configs['logging']['log_level']
     )
+
     queue_service = QueueService(logger, CrawlerQueueChannels.get_values())
 
     def graceful_shutdown(signum, frame):

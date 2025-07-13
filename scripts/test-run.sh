@@ -2,10 +2,10 @@
 set -e
 docker context use distribute-dev
 
-echo "🚀 Step 0: Teardown Current Containers"
-docker compose -f docker/docker-compose.yml down -v
-echo "⏳ Waiting 2s for core infra init"
-sleep 5
+# echo "🚀 Step 0: Teardown Current Containers"
+# docker compose -f docker/docker-compose.yml down -v
+# echo "⏳ Waiting 2s for core infra init"
+# sleep 2
 
 echo "🚀 Step 1: Building & Deploying Core Infrastructure..."
 docker compose -f docker/docker-compose.yml build --no-cache rabbitmq postgres postgres_initiator redis
@@ -50,4 +50,4 @@ docker compose -f docker/docker-compose.yml -f docker/environments/docker-compos
 echo "🎉 All components deployed successfully!"
 sleep 2
 
-docker compose -f docker/docker-compose.yml logs -f
+docker compose -f docker/docker-compose.yml logs -f crawler_noproxy
