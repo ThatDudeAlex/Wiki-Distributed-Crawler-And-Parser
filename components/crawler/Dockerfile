@@ -17,7 +17,6 @@ COPY components/crawler/types               ./components/crawler/types
 COPY components/crawler/__init__.py         ./components/crawler/__init__.py
 COPY components/crawler/Dockerfile          ./components/crawler/Dockerfile
 COPY components/crawler/main.py             ./components/crawler/main.py 
-COPY components/crawler/message_handler.py  ./components/crawler/message_handler.py 
 COPY components/crawler/requirements.txt    ./components/crawler/requirements.txt 
 
 # Conditionally copy the environment-specific config file and rename it

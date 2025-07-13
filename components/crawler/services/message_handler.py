@@ -38,7 +38,7 @@ def run_crawler(ch, method, properties, body, crawler_service: CrawlerService, l
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
-def start_crawl_listener(queue_service: QueueService, crawler_service: CrawlerService, logger: logging.Logger):
+def start_crawler_listener(queue_service: QueueService, crawler_service: CrawlerService, logger: logging.Logger):
     # Partial allows us to inject the value of a param into a function
     # This allows me to inject the crawler & logger while still complying with
     # the RabbitMQ api for listening to messages
