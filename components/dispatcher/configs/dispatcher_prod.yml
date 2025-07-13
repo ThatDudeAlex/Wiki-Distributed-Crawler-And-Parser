@@ -3,7 +3,7 @@ logging:
   log_level: INFO
   logger_name: Dispatcher
 
-dispatch_count: 70
+dispatch_count: 24
 
 seed_urls:
   - https://en.wikipedia.org/wiki/Computer_science

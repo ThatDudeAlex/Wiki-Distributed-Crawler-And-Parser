@@ -159,9 +159,22 @@ class DispatcherQueueChannels(EnumCommonMethods, str, Enum):
 
     Publishes
     ---------
-    - urls_to_crawl
+    - add_links_to_schedule
     """
     URLS_TO_CRAWL = QueueNames.URLS_TO_CRAWL.value
+
+
+class ReschedulerQueueChannels(EnumCommonMethods, str, Enum):
+    """
+    Rescheduler Queue Channels
+
+    Describes which queues are consumed or published by the Rescheduler
+
+    Publishes
+    ---------
+    - urls_to_crawl
+    """
+    ADD_LINKS_TO_SCHEDULE = QueueNames.ADD_LINKS_TO_SCHEDULE.value
 
 
 class DelayQueues(EnumCommonMethods, str, Enum):

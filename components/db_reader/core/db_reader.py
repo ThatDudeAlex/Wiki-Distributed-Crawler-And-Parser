@@ -1,5 +1,7 @@
 import logging
 from contextlib import contextmanager
+
+from sqlalchemy import func
 from database.engine import SessionLocal
 from database.db_models.models import Page, PageContent, ScheduledLinks
 
@@ -67,3 +69,13 @@ def are_tables_empty(logger: logging.Logger, session_factory=None) -> bool:
             return True
 
         return False
+
+
+def get_due_pages(logger: logging.Logger, session_factory=None) -> list | None:
+    with get_db(session_factory=session_factory) as db:
+        due_pages = (
+            db.query(Page)
+            .where(Page.next_crawl_at <= func.now())
+        )
+    # stmt = select(Page).where(Page.scheduled_at <= func.now())
+    # return session.execute(stmt).scalars().all()
