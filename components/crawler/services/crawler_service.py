@@ -26,11 +26,6 @@ class CrawlerService:
         # queue setup
         self.queue_service = queue_service
 
-        # TODO: Remove if hearbeat is no longer going to be use
-        # setup hearbeat (simple component health-check)
-        # self.heartbeat = HeartBeat(configs, logger)
-        # self._last_heartbeat_post = time.time()
-
         # queue publisher setup
         self.publisher = PublishingService(self.queue_service, self._logger)
 
@@ -48,7 +43,7 @@ class CrawlerService:
 
         try:
             self._logger.info('STAGE 1: Fetch URL: %s', url)
-            fetched_response: FetchResponse = crawl(url, self._logger)
+            fetched_response: FetchResponse = crawl(url, self._logger, self.configs['headers'])
 
             # if crawl failed
             if not fetched_response.success:

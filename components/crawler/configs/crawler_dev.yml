@@ -7,14 +7,6 @@ logging:
 rate_limit:
   max_requests_per_sec: 1
 
-heartbeat:
-  enabled: true
-  initial_ttl_seconds: 180
-  ttl_seconds: 90
-  key_template: "crawler:{crawler_id}:heartbeat"
-  key_pattern: "crawler:*:heartbeat"
-  scan_count: 100
-
 recrawl_interval: 691200 # 8 days in seconds
 
 headers:

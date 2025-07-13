@@ -4,27 +4,27 @@ from ratelimit import limits, sleep_and_retry
 
 from components.crawler.types.crawler_types import FetchResponse
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
-from shared.config import BASE_HEADERS
 
 
+# TODO: pull call and period into a config file
 @sleep_and_retry
 @limits(calls=1, period=1)
-def _fetch(url: str) -> requests.Response:
+def _fetch(url: str, headers: dict) -> requests.Response:
     """
     Make a GET request to the given URL with default headers
     """
-    response = requests.get(url, headers=BASE_HEADERS, timeout=10)
+    response = requests.get(url, headers=headers, timeout=10)
     response.raise_for_status()
     return response
 
 
-def crawl(url: str, logger: logging.Logger) -> FetchResponse:
+def crawl(url: str, logger: logging.Logger, headers: dict) -> FetchResponse:
     """
     Perform a crawl of the specified URL, respecting robots.txt, and return a FetchResponse
     """
     try:
 
-        response = _fetch(url)
+        response = _fetch(url, headers)
         logger.info('Successfully Fetched URL: %s', url)
 
         return FetchResponse(
