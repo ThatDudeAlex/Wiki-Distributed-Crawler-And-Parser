@@ -10,6 +10,8 @@ x-crawler-common: &crawler-common
   command: [ "python", "-m", "components.crawler.main" ]
   volumes:
     - compressed_html_data:/data/html
+  ports:
+    - 8000:8000
   environment:
     - NO_PROXY=localhost,127.0.0.1,rabbitmq,redis,postgres,192.168.0.0/16
 

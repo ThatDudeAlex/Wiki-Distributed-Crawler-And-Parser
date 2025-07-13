@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+docker context use distribute-dev
 
 echo "🚀 Step 0: Teardown Current Containers"
 docker compose -f docker/docker-compose.yml down -v
@@ -49,4 +50,4 @@ docker compose -f docker/docker-compose.yml -f docker/environments/docker-compos
 echo "🎉 All components deployed successfully!"
 sleep 2
 
-docker compose -f docker/docker-compose.yml logs -f scheduler
+docker compose -f docker/docker-compose.yml logs -f

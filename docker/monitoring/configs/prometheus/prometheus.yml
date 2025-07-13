@@ -3,23 +3,45 @@ global:
 
 scrape_configs:
   # Dev 
-  - job_name: "node-exporter"
+  - job_name: "dev-node-exporter"
     static_configs:
-      - targets: ["192.168.86.15:9100"] # Dev
+      - targets: ["192.168.86.15:9100"]
+        labels:
+          env: dev
 
-  - job_name: "cadvisor"
+  - job_name: "dev-cadvisor"
     static_configs:
-      - targets: ["192.168.86.15:8080"] # Dev
+      - targets: ["192.168.86.15:8080"]
+        labels:
+          env: dev
+
+  - job_name: "dev-crawler-service"
+    static_configs:
+      - targets: ["192.168.86.15:8000"]
+        labels:
+          env: dev
   
   # Prod
-  - job_name: "node-exporter"
+  - job_name: "prod-node-exporter"
     static_configs:
-      - targets: ["192.168.86.16:9100"] # Prod
+      - targets: ["192.168.86.16:9100"]
+        labels:
+          env: prod
 
-  - job_name: "cadvisor"
+  - job_name: "prod-cadvisor"
     static_configs:
-      - targets: ["192.168.86.16:8080"] # Prod
+      - targets: ["192.168.86.16:8080"]
+        labels:
+          env: prod
+
+  - job_name: "prod-crawler-service"
+    static_configs:
+      - targets: ["192.168.86.16:8000"]
+        labels:
+          env: prod
 
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+        labels:
+          env: prod

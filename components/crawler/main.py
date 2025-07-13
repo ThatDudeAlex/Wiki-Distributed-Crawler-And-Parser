@@ -1,4 +1,5 @@
 
+from prometheus_client import start_http_server
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 from shared.rabbitmq.queue_service import QueueService
 from components.crawler.configs.crawler_config import configs
@@ -11,6 +12,8 @@ def main():
     logger = get_logger(
         configs.logging.logger_name, configs.logging.log_level
     )
+    start_http_server(8000)
+    logger.info("Prometheus metrics exposed on port 8000")
 
     queue_service = QueueService(logger, CrawlerQueueChannels.get_values())
 
