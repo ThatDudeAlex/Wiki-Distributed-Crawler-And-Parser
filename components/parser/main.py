@@ -1,3 +1,4 @@
+from prometheus_client import start_http_server
 from shared.rabbitmq.enums.queue_names import ParserQueueChannels
 from shared.rabbitmq.queue_service import QueueService
 from components.parser.configs.parser_config import configs
@@ -10,6 +11,8 @@ def main():
     logger = get_logger(
         configs.logging.logger_name, configs.logging.log_level
     )
+    start_http_server(8000)
+    logger.info("Prometheus metrics exposed on port 8000")
 
     queue_service = QueueService(logger, ParserQueueChannels.get_values())
 

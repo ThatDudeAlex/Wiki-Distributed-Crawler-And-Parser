@@ -6,6 +6,8 @@ from components.parser.services.compressed_html_reader import load_compressed_ht
 from components.parser.services.publisher import PublishingService
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
 
+from components.parser.core.metrics import PAGES_PARSED_TOTAL, LINKS_EXTRACTED_TOTAL, STAGE_DURATION_SECONDS
+
 
 class ParsingService:
     def __init__(self, configs, queue_service: QueueService, logger: logging.Logger):
@@ -24,28 +26,35 @@ class ParsingService:
         filepath = task.compressed_filepath
 
         try:
-            self._logger.info(
-                'STAGE 1: Loading HTML file from: %s', filepath
-            )
-            html_content = load_compressed_html(filepath, self._logger)
+            with STAGE_DURATION_SECONDS.labels("load_html").time():
+                self._logger.info(
+                    'STAGE 1: Loading HTML file from: %s', filepath)
+                html_content = load_compressed_html(filepath, self._logger)
 
-            if html_content is None:
-                self._logger.error(
-                    "Skipping Parsing Task - Html content did not load"
-                )
-                return
+                if html_content is None:
+                    self._logger.error(
+                        "Skipping Parsing Task - Html content did not load"
+                    )
+                    return
 
-            self._logger.info('STAGE 2: Extracting Page Content')
-            page_content = self.content_extractor.extract(url, html_content)
+            with STAGE_DURATION_SECONDS.labels("extract_content").time():
+                self._logger.info('STAGE 2: Extracting Page Content')
+                page_content = self.content_extractor.extract(
+                    url, html_content)
 
-            self._logger.info('STAGE 3: Extracting Links')
-            page_links = self.link_extractor.extract(url, html_content, depth)
+            with STAGE_DURATION_SECONDS.labels("extract_links").time():
+                self._logger.info('STAGE 3: Extracting Links')
+                page_links = self.link_extractor.extract(
+                    url, html_content, depth)
+                LINKS_EXTRACTED_TOTAL.inc(len(page_links))
 
-            self._logger.info('STAGE 4: Publish Save Page Content')
-            self._publisher.publish_save_parsed_data(page_content)
+            with STAGE_DURATION_SECONDS.labels("publish_content").time():
+                self._logger.info('STAGE 4: Publish Save Page Content')
+                self._publisher.publish_save_parsed_data(page_content)
 
-            self._logger.info('STAGE 5: Publish Process Links')
-            self._publisher.publish_process_links_task(page_links)
+            with STAGE_DURATION_SECONDS.labels("publish_links").time():
+                self._logger.info('STAGE 5: Publish Process Links')
+                self._publisher.publish_process_links_task(page_links)
 
             self._logger.info('Parsing Task Successfully Completed!')
         except Exception as e:
@@ -53,3 +62,6 @@ class ParsingService:
             self._logger.error(
                 f"An exception of type '{exception_type_name}' occurred: {e}")
             return
+        finally:
+            PAGES_PARSED_TOTAL.inc()
+            pass

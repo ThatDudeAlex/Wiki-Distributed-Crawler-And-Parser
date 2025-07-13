@@ -8,6 +8,433 @@ services:
       args:
         APP_ENV: prod # Pass 'prod' to the Dockerfile
 
+  crawler_santa_cruz1:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_santa_cruz1
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_santa_cruz2:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_santa_cruz2
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_santa_clara:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_santa_clara
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_san_jose:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_san_jose
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_la1:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_la1
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_la2:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_la2
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_la3:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_la3
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_la4:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_la4
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_la5:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_la5
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_la6:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_la6
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_la7:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_la7
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_la8:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_la8
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_la9:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_la9
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_la10:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_la10
+    build:
+      args:
+        APP_ENV: prod
+
+  # Florida Proxies
+  crawler_boca_raton:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_boca_raton
+    build:
+      args:
+        APP_ENV: prod
+
+  # Kansas
+  crawler_kansas_city:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_kansas_city
+    build:
+      args:
+        APP_ENV: prod
+
+  # Louisiana
+  crawler_abbeville:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_abbeville
+    build:
+      args:
+        APP_ENV: prod
+
+  # Nevada
+  crawler_las_vegas1:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_las_vegas1
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_las_vegas2:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_las_vegas2
+    build:
+      args:
+        APP_ENV: prod
+
+  # New Jersey
+  crawler_piscataway1:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_piscataway1
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_piscataway2:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_piscataway2
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_piscataway3:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_piscataway3
+    build:
+      args:
+        APP_ENV: prod
+
+  # New York
+  crawler_buffalo1:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_buffalo1
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_buffalo2:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_buffalo2
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_buffalo3:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_buffalo3
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_buffalo4:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_buffalo4
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_buffalo5:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_buffalo5
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_nyc1:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_nyc1
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_nyc2:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_nyc2
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_nyc3:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_nyc3
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_nyc4:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_nyc4
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_nyc5:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_nyc5
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_nyc6:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_nyc6
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_nyc7:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_nyc7
+    build:
+      args:
+        APP_ENV: prod
+
+  # Texas Proxies
+  crawler_dallas1:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_dallas1
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_dallas2:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_dallas2
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_victoria1:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_victoria1
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_victoria2:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_victoria2
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_victoria3:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_victoria3
+    build:
+      args:
+        APP_ENV: prod
+
+  # Utah
+
+  crawler_orem1:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_orem1
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_orem2:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_orem2
+    build:
+      args:
+        APP_ENV: prod
+
+  # Virginia Proxies
+  crawler_ashburn1:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_ashburn1
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_ashburn2:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_ashburn2
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_ashburn3:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_ashburn3
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_ashburn4:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_ashburn4
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_reston1:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_reston1
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_reston2:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_reston2
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_reston3:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_reston3
+    build:
+      args:
+        APP_ENV: prod
+
+  # Washington DC
+  crawler_dc1:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_dc1
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_dc2:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_dc2
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_dc3:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_dc3
+    build:
+      args:
+        APP_ENV: prod
+
+  crawler_dc4:
+    extends:
+      file: ./docker-compose.yml
+      service: crawler_dc4
+    build:
+      args:
+        APP_ENV: prod
+
   parser:
     extends:
       file: ./docker-compose.yml
