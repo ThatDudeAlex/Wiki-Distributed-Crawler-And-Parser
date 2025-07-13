@@ -4,15 +4,18 @@ logging:
   log_level: DEBUG
   logger_name: Crawler
 
+
 rate_limit:
-  max_requests_per_sec: 1
+  max_requests_per_period: 1
+  period_in_seconds: 1
+
+requests:
+  timeout_in_seconds: 10
+  headers:
+    accept: text/html
+    accept-language: en-US
+    user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36
 
 recrawl_interval: 691200 # 8 days in seconds
 
-headers:
-  accept: text/html
-  accept-language: en-US
-  user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36
-
-# ${DL_HTML_PATH} is an env variable that has to be set (config loader does this)
 storage_path: /data/html

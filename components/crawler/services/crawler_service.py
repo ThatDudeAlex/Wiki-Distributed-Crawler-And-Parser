@@ -1,19 +1,18 @@
 
-from datetime import timedelta
 import logging
 import time
-
-from components.crawler.types.crawler_types import FetchResponse
-from components.crawler.services.downloader import download_compressed_html_content
+from datetime import timedelta
 from components.crawler.services.publisher import PublishingService
-from components.crawler.core.crawler import crawl
+from components.crawler.core.downloader import download_compressed_html_content
+from components.crawler.core.http_fetcher import HttpFetcher
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.utils import get_timestamp_eastern_time, create_hash
 
-# Assuming metrics.py in the same directory
-from components.crawler.core.metrics import CRAWL_PAGES_TOTAL, CRAWL_PAGES_FAILURES_TOTAL, PAGE_CRAWL_LATENCY_SECONDS
+from shared.monitoring.metrics import (
+    CRAWL_PAGES_TOTAL, CRAWL_PAGES_FAILURES_TOTAL, PAGE_CRAWL_LATENCY_SECONDS
+)
 
 
 class CrawlerService:
@@ -26,8 +25,10 @@ class CrawlerService:
         # queue setup
         self.queue_service = queue_service
 
+        self.http_fetcher = HttpFetcher(configs, logger)
+
         # queue publisher setup
-        self.publisher = PublishingService(self.queue_service, self._logger)
+        self.publisher = PublishingService(queue_service, logger)
 
         self._logger.info('Crawler Service Initiation Complete')
 
@@ -35,7 +36,7 @@ class CrawlerService:
         url = task.url
         depth = task.depth
 
-        # Default status (for crawler_service_crawl_tasks_total metric)
+        # Default status (for crawl_pages_total metric)
         task_status = CrawlStatus.SUCCESS.value
 
         # Start timer for measuring overall crawl time
@@ -43,7 +44,8 @@ class CrawlerService:
 
         try:
             self._logger.info('STAGE 1: Fetch URL: %s', url)
-            fetched_response: FetchResponse = crawl(url, self._logger, self.configs['headers'])
+
+            fetched_response = self.http_fetcher.crawl_url(url, self._logger, self.configs['headers'])
 
             # if crawl failed
             if not fetched_response.success:
