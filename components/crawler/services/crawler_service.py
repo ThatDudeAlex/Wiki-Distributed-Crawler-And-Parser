@@ -45,7 +45,7 @@ class CrawlerService:
         try:
             self._logger.info('STAGE 1: Fetch URL: %s', url)
 
-            fetched_response = self.http_fetcher.crawl_url(url, self._logger, self.configs['headers'])
+            fetched_response = self.http_fetcher.crawl_url(url)
 
             # if crawl failed
             if not fetched_response.success:

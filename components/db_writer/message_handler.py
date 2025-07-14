@@ -117,29 +117,29 @@ def start_db_service_listener(queue_service: QueueService, logger: logging.Logge
     )
 
     # Save Page Metadata
-    queue_service.channel.basic_consume(
+    queue_service._channel.basic_consume(
         queue=DbWriterQueueChannels.PAGE_METADATA_TO_SAVE,
         on_message_callback=save_page_metadata_partial,
         auto_ack=False
     )
     # Save Parsed Content
-    queue_service.channel.basic_consume(
+    queue_service._channel.basic_consume(
         queue=DbWriterQueueChannels.PARSED_CONTENT_TO_SAVE,
         on_message_callback=save_parsed_content_partial,
         auto_ack=False
     )
     # Save Processed Links
-    queue_service.channel.basic_consume(
+    queue_service._channel.basic_consume(
         queue=DbWriterQueueChannels.SCHEDULED_LINKS_TO_SAVE,
         on_message_callback=save_save_processed_Links_partial,
         auto_ack=False
     )
     # Cache Processed Links
-    queue_service.channel.basic_consume(
+    queue_service._channel.basic_consume(
         queue=DbWriterQueueChannels.ADD_LINKS_TO_SCHEDULE,
         on_message_callback=add_links_to_schedule_partial,
         auto_ack=False
     )
 
     logger.info("Listening for Database requests...")
-    queue_service.channel.start_consuming()
+    queue_service._channel.start_consuming()

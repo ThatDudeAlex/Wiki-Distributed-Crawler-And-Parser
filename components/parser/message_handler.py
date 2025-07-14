@@ -41,11 +41,11 @@ def start_parser_listener(queue_service: QueueService, parsing_service: ParsingS
         handle_message, parsing_service=parsing_service, logger=logger
     )
 
-    queue_service.channel.basic_consume(
+    queue_service._channel.basic_consume(
         queue=ParserQueueChannels.PAGES_TO_PARSE.value,
         on_message_callback=handle_message_partial,
         auto_ack=False
     )
 
     logger.info("Listening for parsing requests...")
-    queue_service.channel.start_consuming()
+    queue_service._channel.start_consuming()

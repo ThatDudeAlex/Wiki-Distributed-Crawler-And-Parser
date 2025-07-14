@@ -66,17 +66,17 @@ def start_schedule_listener(scheduler_service: ScheduleService, queue_service: Q
     )
 
     # listen for links to schedule
-    queue_service.channel.basic_consume(
+    queue_service._channel.basic_consume(
         queue=SchedulerQueueChannels.LINKS_TO_SCHEDULE.value,
         on_message_callback=links_to_schedule_partial,
         auto_ack=False
     )
     # listen for scheduled links to process
-    queue_service.channel.basic_consume(
+    queue_service._channel.basic_consume(
         queue=SchedulerQueueChannels.SCHEDULED_LINKS_TO_PROCESS.value,
         on_message_callback=scheduled_links_to_process_partial,
         auto_ack=False
     )
 
     logger.info("Scheduler is listerning...")
-    queue_service.channel.start_consuming()
+    queue_service._channel.start_consuming()

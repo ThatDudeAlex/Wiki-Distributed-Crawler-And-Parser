@@ -26,7 +26,6 @@ class HttpFetcher:
         self.headers = configs['requests']['headers']
         self.timeout = configs['requests']['timeout_in_seconds']
 
-
     def _rate_limited_fetch(self, url: str) -> requests.Response:
         @sleep_and_retry
         @limits(calls=self.max_requests, period=self.period)
@@ -35,7 +34,11 @@ class HttpFetcher:
             response.raise_for_status()
             return response
         
-        return inner()
+        try:
+            return inner()
+        except Exception as e:
+            self._logger.error("Exception during rate_limited_fetch: %s", str(e))
+            raise
 
 
     def crawl_url(self, url: str) -> FetchResponse:
