@@ -1,12 +1,13 @@
 
 import logging
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 from components.crawler.services.publisher import PublishingService
 from components.crawler.core.downloader import download_compressed_html_content
 from components.crawler.core.http_fetcher import HttpFetcher
 from shared.rabbitmq.queue_service import QueueService
-from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
+# from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
+from shared.rabbitmq.schemas.crawling import CrawlTask
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.utils import get_timestamp_eastern_time, create_hash
 
@@ -74,17 +75,17 @@ class CrawlerService:
                 self.configs['storage_path'], url, html_content, self._logger)
 
             # Timestamp of when crawling finished + next scheduled crawl
-            fetched_at = get_timestamp_eastern_time()
+            fetched_at = get_timestamp_eastern_time(isoformat=True)
             next_crawl = (
-                fetched_at + timedelta(seconds=self.configs['recrawl_interval'])
-            )
+                datetime.fromisoformat(fetched_at) + timedelta(seconds=self.configs['recrawl_interval'])
+            ).isoformat()
 
             self._logger.info('STAGE 4: Publish Page Metadata Report')
             self.publisher.store_successful_crawl(
                 fetched_response, url_hash, html_content_hash, filepath, fetched_at, next_crawl)
 
             self._logger.info('STAGE 5: Tell Parsers to extract page content')
-            self.publisher.publish_parsing_task(url, depth, filepath)
+            # self.publisher.publish_parsing_task(url, depth, filepath)
 
             self._logger.info('Crawl Task Successfully Completed!')
 

@@ -30,7 +30,14 @@ def get_db(session_factory=None):
 
 def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logger, session_factory=None):
     with get_db(session_factory=session_factory) as db:
+        next_crawl_at = None
+
         try:
+            last_crawled_at = datetime.fromisoformat(page_metadata.fetched_at)
+
+            if page_metadata.fetched_at:
+                next_crawl_at = datetime.fromisoformat(page_metadata.fetched_at)
+
             stmt = insert(Page).values(
                 url=page_metadata.url,
                 last_crawl_status=page_metadata.status.value,
@@ -38,16 +45,14 @@ def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logg
                 url_hash=page_metadata.url_hash,
                 html_content_hash=page_metadata.html_content_hash,
                 compressed_filepath=page_metadata.compressed_filepath,
-                last_crawled_at=page_metadata.fetched_at,
-                next_crawl_at=page_metadata.next_crawl,
+                last_crawled_at=last_crawled_at,
+                next_crawl_at=next_crawl_at,
                 total_crawl_attempts=1,
                 failed_crawl_attempts=0,
                 last_error_seen=page_metadata.error_message
             )
 
             # INSERT or UPDATE (aka Upsert)
-            # IMPORTANT: This can causes an update of EVERY column even if it's not needed
-            # It's fine to do on a low-scale (less than 1k+ upserts per second)
             stmt = stmt.on_conflict_do_update(
                 # Assumes `url` has a UNIQUE constraint
                 index_elements=['url'],
@@ -69,9 +74,10 @@ def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logg
                 }
             )
             db.execute(stmt)
-        except Exception:
-            logger.exception(
-                "Unexpected error while fetching page metadata: %s", page_metadata.url)
+            logger.info("Succesfully inserted/updated into DB page: %s", page_metadata.url)
+        except Exception as e:
+            logger.error(
+                "Unexpected error while fetching page metadata: %s, %s", page_metadata.url, e)
 
 
 def save_processed_links(processed_links: SaveProcessedLinks, logger: logging.Logger, session_factory=None) -> None:

@@ -3,7 +3,8 @@ import logging
 from components.crawler.types.crawler_types import FetchResponse
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
-from shared.rabbitmq.schemas.crawling_task_schemas import CrawlStatus, SavePageMetadataTask, ValidationError
+from shared.rabbitmq.schemas.crawling_task_schemas import CrawlStatus, ValidationError
+from shared.rabbitmq.schemas.save_to_db import SavePageMetadataTask
 from shared.rabbitmq.queue_service import QueueService
 
 
@@ -15,10 +16,10 @@ class PublishingService:
 
     def _publish_page_metadata(self, message: SavePageMetadataTask):
         try:
-            message.validate_publish()
+            # message.validate_publish()
 
             self._queue_service.publish(
-                CrawlerQueueChannels.PAGE_METADATA_TO_SAVE.value, message
+                CrawlerQueueChannels.PAGE_METADATA_TO_SAVE.value, message.model_dump_json()
             )
 
             if message.status == CrawlStatus.SUCCESS:
@@ -35,8 +36,8 @@ class PublishingService:
         url_hash: str,
         html_content_hash: str,
         compressed_filepath: str,
-        fetched_at: datetime,
-        next_crawl: datetime
+        fetched_at: str,
+        next_crawl: str
     ):
         page_metadata = SavePageMetadataTask(
             status=fetched_response.crawl_status,
@@ -53,7 +54,7 @@ class PublishingService:
     def store_failed_crawl(
         self,
         status: CrawlStatus,
-        fetched_at: datetime,
+        fetched_at: str,
         url: str,
         error_type: str = None,
         error_message: str = None
