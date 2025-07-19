@@ -1,8 +1,8 @@
 import logging
 from typing import List
-from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent, LinkData
+from shared.rabbitmq.schemas.save_to_db import SaveParsedContent
 from shared.rabbitmq.enums.queue_names import ParserQueueChannels
-from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
+from shared.rabbitmq.schemas.scheduling import LinkData, ProcessDiscoveredLinks
 from shared.rabbitmq.queue_service import QueueService
 
 
@@ -13,12 +13,11 @@ class PublishingService:
         pass
 
     # TODO: Implement retry mechanism and dead-letter
-    def publish_save_parsed_data(self, page_content: ParsedContent):
+    def publish_save_parsed_data(self, page_content: SaveParsedContent):
         message = page_content
-        message.validate_publish()
 
         self._queue_service.publish(
-            ParserQueueChannels.PARSED_CONTENT_TO_SAVE.value, message)
+            ParserQueueChannels.PARSED_CONTENT_TO_SAVE.value, message.model_dump_json())
 
         self._logger.info("Published: Save Parsed Data")
 
@@ -26,9 +25,8 @@ class PublishingService:
     def publish_process_links_task(self, page_links: List[LinkData]):
 
         message = ProcessDiscoveredLinks(links=page_links)
-        message.validate_publish()
 
         self._queue_service.publish(
-            ParserQueueChannels.LINKS_TO_SCHEDULE.value, message)
+            ParserQueueChannels.LINKS_TO_SCHEDULE.value, message.model_dump_json())
 
         self._logger.debug("Published: Process Links")

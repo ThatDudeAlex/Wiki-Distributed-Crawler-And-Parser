@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 from typing import List
 from lxml import html
 from components.parser.configs.app_configs import IMAGE_EXTENSIONS
-from shared.rabbitmq.schemas.parsing_task_schemas import LinkData
+from shared.rabbitmq.schemas.scheduling import LinkData
 from shared.utils import get_timestamp_eastern_time
 from shared.utils import is_internal_link, normalize_url
 
@@ -61,7 +61,7 @@ class PageLinkExtractor:
             source_page_url=source_page_url,
             url=normalized_href,
             depth=depth + 1,  # update the depth of the link
-            discovered_at=get_timestamp_eastern_time(True),
+            discovered_at=get_timestamp_eastern_time(isoformat=True),
             anchor_text=anchor_text,
             title_attribute=title_attr,
             rel_attribute=rel_attr,

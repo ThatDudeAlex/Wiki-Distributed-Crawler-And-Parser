@@ -85,7 +85,7 @@ class CrawlerService:
                 fetched_response, url_hash, html_content_hash, filepath, fetched_at, next_crawl)
 
             self._logger.info('STAGE 5: Tell Parsers to extract page content')
-            # self.publisher.publish_parsing_task(url, depth, filepath)
+            self.publisher.publish_parsing_task(url, depth, filepath)
 
             self._logger.info('Crawl Task Successfully Completed!')
 

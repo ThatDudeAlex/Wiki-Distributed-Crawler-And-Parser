@@ -4,7 +4,8 @@ from components.parser.core.wiki_content_extractor import PageContentExtractor
 from components.parser.core.wiki_link_extractor import PageLinkExtractor
 from components.parser.services.compressed_html_reader import load_compressed_html
 from components.parser.services.publisher import PublishingService
-from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
+from shared.rabbitmq.schemas.parsing import ParsingTask
+# from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
 
 from components.parser.core.metrics import PAGES_PARSED_TOTAL, LINKS_EXTRACTED_TOTAL, STAGE_DURATION_SECONDS
 
@@ -39,13 +40,11 @@ class ParsingService:
 
             with STAGE_DURATION_SECONDS.labels("extract_content").time():
                 self._logger.info('STAGE 2: Extracting Page Content')
-                page_content = self.content_extractor.extract(
-                    url, html_content)
+                page_content = self.content_extractor.extract(url, html_content)
 
             with STAGE_DURATION_SECONDS.labels("extract_links").time():
                 self._logger.info('STAGE 3: Extracting Links')
-                page_links = self.link_extractor.extract(
-                    url, html_content, depth)
+                page_links = self.link_extractor.extract(url, html_content, depth)
                 LINKS_EXTRACTED_TOTAL.inc(len(page_links))
 
             with STAGE_DURATION_SECONDS.labels("publish_content").time():

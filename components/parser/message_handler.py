@@ -4,17 +4,15 @@ from functools import partial
 import os
 from components.parser.services.parsing_service import ParsingService
 from shared.rabbitmq.queue_service import QueueService
-from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
+# from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
+from shared.rabbitmq.schemas.parsing import ParsingTask
 from shared.rabbitmq.enums.queue_names import ParserQueueChannels
 
 
 def handle_message(ch, method, properties, body, parsing_service: ParsingService, logger: logging.Logger):
     try:
         message_str = body.decode('utf-8')
-        message_dict = json.loads(message_str)
-
-        task = ParsingTask(**message_dict)
-        task.validate_consume()
+        task = ParsingTask.model_validate_json(message_str)
 
         if not os.path.exists(task.compressed_filepath):
             logger.warning("File does not exist: %s", task.compressed_filepath)

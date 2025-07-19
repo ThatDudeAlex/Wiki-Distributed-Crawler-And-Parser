@@ -9,9 +9,10 @@ from sqlalchemy.orm import Session
 from database.engine import SessionLocal
 from database.db_models.models import Category, Link, Page, PageContent, ScheduledLinks
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
-from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
+# from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
+from shared.rabbitmq.schemas.save_to_db import SavePageMetadataTask, SaveParsedContent
 from shared.rabbitmq.schemas.link_processing_schemas import SaveProcessedLinks, AddLinksToSchedule
-from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
+# from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 
 
 @contextmanager
@@ -116,7 +117,7 @@ def save_processed_links(processed_links: SaveProcessedLinks, logger: logging.Lo
                 "Unexpected error while saving processed links")
 
 
-def save_parsed_data(page_data: ParsedContent, logger: logging.Logger, session_factory=None) -> bool:
+def save_parsed_data(page_data: SaveParsedContent, logger: logging.Logger, session_factory=None) -> bool:
     with get_db(session_factory=session_factory) as db:
         try:
             # Get or create categories
@@ -129,7 +130,6 @@ def save_parsed_data(page_data: ParsedContent, logger: logging.Logger, session_f
             if existing_page:
                 # Update existing fields
                 existing_page.title = page_data.title
-                existing_page.summary = page_data.summary
                 existing_page.text_content = page_data.text_content
                 existing_page.text_content_hash = page_data.text_content_hash
                 existing_page.parsed_at = page_data.parsed_at
@@ -139,7 +139,6 @@ def save_parsed_data(page_data: ParsedContent, logger: logging.Logger, session_f
                 page = PageContent(
                     source_page_url=page_data.source_page_url,
                     title=page_data.title,
-                    summary=page_data.summary,
                     text_content=page_data.text_content,
                     text_content_hash=page_data.text_content_hash,
                     parsed_at=page_data.parsed_at,

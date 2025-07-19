@@ -1,9 +1,9 @@
 import logging
 from typing import List
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels, DelayQueues
-from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
-from shared.rabbitmq.schemas.parsing_task_schemas import LinkData, ProcessDiscoveredLinks
-from shared.rabbitmq.schemas.link_processing_schemas import SaveProcessedLinks, AddLinksToSchedule
+from shared.rabbitmq.schemas.crawling import CrawlTask
+from shared.rabbitmq.schemas.scheduling import LinkData, ProcessDiscoveredLinks
+from shared.rabbitmq.schemas.save_to_db import SaveProcessedLinks, SaveLinksToSchedule
 from shared.rabbitmq.queue_service import QueueService
 from shared.utils import get_timestamp_eastern_time
 
@@ -35,12 +35,12 @@ class PublishingService:
     # TODO: Implement retry mechanism and dead-letter
     def publish_save_processed_links(self, links_to_save: List[LinkData]):
         message = SaveProcessedLinks(links=links_to_save)
-        message.validate_publish()
 
         self._queue_service.publish(
-            SchedulerQueueChannels.SCHEDULED_LINKS_TO_SAVE.value, message)
+            SchedulerQueueChannels.SCHEDULED_LINKS_TO_SAVE.value, 
+            message.model_dump_json())
 
-        # self._logger.info("Published: Save Processed Links")
+        self._logger.info("Published: Save Processed Links")
 
     # TODO: Implement retry mechanism and dead-letter
     def publish_links_to_schedule(self, links_to_crawl: List[LinkData]):
@@ -49,16 +49,17 @@ class PublishingService:
         for link in links_to_crawl:
             task = CrawlTask(
                 url=link.url,
-                scheduled_at=get_timestamp_eastern_time(),
+                scheduled_at=get_timestamp_eastern_time(isoformat=True),
                 depth=link.depth
             )
 
             scheduled_links.append(task)
-        message = AddLinksToSchedule(links=scheduled_links)
-        message.validate_publish()
+        message = SaveLinksToSchedule(links=scheduled_links)
 
         self._queue_service.publish(
-            SchedulerQueueChannels.ADD_LINKS_TO_SCHEDULE.value, message)
-        link_count += 1
+            SchedulerQueueChannels.ADD_LINKS_TO_SCHEDULE.value, 
+            message.model_dump_json())
+        
+        # link_count += 1
 
-        # self._logger.info("Published: %s Links Scheduled", link_count)
+        self._logger.info("Published: %s Links Scheduled", len(scheduled_links))

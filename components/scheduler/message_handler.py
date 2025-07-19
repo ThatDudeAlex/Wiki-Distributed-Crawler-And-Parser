@@ -4,18 +4,16 @@ import logging
 from components.scheduler.services.schedule_service import ScheduleService
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
-from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
+from shared.rabbitmq.schemas.scheduling import ProcessDiscoveredLinks
 
 
 def links_to_schedule(ch, method, properties, body, scheduler: ScheduleService, logger: logging.Logger):
     try:
         message_str = body.decode('utf-8')
-        message_dict = json.loads(message_str)
+        task = ProcessDiscoveredLinks.model_validate_json(message_str)
 
-        task = ProcessDiscoveredLinks(**message_dict)
-        task.validate_consume()
-
-        scheduler.schedule_links(task)
+        # scheduler.schedule_links(task)
+        scheduler.process_links(task)
 
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -32,11 +30,7 @@ def links_to_schedule(ch, method, properties, body, scheduler: ScheduleService, 
 def scheduled_links_to_process(ch, method, properties, body, scheduler: ScheduleService, logger: logging.Logger):
     try:
         message_str = body.decode('utf-8')
-        message_dict = json.loads(message_str)
-
-        task = ProcessDiscoveredLinks(**message_dict)
-        task.validate_consume()
-
+        task = ProcessDiscoveredLinks.model_validate_json(message_str)
         # logger.info('GOT FROM LEAKY BUCKET: %s', link.url)
 
         scheduler.process_links(task)

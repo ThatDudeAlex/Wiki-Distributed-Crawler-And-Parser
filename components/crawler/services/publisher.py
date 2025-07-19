@@ -2,9 +2,10 @@ from datetime import datetime
 import logging
 from components.crawler.types.crawler_types import FetchResponse
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
-from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
+# from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
 from shared.rabbitmq.schemas.crawling_task_schemas import CrawlStatus, ValidationError
 from shared.rabbitmq.schemas.save_to_db import SavePageMetadataTask
+from shared.rabbitmq.schemas.parsing import ParsingTask
 from shared.rabbitmq.queue_service import QueueService
 
 
@@ -72,12 +73,9 @@ class PublishingService:
         message = ParsingTask(
             url=url, depth=depth, compressed_filepath=compressed_filepath
         )
-        # Validate Message
-        message.validate_publish()
 
-        # convert message to dict to so that it's JSON serializable
         self._queue_service.publish(
-            CrawlerQueueChannels.PAGES_TO_PARSE.value, message)
+            CrawlerQueueChannels.PAGES_TO_PARSE.value, message.model_dump_json())
         self._logger.debug(
             "Published: Parsing Task - %s", compressed_filepath
         )

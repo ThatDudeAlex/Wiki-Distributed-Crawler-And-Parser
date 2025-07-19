@@ -1,10 +1,11 @@
 import logging
 from typing import List, Optional
-from bs4 import BeautifulSoup, Tag
+from bs4 import Tag
 from lxml import html
 from readability import Document
 
-from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
+# from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
+from shared.rabbitmq.schemas.save_to_db import SaveParsedContent
 from shared.utils import create_hash, get_timestamp_eastern_time
 
 
@@ -13,7 +14,7 @@ class PageContentExtractor:
         self.selectors = selectors
         self.logger = logger
 
-    def extract(self, url: str, html_content: str) -> ParsedContent:
+    def extract(self, url: str, html_content: str) -> SaveParsedContent:
         """
         Parses HTML content from a Wikipedia-like page and returns structured content including
         title, categories, summary, main body text, and a hash of the text content.
@@ -24,14 +25,10 @@ class PageContentExtractor:
         categories = self._extract_categories(tree)
         main_content_list = self._extract_main_body_content(tree)
 
-        summary = None
         text_content = None
         text_content_hash = None
 
         if main_content_list:
-            main_content = main_content_list[0]
-            summary = self._extract_summary(main_content)
-
             doc = Document(html_content)
             clean_html = doc.summary()
             tmp_tree = html.fromstring(clean_html)
@@ -40,14 +37,13 @@ class PageContentExtractor:
             text_content_hash = create_hash(text_content)
         else:
             self.logger.warning(
-                'Failed to find main content — skipping summary & text_content')
+                'Failed to find main content — skipping text_content')
 
-        parsed_at = get_timestamp_eastern_time()
-        return ParsedContent(
+        parsed_at = get_timestamp_eastern_time(isoformat=True)
+        return SaveParsedContent(
             source_page_url=url,
             title=title,
             categories=categories,
-            summary=summary,
             text_content=text_content,
             text_content_hash=text_content_hash,
             parsed_at=parsed_at

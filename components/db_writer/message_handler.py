@@ -5,9 +5,9 @@ from components.db_writer.core.db_writer import save_page_metadata, save_parsed_
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import DbWriterQueueChannels
 # from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
-from shared.rabbitmq.schemas.save_to_db import SavePageMetadataTask
+from shared.rabbitmq.schemas.save_to_db import SavePageMetadataTask, SaveParsedContent
 from shared.rabbitmq.schemas.link_processing_schemas import SaveProcessedLinks, AddLinksToSchedule
-from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
+# from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 
 
 def consume_save_page_metadata(ch, method, properties, body, logger: logging.Logger):
@@ -37,10 +37,7 @@ def consume_save_page_metadata(ch, method, properties, body, logger: logging.Log
 def consume_save_parsed_content(ch, method, properties, body, logger: logging.Logger):
     try:
         message_str = body.decode('utf-8')
-        message_dict = json.loads(message_str)
-
-        task = ParsedContent(**message_dict)
-        task.validate_consume()
+        task = SaveParsedContent.model_validate_json(message_str)
 
         save_parsed_data(task, logger)
 

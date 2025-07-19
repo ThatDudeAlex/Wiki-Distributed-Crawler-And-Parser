@@ -1,6 +1,6 @@
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
-from shared.rabbitmq.schemas.parsing_task_schemas import LinkData
+from shared.rabbitmq.schemas.scheduling import LinkData
 from shared.config import BASE_HEADERS
 from shared.utils import is_external_link, has_excluded_prefix, is_home_page
 import logging
