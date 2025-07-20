@@ -3,8 +3,6 @@ from typing import List, Optional
 from bs4 import Tag
 from lxml import html
 from readability import Document
-
-# from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
 from shared.rabbitmq.schemas.save_to_db import SaveParsedContent
 from shared.utils import create_hash, get_timestamp_eastern_time
 

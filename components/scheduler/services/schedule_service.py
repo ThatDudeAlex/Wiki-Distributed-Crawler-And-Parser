@@ -1,6 +1,6 @@
 import logging
 import time
-from shared.rabbitmq.schemas.parsing_task_schemas import ProcessDiscoveredLinks
+from shared.rabbitmq.schemas.scheduling import ProcessDiscoveredLinks
 from shared.redis.cache_service import CacheService
 from shared.rabbitmq.queue_service import QueueService
 from components.scheduler.core.filter import FilteringService, LinkData

@@ -4,10 +4,7 @@ import logging
 from components.db_writer.core.db_writer import save_page_metadata, save_parsed_data, save_processed_links, add_links_to_schedule
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import DbWriterQueueChannels
-# from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
-from shared.rabbitmq.schemas.save_to_db import SavePageMetadataTask, SaveParsedContent
-from shared.rabbitmq.schemas.link_processing_schemas import SaveProcessedLinks, AddLinksToSchedule
-# from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
+from shared.rabbitmq.schemas.save_to_db import SavePageMetadataTask, SaveParsedContent, SaveProcessedLinks, SaveLinksToSchedule
 
 
 def consume_save_page_metadata(ch, method, properties, body, logger: logging.Logger):
@@ -56,10 +53,7 @@ def consume_save_parsed_content(ch, method, properties, body, logger: logging.Lo
 def consume_save_processed_Links(ch, method, properties, body, logger: logging.Logger):
     try:
         message_str = body.decode('utf-8')
-        message_dict = json.loads(message_str)
-
-        task = SaveProcessedLinks(**message_dict)
-        task.validate_consume()
+        task = SaveProcessedLinks.model_validate_json(message_str)
 
         save_processed_links(task, logger)
 
@@ -78,10 +72,8 @@ def consume_save_processed_Links(ch, method, properties, body, logger: logging.L
 def consume_add_links_to_schedule(ch, method, properties, body, logger: logging.Logger):
     try:
         message_str = body.decode('utf-8')
-        message_dict = json.loads(message_str)
 
-        task = AddLinksToSchedule(**message_dict)
-        task.validate_consume()
+        task = SaveLinksToSchedule.model_validate_json(message_str)
         logger.info('got a message: %s', task)
 
         add_links_to_schedule(task, logger)

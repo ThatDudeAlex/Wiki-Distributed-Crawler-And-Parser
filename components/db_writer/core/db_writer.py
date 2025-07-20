@@ -9,10 +9,8 @@ from sqlalchemy.orm import Session
 from database.engine import SessionLocal
 from database.db_models.models import Category, Link, Page, PageContent, ScheduledLinks
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
-# from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
-from shared.rabbitmq.schemas.save_to_db import SavePageMetadataTask, SaveParsedContent
-from shared.rabbitmq.schemas.link_processing_schemas import SaveProcessedLinks, AddLinksToSchedule
-# from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
+from shared.rabbitmq.schemas.save_to_db import (
+    SavePageMetadataTask, SaveParsedContent, SaveProcessedLinks, SaveLinksToSchedule)
 
 
 @contextmanager
@@ -153,7 +151,7 @@ def save_parsed_data(page_data: SaveParsedContent, logger: logging.Logger, sessi
             return False
 
 
-def add_links_to_schedule(links_to_schedule: AddLinksToSchedule, logger: logging.Logger, session_factory=None) -> None:
+def add_links_to_schedule(links_to_schedule: SaveLinksToSchedule, logger: logging.Logger, session_factory=None) -> None:
     with get_db(session_factory=session_factory) as db:
         values = []
         for link in links_to_schedule.links:

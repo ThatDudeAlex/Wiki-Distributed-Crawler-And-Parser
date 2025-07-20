@@ -6,7 +6,7 @@ import time
 from components.rescheduler.services.db_client import DBReaderClient
 from components.rescheduler.services.publisher import PublishingService
 from shared.rabbitmq.queue_service import QueueService
-from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
+from shared.rabbitmq.schemas.crawling import CrawlTask
 from shared.utils import get_timestamp_eastern_time
 
 

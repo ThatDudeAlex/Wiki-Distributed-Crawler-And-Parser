@@ -1,7 +1,6 @@
 import logging
 from typing import List
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
-# from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
 from shared.rabbitmq.schemas.crawling import CrawlTask
 from shared.rabbitmq.queue_service import QueueService
 
@@ -20,7 +19,6 @@ class PublishingService:
 
         for link in links_to_crawl:
             message = link
-            # message.model_dump_json()
 
             self._queue_service.publish(
                 SchedulerQueueChannels.URLS_TO_CRAWL.value, message.model_dump_json())

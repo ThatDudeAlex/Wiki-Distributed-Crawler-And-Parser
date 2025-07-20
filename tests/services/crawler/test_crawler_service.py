@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 from components.crawler.services.crawler_service import CrawlerService
 from components.crawler.types.crawler_types import FetchResponse
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
-from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
+from shared.rabbitmq.schemas.crawling import CrawlTask
 from datetime import datetime
 from components.crawler.configs.crawler_config import configs as loaded_configs
 from shared.configs.load_config import Path

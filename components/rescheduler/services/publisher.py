@@ -1,10 +1,10 @@
 import logging
 from typing import List
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
-from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
 from shared.rabbitmq.queue_service import QueueService
-from shared.rabbitmq.schemas.link_processing_schemas import AddLinksToSchedule
-from shared.rabbitmq.schemas.parsing_task_schemas import LinkData
+from shared.rabbitmq.schemas.crawling import CrawlTask
+from shared.rabbitmq.schemas.scheduling import LinkData
+from shared.rabbitmq.schemas.save_to_db import SaveLinksToSchedule
 from shared.utils import get_timestamp_eastern_time
 
 
@@ -28,9 +28,8 @@ class PublishingService:
 
             scheduled_links.append(task)
             link_count += 1
-        message = AddLinksToSchedule(links=scheduled_links)
-        message.validate_publish()
+        message = SaveLinksToSchedule(links=scheduled_links)
 
         self._queue_service.publish(
-            SchedulerQueueChannels.ADD_LINKS_TO_SCHEDULE.value, message)
+            SchedulerQueueChannels.ADD_LINKS_TO_SCHEDULE.value, message.model_dump_json())
         self._logger.info("Published: %d links to schedule", link_count)

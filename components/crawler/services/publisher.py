@@ -2,8 +2,7 @@ from datetime import datetime
 import logging
 from components.crawler.types.crawler_types import FetchResponse
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
-# from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
-from shared.rabbitmq.schemas.crawling_task_schemas import CrawlStatus, ValidationError
+from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.rabbitmq.schemas.save_to_db import SavePageMetadataTask
 from shared.rabbitmq.schemas.parsing import ParsingTask
 from shared.rabbitmq.queue_service import QueueService
@@ -28,8 +27,8 @@ class PublishingService:
             else:
                 self._logger.info("Published: Page Metadata - Failed Crawl")
 
-        except ValidationError as e:
-            self._logger.error("Validation failed: %s", str(e))
+        except Exception as e:
+            self._logger.error("Unexpected error occurred: %s", e)
 
     def store_successful_crawl(
         self,

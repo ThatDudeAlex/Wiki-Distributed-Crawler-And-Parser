@@ -19,7 +19,7 @@ def test_save_crawled_page_real_postgres():
     from sqlalchemy.orm import sessionmaker
     from database.db_models.models import Base, CrawlStatus, Page
     from components.db_writer.core.db_writer import save_page_metadata
-    from shared.rabbitmq.schemas.crawling_task_schemas import SavePageMetadataTask
+    from shared.rabbitmq.schemas.save_to_db import SavePageMetadataTask
     from shared.utils import datetime
 
     with PostgresContainer("postgres:15") as pg:
@@ -58,7 +58,7 @@ def test_save_parsed_page_content_real_postgres():
     from sqlalchemy.orm import sessionmaker
     from database.db_models.models import Base, CrawlStatus, Page, PageContent
     from components.db_writer.core.db_writer import save_parsed_data
-    from shared.rabbitmq.schemas.parsing_task_schemas import ParsedContent
+    from shared.rabbitmq.schemas.save_to_db import SaveParsedContent
     from shared.utils import datetime
 
     with PostgresContainer("postgres:15") as pg:
@@ -79,11 +79,10 @@ def test_save_parsed_page_content_real_postgres():
             ))
             session.commit()
 
-        parsed_content = ParsedContent(
+        parsed_content = SaveParsedContent(
             source_page_url="http://example.com",
             title="Example Page",
             parsed_at=datetime.fromisoformat("2025-01-01T12:00:00"),
-            summary="Summary of the page",
             text_content="Full content",
             text_content_hash="hash-abc",
             categories=["Tech", "Python"]

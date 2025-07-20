@@ -3,7 +3,6 @@ import json
 import logging
 from components.crawler.services.crawler_service import CrawlerService
 from shared.rabbitmq.queue_service import QueueService
-# from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask, ValidationError
 from shared.rabbitmq.schemas.crawling import CrawlTask
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 

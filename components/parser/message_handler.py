@@ -4,7 +4,6 @@ from functools import partial
 import os
 from components.parser.services.parsing_service import ParsingService
 from shared.rabbitmq.queue_service import QueueService
-# from shared.rabbitmq.schemas.parsing_task_schemas import ParsingTask
 from shared.rabbitmq.schemas.parsing import ParsingTask
 from shared.rabbitmq.enums.queue_names import ParserQueueChannels
 

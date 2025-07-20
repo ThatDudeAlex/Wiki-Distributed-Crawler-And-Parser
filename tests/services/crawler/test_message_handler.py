@@ -2,7 +2,7 @@ import json
 from unittest.mock import MagicMock, patch
 from zoneinfo import ZoneInfo
 from components.crawler import message_handler
-from shared.rabbitmq.schemas.crawling_task_schemas import CrawlTask
+from shared.rabbitmq.schemas.crawling import CrawlTask
 from datetime import datetime
 
 
