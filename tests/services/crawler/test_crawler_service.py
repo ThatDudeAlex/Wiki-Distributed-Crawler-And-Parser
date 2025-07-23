@@ -5,6 +5,8 @@ from components.crawler.types.crawler_types import FetchResponse
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.rabbitmq.schemas.crawling import CrawlTask
 from datetime import datetime
+
+# TODO: update with new config_loader and remove this
 from components.crawler.configs.crawler_config import configs as loaded_configs
 from shared.configs.load_config import Path
 

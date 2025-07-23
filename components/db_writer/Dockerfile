@@ -10,6 +10,7 @@ COPY shared/        ./shared/
 # service-specific code
 COPY components/db_writer/     ./components/db_writer/
 
+# install dependencies
 RUN pip install --no-cache-dir -r components/db_writer/requirements.txt
 
 CMD ["python", "-m", "components.db_writer.main"]

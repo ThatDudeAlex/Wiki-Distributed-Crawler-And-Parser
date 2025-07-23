@@ -16,7 +16,7 @@ class FilteringService:
         self.configs = configs
         self._logger = logger
         self.robots_parser = self._load_robots_txt(
-            configs.filters.robots_txt
+            configs['filters']['robots_txt']
         )
 
     def _load_robots_txt(self, robot_text) -> RobotFileParser:
@@ -36,7 +36,7 @@ class FilteringService:
         )
 
     def _exceeds_max_depth(self, link: LinkData) -> bool:
-        if link.depth > self.configs.filters.max_depth:
+        if link.depth > self.configs['filters']['max_depth']:
             # self._logger.info(
             #     "FILTERED: Exceeds max depth — depth=%s > MAX_DEPTH=%s — URL: %s",
             #     link.depth, self.configs.filters.max_depth, link.url
@@ -63,7 +63,7 @@ class FilteringService:
 
     def _is_cross_language_domain(self, link: LinkData) -> bool:
         parsed = urlparse(link.url)
-        if parsed.netloc not in self.configs.filters.allowed_domains:
+        if parsed.netloc not in self.configs['filters']['allowed_domains']:
             # self._logger.info("FILTERED: Unallowed Domain — URL: %s", link.url)
             return True
         return False

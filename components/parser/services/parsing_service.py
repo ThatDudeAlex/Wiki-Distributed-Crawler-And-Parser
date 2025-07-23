@@ -12,11 +12,8 @@ class ParsingService:
     def __init__(self, configs, queue_service: QueueService, logger: logging.Logger):
         self._queue_service = queue_service
         self._logger = logger
-        self.content_extractor = PageContentExtractor(
-            configs.selectors, logger)
-        self.link_extractor = PageLinkExtractor(
-            configs.selectors, logger
-        )
+        self.content_extractor = PageContentExtractor(configs['selectors'], logger)
+        self.link_extractor = PageLinkExtractor(configs['selectors'], logger)
         self._publisher = PublishingService(self._queue_service, logger)
 
     def run(self, task: ParsingTask):

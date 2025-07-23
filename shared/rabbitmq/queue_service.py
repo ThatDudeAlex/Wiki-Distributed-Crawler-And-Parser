@@ -7,7 +7,7 @@ import json
 from pika.exceptions import AMQPConnectionError
 from dotenv import load_dotenv
 
-from shared.configs.config_loader import config_loader
+from shared.configs.config_loader import global_config_loader
 from shared.rabbitmq.types import QueueMsgSchemaInterface
 
 load_dotenv()
@@ -23,8 +23,8 @@ class QueueService:
     ):
         self._logger = logger
 
-        config_path = Path(__file__).resolve().parents[1] / "configs" / "global_config.yml"
-        global_config = config_loader(config_path)
+        # config_path = Path(__file__).resolve().parents[1] / "configs" / "global_config.yml"
+        global_config = global_config_loader()
         rabbitmq_cfg = global_config["rabbitmq"]
         self._host = rabbitmq_cfg["host"]
         self._port = rabbitmq_cfg["port"]
@@ -74,7 +74,6 @@ class QueueService:
         self._channel.basic_publish(
             exchange="",
             routing_key=queue_name,
-            # body=json.dumps(message.to_dict()),
             body=message,
             properties=pika.BasicProperties(delivery_mode=2),
         )

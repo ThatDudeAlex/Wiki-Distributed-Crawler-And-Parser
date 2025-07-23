@@ -49,7 +49,7 @@ class PageContentExtractor:
 
     def _extract_title(self, tree) -> Optional[str]:
         try:
-            title_list = tree.xpath(self.selectors.title)
+            title_list = tree.xpath(self.selectors['title'])
             if title_list:
                 return title_list[0].strip()
 
@@ -63,7 +63,7 @@ class PageContentExtractor:
     def _extract_main_body_content(self, tree) -> Optional[Tag]:
         try:
             # content_container_id
-            return tree.xpath(self.selectors.content_container_id)
+            return tree.xpath(self.selectors['content_container_id'])
         except Exception as e:
             self.logger.error(
                 f"An exception of type '{type(e).__name__}' occurred: {e}")
@@ -74,12 +74,12 @@ class PageContentExtractor:
             categories = []
 
             normal_catlinks_div_list = tree.xpath(
-                self.selectors.categories_div_id)
+                self.selectors['categories_div_id'])
 
             if normal_catlinks_div_list:
                 catlinks_div = normal_catlinks_div_list[0]
                 category_links = catlinks_div.xpath(
-                    self.selectors.categories_links
+                    self.selectors['categories_links']
                 )
 
                 for link in category_links:
@@ -97,16 +97,3 @@ class PageContentExtractor:
         except Exception as e:
             self.logger.error("Unexpected error extracting categories: %s", e)
             return []
-
-    def _extract_summary(self, main_content) -> Optional[str]:
-        try:
-            paragraphs = main_content.xpath(self.selectors.summary)
-            if paragraphs:
-                return paragraphs[0].text_content().strip()
-
-            self.logger.warning('Missing Page Summary')
-            return None
-        except Exception as e:
-            self.logger.error(
-                "Unexpected error while extracting page summary: %s", e)
-            return None

@@ -18,7 +18,7 @@ class PageLinkExtractor:
         Parses a Wikipedia HTML page and returns structured data for links within the main body
         """
         tree = html.fromstring(html_content)
-        main_list = tree.xpath(self.selectors.content_container_id)
+        main_list = tree.xpath(self.selectors['content_container_id'])
 
         if not main_list:
             self.logger.warning(
@@ -26,7 +26,7 @@ class PageLinkExtractor:
             return []
 
         main_content = main_list[0]
-        all_links = main_content.xpath(self.selectors.all_links)
+        all_links = main_content.xpath(self.selectors['all_links'])
         extracted_links: List[LinkData] = []
 
         for link in all_links:
@@ -85,7 +85,7 @@ class PageLinkExtractor:
 
             # Dynamically extract attributes
             link_attributes = {
-                attr: link_tag.get(attr) for attr in self.selectors.attributes
+                attr: link_tag.get(attr) for attr in self.selectors['attributes']
             }
 
             if link_attributes['rel']:

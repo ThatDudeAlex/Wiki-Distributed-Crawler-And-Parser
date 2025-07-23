@@ -79,7 +79,7 @@ class ScheduleService:
                 return None
 
         # Run processing loop in parallel
-        with ThreadPoolExecutor(max_workers=self.configs.max_workers) as executor:
+        with ThreadPoolExecutor(max_workers=self.configs['max_workers']) as executor:
             futures = [
                 executor.submit(process_single_link, link, idx)
                 for idx, link in enumerate(unseen_links, start=1)

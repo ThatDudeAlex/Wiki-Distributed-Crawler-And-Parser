@@ -26,7 +26,7 @@ class Dispatcher:
         while True:
             try:
                 links = self._dbclient.pop_links_from_schedule(
-                    self.configs.dispatch_count)
+                    self.configs['dispatch_count'])
 
                 if links:
                     tasks = [
@@ -39,7 +39,7 @@ class Dispatcher:
                     ]
                     self._publisher.publish_crawl_tasks(tasks)
 
-                sleep(self.configs.dispatch_tick)
+                sleep(self.configs['dispatch_tick'])
             except Exception as e:
                 self.logger.error(
                     "Dispatcher encountered an error: %s", str(e))
@@ -47,7 +47,7 @@ class Dispatcher:
     def seed_empty_queue(self):
         self.logger.info("Seeding Crawl Queue")
         seed_links = []
-        for link in self.configs.seed_urls:
+        for link in self.configs['seed_urls']:
             seed_links.append(CrawlTask(
                 url=link,
                 depth=0,
