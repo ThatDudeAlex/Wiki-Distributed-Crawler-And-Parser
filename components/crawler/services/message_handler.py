@@ -18,10 +18,6 @@ def run_crawler(ch, method, properties, body, crawler_service: CrawlerService, l
         # Acknowledge message
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    # except ValidationError as e:
-    #     logger.error("Validation failed: %s", str(e))
-    #     ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-
     except json.JSONDecodeError as e:
         logger.error("Invalid JSON format: %s", str(e))
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
