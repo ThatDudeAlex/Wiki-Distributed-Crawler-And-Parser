@@ -4,6 +4,8 @@ import os
 import sys
 from logging.handlers import RotatingFileHandler
 
+# TODO: Implement structured logs with structlog
+
 # 1. Formatter — shows context info
 FORMATTER = logging.Formatter(
     "[%(asctime)s] %(levelname)-8s %(name)s:%(funcName)s():%(lineno)d - %(message)s"

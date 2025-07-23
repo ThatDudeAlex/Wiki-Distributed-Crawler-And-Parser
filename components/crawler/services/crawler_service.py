@@ -2,9 +2,11 @@
 import logging
 import time
 from datetime import datetime, timedelta
+from typing import Optional
 from components.crawler.services.publisher import PublishingService
 from components.crawler.core.downloader import download_compressed_html_content
 from components.crawler.core.http_fetcher import HttpFetcher
+from components.crawler.types.crawler_types import FetchResponse
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling import CrawlTask
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
@@ -16,6 +18,17 @@ from shared.monitoring.metrics import (
 
 
 class CrawlerService:
+    """
+    Core crawler orchestration class.
+
+    Responsible for executing a full crawl task lifecycle:
+        - Fetching page HTML
+        - Compressing & storing content
+        - Recording crawl metadata
+        - Publishing page for downstream parsing
+        - Emitting Prometheus metrics
+    """
+
     def __init__(self, configs, queue_service: QueueService, logger: logging.Logger):
         self.configs = configs
 
@@ -33,8 +46,20 @@ class CrawlerService:
         self._logger.info('Crawler Service Initiation Complete')
 
     def run(self, task: CrawlTask):
-        url = task.url
-        depth = task.depth
+        """
+        Run the full crawl lifecycle for a given CrawlTask
+
+        Args:
+            task (CrawlTask): Contains URL, depth, and metadata for the crawl job
+
+        Flow:
+            1. Fetch the page via HTTP
+            2. Save the raw HTML to disk (compressed)
+            3. Generate hashes & metadata
+            4. Publish metadata and downstream parse job
+            5. Record Prometheus metrics
+        """
+        url, depth = task.url, task.depth
 
         # Default status (for crawl_pages_total metric)
         task_status = CrawlStatus.SUCCESS.value
@@ -44,40 +69,23 @@ class CrawlerService:
 
         try:
             self._logger.info('STAGE 1: Fetch URL: %s', url)
+            fetched_response = self._fetch_page(url)
 
-            fetched_response = self.http_fetcher.crawl_url(url)
-
-            # if crawl failed
-            if not fetched_response.success:
-                # Timestamp of when crawling finished
-                fetched_at = get_timestamp_eastern_time()
-
-                self.publisher.store_failed_crawl(
-                    url, fetched_response.crawl_status, fetched_at,
-                    fetched_response.error_type, fetched_response.error_message)
-
-                # Increment failure counter
-                self._increment_failed_counter(
-                    fetched_response.error_type, fetched_response.crawl_status.value
-                )
+            # If fetch failed, move on
+            if not fetched_response:
                 task_status = CrawlStatus.FAILED.value
                 return
 
             html_content = fetched_response.text
 
-            # TODO: Implement try/catch with retry for download
-            self._logger.info('STAGE 2: Create Hash of Html file')
+            self._logger.info('STAGE 2: Download Compressed Html File')
+            url_hash, filepath = self._download_compressed_html(url, html_content)
+
+            self._logger.info('STAGE 3: Create Hash of Html file')
             html_content_hash = create_hash(html_content)
 
-            self._logger.info('STAGE 3: Download Compressed Html File')
-            url_hash, filepath = download_compressed_html_content(
-                self.configs['storage_path'], url, html_content, self._logger)
-
             # Timestamp of when crawling finished + next scheduled crawl
-            fetched_at = get_timestamp_eastern_time(isoformat=True)
-            next_crawl = (
-                datetime.fromisoformat(fetched_at) + timedelta(seconds=self.configs['recrawl_interval'])
-            ).isoformat()
+            fetched_at, next_crawl = self._get_crawl_timestamps_isoformat()
 
             self._logger.info('STAGE 4: Publish Page Metadata Report')
             self.publisher.store_successful_crawl(
@@ -89,26 +97,96 @@ class CrawlerService:
             self._logger.info('Crawl Task Successfully Completed!')
 
         except Exception as e:
-            self._logger.error(
-                f"Unexpected error during crawl task for {url}: {e}")
-            self._increment_failed_counter(
-                type(e).__name__, CrawlStatus.FAILED.value
-            )
+            self._logger.error(f"Unexpected error during crawl task for {url}: {e}")
             task_status = CrawlStatus.FAILED.value
+            CRAWL_PAGES_FAILURES_TOTAL.labels(
+                error_type=type(e).__name__, 
+                crawl_status=task_status
+            ).inc()
+           
 
         # Finally is NEEDED to increase CRAWL_PAGES_TOTAL counter & record crawl time
         finally:
             latency = time.time() - start_time
+            PAGE_CRAWL_LATENCY_SECONDS.labels(status=task_status).observe(latency)
             CRAWL_PAGES_TOTAL.labels(status=task_status).inc()
-            self._record_latency(task_status, latency)
 
-    def _increment_failed_counter(self, error_type: str, crawl_status: str) -> None:
-        CRAWL_PAGES_FAILURES_TOTAL.labels(
-            error_type=error_type, crawl_status=crawl_status).inc()
+    def _fetch_page(self, url) -> Optional[FetchResponse]:
+        """
+        Fetch the HTML content of the given URL using the HttpFetcher
 
-    def _increment_page_crawl_counter(self, task_status: str) -> None:
-        CRAWL_PAGES_TOTAL.labels(status=task_status).inc()
+        If the fetch fails:
+            - Publishes failure info to queue
+            - Logs & increments Prometheus failure counter
 
-    def _record_latency(self, task_status: str, latency: int) -> None:
-        PAGE_CRAWL_LATENCY_SECONDS.labels(
-            status=task_status).observe(latency)
+        Returns:
+            FetchResponse if successful, else None
+        """
+        fetched_response = self.http_fetcher.crawl_url(url)
+
+        # if crawl failed
+        if not fetched_response.success:
+            self._logger.warning(f"Crawl failed for URL: {url}")
+
+            # Timestamp of when crawling finished
+            fetched_at = get_timestamp_eastern_time()
+
+            self.publisher.store_failed_crawl(
+                url, fetched_response.crawl_status, fetched_at,
+                fetched_response.error_type, fetched_response.error_message)
+
+            # Increment failure counter
+            CRAWL_PAGES_FAILURES_TOTAL.labels(
+                error_type= fetched_response.error_type,
+                crawl_status=fetched_response.crawl_status.value
+            ).inc()
+
+            return None
+
+        return fetched_response
+    
+    def _download_compressed_html(self, url, html):
+        """
+        Attempt to compress and save the HTML content to disk, with retry
+
+        Args:
+            url (str): Page URL (used for hash-based filename)
+            html (str): Raw HTML content
+
+        Returns:
+            tuple[str, str]: (hash of URL, path to .gz file)
+
+        Raises:
+            OSError: If saving fails after configured retries
+        """
+        attempt = 0
+        retries = self.configs['download_retry_attempts']
+        grace_period = self.configs['download_retry_grace_period_seconds']
+
+        while attempt <= retries:
+            try:
+                return download_compressed_html_content(self.configs['storage_path'], url, html, self._logger)
+            except OSError as e:
+                self._logger.warning(f"[RETRY] HTML download failed ({attempt+1}/{retries+1}) for {url}: {e}")
+                if attempt == retries:
+                    self._logger.error(f"[GIVEUP] Could not download HTML after {retries+1} attempts")
+                    raise
+                time.sleep(grace_period)
+
+    def _get_crawl_timestamps_isoformat(self) -> tuple[str, str]:
+        """
+        Compute the current crawl timestamp and next crawl eligibility time
+
+        Returns:
+            tuple(str, str): (current ISO timestamp, next eligible crawl ISO timestamp)
+        """
+        recrawl_interval = self.configs['recrawl_interval']
+
+        # Timestamp of when crawling finished + next scheduled crawl
+        fetched_at = get_timestamp_eastern_time(isoformat=True)
+
+        next_crawl = (
+            datetime.fromisoformat(fetched_at) + timedelta(seconds=recrawl_interval)
+        ).isoformat()
+
+        return fetched_at, next_crawl

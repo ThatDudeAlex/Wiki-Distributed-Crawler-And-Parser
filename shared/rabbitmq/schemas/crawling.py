@@ -2,7 +2,9 @@ from pydantic import BaseModel, field_validator
 from datetime import datetime
 from urllib.parse import urlparse
 
-
+# TODO: Add Optional 'html_content_hash' field. If the field is present we then know the
+#       crawl task is for recrawling a previous page, and the hash can be used to determine
+#       if the page has changed and requires a redownload of the html_content
 class CrawlTask(BaseModel):
     url: str
     scheduled_at: str # ISO 8601 string (could be useful to help debugging)
