@@ -38,7 +38,7 @@ This service is responsible for:
 
 - Compressed files are stored in: `/data/html/` (or as configured in YAML)
 
-- Works in parallel via multiple container replicas
+- Can Work in parallel via multiple container replicas
 
 - Configuration is loaded via `shared/config_loader.py` from YAML and `.env`
 

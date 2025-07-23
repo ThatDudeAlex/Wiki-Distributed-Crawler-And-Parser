@@ -1,5 +1,3 @@
-
-from pathlib import Path
 import signal
 from prometheus_client import start_http_server
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
@@ -19,6 +17,7 @@ def run():
 
     queue_service = QueueService(logger, CrawlerQueueChannels.get_values())
 
+    # TODO: remove if not needed or useful
     def graceful_shutdown(signum, frame):
         logger.info("Received termination signal. Shutting down cleanly...")
         queue_service.close()
