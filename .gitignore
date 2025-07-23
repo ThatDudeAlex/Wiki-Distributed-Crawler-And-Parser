@@ -38,5 +38,6 @@ dist/
 build/
 out/
 
-# personal project notes
+# personal project notes & local dev files
 project_notes/
+data/html
