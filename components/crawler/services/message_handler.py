@@ -61,7 +61,7 @@ def start_crawler_listener(queue_service: QueueService, crawler_service: Crawler
     Starts the message listener for incoming crawl tasks
 
     Uses RabbitMQ's basic_consume to listen on the `urls_to_crawl` queue,
-    and routes each message to the `run_crawler` function via `partial`
+    and routes each message to the `handle_crawl_message` function via `partial`
     """
 
     # Partial allows us to inject the value of a param into a function

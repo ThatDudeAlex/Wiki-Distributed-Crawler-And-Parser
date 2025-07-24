@@ -1,41 +1,67 @@
-import json
 import logging
-from functools import partial
 import os
-from components.parser.services.parsing_service import ParsingService
+from functools import partial
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.parsing import ParsingTask
 from shared.rabbitmq.enums.queue_names import ParserQueueChannels
+from components.parser.services.parsing_service import ParsingService
+from components.parser.core.metrics import (
+    PARSER_MESSAGES_RECEIVED_TOTAL,
+    PARSER_MESSAGE_FAILURES_TOTAL,
+)
 
 
-def handle_message(ch, method, properties, body, parsing_service: ParsingService, logger: logging.Logger):
+def handle_parsing_message(ch, method, properties, body, parsing_service: ParsingService, logger: logging.Logger):
+    """
+    Callback function for handling incoming parsing tasks from the queue
+
+    Decodes the incoming message, validates it, and triggers the parsing pipeline
+    """
     try:
         message_str = body.decode('utf-8')
         task = ParsingTask.model_validate_json(message_str)
 
         if not os.path.exists(task.compressed_filepath):
-            logger.warning("File does not exist: %s", task.compressed_filepath)
+            logger.warning("Compressed HTML file not found: %s", task.compressed_filepath)
+            PARSER_MESSAGES_RECEIVED_TOTAL.labels(status="missing_file").inc()
+            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+            return
 
         logger.info("Initiating parsing on file: %s", task.compressed_filepath)
         parsing_service.run(task)
 
+        PARSER_MESSAGES_RECEIVED_TOTAL.labels(status="valid").inc()
+
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)
+
     except ValueError as e:
-        logger.error("Message Skipped - Invalid task message: %s", e.json())
+        logger.error("Message skipped - invalid ParsingTask: %s", e)
+        PARSER_MESSAGES_RECEIVED_TOTAL.labels(status="invalid").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
     except Exception as e:
         # TODO: look into if retrying could help the situation
-        logger.error(f"Error processing message: {e}")
+        error_type = type(e).__name__
+        logger.exception("Unexpected error while processing message")
+        PARSER_MESSAGE_FAILURES_TOTAL.labels(error_type=error_type).inc()
+        PARSER_MESSAGES_RECEIVED_TOTAL.labels(status="error").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+        
 
 
 def start_parser_listener(queue_service: QueueService, parsing_service: ParsingService, logger: logging.Logger):
+    """
+    Starts the message listener for incoming parsing tasks
+
+    Uses RabbitMQ's basic_consume to listen on the `pages_to_parse` queue,
+    and routes each message to the `handle_parsing_message` function via `partial`
+    """
     # Partial allows us to inject the value of a param into a function
     # This allows me to inject the parser & logger while still complying with
     # the RabbitMQ api for listening to messages
     handle_message_partial = partial(
-        handle_message, parsing_service=parsing_service, logger=logger
+        handle_parsing_message, parsing_service=parsing_service, logger=logger
     )
 
     queue_service._channel.basic_consume(
