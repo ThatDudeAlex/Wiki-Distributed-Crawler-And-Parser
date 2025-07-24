@@ -9,7 +9,7 @@ from shared.configs.config_loader import component_config_loader
 COMPONENT_NAME = "parser"
 
 def run():
-    configs = component_config_loader(COMPONENT_NAME)
+    configs = component_config_loader(COMPONENT_NAME, True)
     logger = get_logger(
         configs['logging']['logger_name'], configs['logging']['log_level']
     )

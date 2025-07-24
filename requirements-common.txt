@@ -4,3 +4,4 @@ python-dotenv
 pyyaml
 prometheus_client
 pydantic
+deepmerge
