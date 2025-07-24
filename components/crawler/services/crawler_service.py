@@ -160,8 +160,8 @@ class CrawlerService:
             OSError: If saving fails after configured retries
         """
         attempt = 0
-        retries = self.configs['download_retry_attempts']
-        grace_period = self.configs['download_retry_grace_period_seconds']
+        retries = self.configs['download_retry']['attempts']
+        grace_period = self.configs['download_retry']['grace_period_seconds']
 
         while attempt <= retries:
             try:

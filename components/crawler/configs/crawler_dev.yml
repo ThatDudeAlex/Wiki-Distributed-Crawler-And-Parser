@@ -19,11 +19,11 @@ requests:
     user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36
 
 # How many times the crawler should retry to download the compressed html
-download_retry_attempts: 1
-
-download_retry_grace_period_seconds: 2
+download_retry:
+  attempts: 1
+  grace_period_seconds: 2
 
 # How much time until pages are allowed to be recrawled
-recrawl_interval: 691200 # 8 days in seconds
+recrawl_interval: 3600 # 1 hr in seconds
 
 storage_path: /data/html
