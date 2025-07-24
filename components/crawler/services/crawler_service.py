@@ -30,6 +30,14 @@ class CrawlerService:
     """
 
     def __init__(self, configs, queue_service: QueueService, logger: logging.Logger):
+        """
+        Initializes the CrawlerService
+
+        Args:
+            configs (dict): Configuration dictionary for crawlers
+            queue_service (QueueService): RabbitMQ interface for publishing results
+            logger (logging.Logger): Logger instance
+        """
         self.configs = configs
 
         # logger setup
