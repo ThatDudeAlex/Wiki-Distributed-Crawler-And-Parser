@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# TODO: move to root of shared/ and have only config files under shared/configs/
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SHARED_CONFIG_PATH = Path(__file__).resolve().parents[0]
 
