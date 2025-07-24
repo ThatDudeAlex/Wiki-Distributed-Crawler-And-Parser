@@ -1,5 +1,6 @@
 import logging
 from typing import List, Optional
+
 from lxml import html
 from readability import Document
 from shared.rabbitmq.schemas.save_to_db import SaveParsedContent
