@@ -24,14 +24,7 @@ class CrawlerErrorType(str, Enum):
     SSL_ERROR = "SSLError"
     REQUEST_EXCEPTION = "RequestException"
 
-    @classmethod
-    def from_exception(cls, exc: requests.RequestException) -> "CrawlerErrorType":
-        exc_type = type(exc)
-        if exc_type in cls._EXCEPTION_MAP:
-            return cls._EXCEPTION_MAP[exc_type]
-        return cls.REQUEST_EXCEPTION
-
-    _EXCEPTION_MAP = {
+    __EXCEPTION_MAP = {
         requests.exceptions.HTTPError: HTTP_ERROR,
         requests.exceptions.Timeout: TIMEOUT,
         requests.exceptions.ConnectionError: CONNECTION_ERROR,
@@ -39,27 +32,36 @@ class CrawlerErrorType(str, Enum):
         requests.exceptions.SSLError: SSL_ERROR,
     }
 
+    @classmethod
+    def from_exception(cls, exc: requests.RequestException) -> "CrawlerErrorType":
+        exc_type = type(exc)
+        if exc_type in cls.__EXCEPTION_MAP:
+            return cls.__EXCEPTION_MAP[exc_type]
+        return cls.REQUEST_EXCEPTION
 
+
+# Is a dataclass because is never coming from external, untrusted data so I don't need 
+# Pydantic validation
 @dataclass
 class FetchResponse:
     """
-    Represents the result of a page crawl operation
+    Result object for a crawl operation.
 
     Attributes:
         success (bool): Whether the crawl was successful
-        url (str): The URL that was crawled
-        crawl_status (Optional[CrawlStatus]): The result status of the crawl
-        status_code (Optional[int]): The HTTP response code, if any
-        headers (Optional[Dict]): The HTTP headers from the response
-        text (Optional[str]): The raw HTML/text of the response
-        error_type (Optional[CrawlerErrorType]): The type of error if failed
-        error_message (Optional[str]): A descriptive error message
+        url (str): URL that was crawled
+        crawl_status (Optional[CrawlStatus]): Crawl status (SUCCESS or FAILED)
+        status_code (Optional[int]): HTTP response code
+        headers (Optional[Dict[str, str]]): Response headers
+        text (Optional[str]): Page content (HTML)
+        error_type (Optional[CrawlerErrorType]): Crawler-specific error category
+        error_message (Optional[str]): Raw error message if failed
     """
     success: bool
     url: str
     crawl_status: Optional[CrawlStatus]
     status_code: Optional[int] = None
-    headers: Optional[Dict] = None
+    headers: Optional[Dict[str, str]] = None
     text: Optional[str] = None
     error_type: Optional[CrawlerErrorType] = None
     error_message: Optional[str] = None
