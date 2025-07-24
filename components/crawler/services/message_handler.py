@@ -1,6 +1,8 @@
 import json
 import logging
 from functools import partial
+
+from pydantic import ValidationError
 from components.crawler.services.crawler_service import CrawlerService
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling import CrawlTask
@@ -23,13 +25,18 @@ def handle_crawl_message(ch, method, properties, body, crawler_service: CrawlerS
         # Acknowledge message
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    except json.JSONDecodeError as e:
-        logger.error("Invalid JSON format: %s", e)
+    except UnicodeDecodeError as e:
+        logger.error("Failed to decode message body as UTF-8: %s", e)
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
+    except ValidationError as e:
+        logger.error("Message failed schema validation: %s", e)
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
     except Exception as e:
         logger.exception("Unexpected error processing message: %s", e)
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
 
 def parse_crawl_task(body: bytes) -> CrawlTask:
     """

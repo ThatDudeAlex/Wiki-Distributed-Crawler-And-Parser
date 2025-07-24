@@ -81,9 +81,7 @@ class HttpFetcher:
             
             self._logger.error(
                 "Failed to fetch URL: %s | Error Type: %s | Message: %s",
-                url,
-                error_type.value,
-                str(e)
+                url, error_type, e
             )
 
             return FetchResponse(

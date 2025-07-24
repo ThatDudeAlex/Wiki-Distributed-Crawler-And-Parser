@@ -126,7 +126,7 @@ def test_download_compressed_html(crawler_service, side_effect, expect_exception
         else:
             mock_download.return_value = side_effect
 
-
+        # Act & Assert
         if expect_exception:
             with pytest.raises(OSError):
                 crawler_service._download_compressed_html("http://example.com", "<html></html>")
@@ -160,9 +160,9 @@ def test_get_crawl_timestamps_isoformat(crawler_service):
 
 
 def test_run_success(crawler_service, crawl_task):
+    # Setup
     crawler = crawler_service
 
-    # Setup
     crawler._fetch_page = MagicMock(return_value=MagicMock(text="<html>OK</html>", url="http://example.com"))
     crawler._download_compressed_html = MagicMock(return_value=("abc123", "/tmp/abc123.html.gz"))
     crawler._get_crawl_timestamps_isoformat = MagicMock(return_value=("2025-07-24T12:00:00", "2025-07-24T13:00:00"))
