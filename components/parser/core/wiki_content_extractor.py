@@ -16,6 +16,13 @@ class PageContentExtractor:
     """
 
     def __init__(self, configs, logger: logging.Logger):
+        """
+        Initializes the PageContentExtractor
+
+        Args:
+            configs (dict): Configuration dictionary containing XPath selectors
+            logger (logging.Logger): Logger instance
+        """
         self.configs = configs
         self.logger = logger
 

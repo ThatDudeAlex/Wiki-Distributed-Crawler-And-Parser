@@ -14,6 +14,13 @@ class PublishingService:
     """
 
     def __init__(self, queue_service: QueueService, logger: logging.Logger):
+        """
+        Initializes the PublishingService
+
+        Args:
+            queue_service (QueueService): The RabbitMQ interface for publishing messages to queues
+            logger (logging.Logger): Logger instance
+        """
         self._queue_service = queue_service
         self._logger = logger
 
