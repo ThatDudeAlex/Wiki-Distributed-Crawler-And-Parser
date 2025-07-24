@@ -16,11 +16,24 @@ from shared.rabbitmq.schemas.save_to_db import (
 
 
 def consume_save_page_metadata(ch, method, properties, body, logger: logging.Logger):
+    """
+    Consume and process a message to save the metadata of a crawled page to the database
+
+    Parses the message into a SavePageMetadataTask, writes it to the database,
+    and acknowledges or rejects the message based on success or failure.
+
+    Args:
+        ch: The RabbitMQ channel
+        method: Delivery method information including delivery tag
+        properties: Message properties (unused)
+        body: Raw message payload (bytes)
+        logger (logging.Logger): Logger instance
+    """
     try:
         message_str = body.decode('utf-8')
         task = SavePageMetadataTask.model_validate_json(message_str)
 
-        logger.info("Initiating Save Page Metadata Task: %s", task)
+        logger.info("Initiating Task - Save Page Metadata: %s", task)
         save_page_metadata(task, logger)
 
         # acknowledge success
@@ -38,10 +51,24 @@ def consume_save_page_metadata(ch, method, properties, body, logger: logging.Log
 
 
 def consume_save_parsed_content(ch, method, properties, body, logger: logging.Logger):
+    """
+    Consume and process a message to save parsed page content and categories
+
+    Parses the message into a SaveParsedContent object and writes it to the
+    PageContent table. Acknowledges or rejects the message based on outcome.
+
+    Args:
+        ch: The RabbitMQ channel
+        method: Delivery method information including delivery tag
+        properties: Message properties (unused)
+        body: Raw message payload (bytes)
+        logger (logging.Logger): Logger instance
+    """
     try:
         message_str = body.decode('utf-8')
         task = SaveParsedContent.model_validate_json(message_str)
 
+        logger.info("Initiating Task - Save Parsed Data: %s", task)
         save_parsed_data(task, logger)
 
         # acknowledge success
@@ -58,11 +85,25 @@ def consume_save_parsed_content(ch, method, properties, body, logger: logging.Lo
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
-def consume_save_processed_Links(ch, method, properties, body, logger: logging.Logger):
+def consume_save_processed_links(ch, method, properties, body, logger: logging.Logger):
+    """
+    Consume and process a message containing links extracted from a page
+
+    Parses the message into a SaveProcessedLinks object and performs a bulk
+    upsert into the Link table. Acknowledges or rejects the message accordingly.
+
+    Args:
+        ch: The RabbitMQ channel
+        method: Delivery method information including delivery tag
+        properties: Message properties (unused)
+        body: Raw message payload (bytes)
+        logger (logging.Logger): Logger instance
+    """
     try:
         message_str = body.decode('utf-8')
         task = SaveProcessedLinks.model_validate_json(message_str)
 
+        logger.info("Initiating Task - Save Processed Links: %s", task)
         save_processed_links(task, logger)
 
         # acknowledge success
@@ -80,12 +121,26 @@ def consume_save_processed_Links(ch, method, properties, body, logger: logging.L
 
 
 def consume_add_links_to_schedule(ch, method, properties, body, logger: logging.Logger):
+    """
+    Consume and process a message to schedule new links for crawling
+
+    Parses the message into a SaveLinksToSchedule object and inserts new
+    links into the ScheduledLinks table. Acknowledges or rejects the message.
+
+    Args:
+        ch: The RabbitMQ channel
+        method: Delivery method information including delivery tag
+        properties: Message properties (unused)
+        body: Raw message payload (bytes)
+        logger (logging.Logger): Logger instance
+    """
     try:
         message_str = body.decode('utf-8')
 
         task = SaveLinksToSchedule.model_validate_json(message_str)
         logger.info('got a message: %s', task)
-
+        
+        logger.info("Initiating Task - Add Links To Schedule: %s", task)
         add_links_to_schedule(task, logger)
 
         # acknowledge success
@@ -103,6 +158,13 @@ def consume_add_links_to_schedule(ch, method, properties, body, logger: logging.
 
 
 def start_db_service_listener(queue_service: QueueService, logger: logging.Logger):
+    """
+    Starts listening to database-write related RabbitMQ queues and redirects each to its corresponding consumer
+
+    Args:
+        queue_service (QueueService): The shared queue abstraction for subscribing to messages
+        logger (logging.Logger): Logger instance
+    """
     # Partial allows us to inject the value of a param into a function.
     # This allows me to inject the logger while still complying with
     # the RabbitMQ api for listening to messages
@@ -113,7 +175,7 @@ def start_db_service_listener(queue_service: QueueService, logger: logging.Logge
         consume_save_parsed_content, logger=logger
     )
     save_save_processed_Links_partial = partial(
-        consume_save_processed_Links, logger=logger
+        consume_save_processed_links, logger=logger
     )
     add_links_to_schedule_partial = partial(
         consume_add_links_to_schedule, logger=logger
