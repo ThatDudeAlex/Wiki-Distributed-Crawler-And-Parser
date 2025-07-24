@@ -1,16 +1,21 @@
-from functools import partial
 import json
 import logging
+from functools import partial
 from components.crawler.services.crawler_service import CrawlerService
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling import CrawlTask
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 
 
-def run_crawler(ch, method, properties, body, crawler_service: CrawlerService, logger: logging.Logger):
+def handle_crawl_message(ch, method, properties, body, crawler_service: CrawlerService, logger: logging.Logger):
+    """
+    Callback function for handling incoming crawl tasks from the queue
+
+    Decodes the message body, validates it into a CrawlTask, and passes it to the CrawlerService.
+    Acknowledges successful processing or rejects invalid/failed tasks
+    """
     try:
-        message_str = body.decode('utf-8')
-        task = CrawlTask.model_validate_json(message_str)
+        task = parse_crawl_task(body)
 
         logger.info("Initiating crawl for URL: %s", task.url)
         crawler_service.run(task)
@@ -19,20 +24,44 @@ def run_crawler(ch, method, properties, body, crawler_service: CrawlerService, l
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     except json.JSONDecodeError as e:
-        logger.error("Invalid JSON format: %s", str(e))
+        logger.error("Invalid JSON format: %s", e)
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
-    except Exception:
-        logger.exception("Unexpected error processing message:")
+    except Exception as e:
+        logger.exception("Unexpected error processing message: %s", e)
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
+def parse_crawl_task(body: bytes) -> CrawlTask:
+    """
+    Decode and validate a raw RabbitMQ message into a CrawlTask object
+
+    Args:
+        body (bytes): Raw message body from RabbitMQ
+
+    Returns:
+        CrawlTask: Parsed and validated crawl task object
+
+    Raises:
+        UnicodeDecodeError: If the message body is not valid UTF-8
+        pydantic.ValidationError: If the decoded JSON does not match the CrawlTask schema
+    """
+    message_str = body.decode("utf-8")
+    return CrawlTask.model_validate_json(message_str)
 
 
 def start_crawler_listener(queue_service: QueueService, crawler_service: CrawlerService, logger: logging.Logger):
+    """
+    Starts the message listener for incoming crawl tasks
+
+    Uses RabbitMQ's basic_consume to listen on the `urls_to_crawl` queue,
+    and routes each message to the `run_crawler` function via `partial`
+    """
+
     # Partial allows us to inject the value of a param into a function
     # This allows me to inject the crawler & logger while still complying with
     # the RabbitMQ api for listening to messages
     handle_message_partial = partial(
-        run_crawler, crawler_service=crawler_service, logger=logger
+        handle_crawl_message, crawler_service=crawler_service, logger=logger
     )
 
     queue_service._channel.basic_consume(

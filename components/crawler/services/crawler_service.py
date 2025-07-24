@@ -2,7 +2,7 @@
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Tuple
 from components.crawler.services.publisher import PublishingService
 from components.crawler.core.downloader import download_compressed_html_content
 from components.crawler.core.http_fetcher import HttpFetcher
@@ -145,7 +145,7 @@ class CrawlerService:
 
         return fetched_response
     
-    def _download_compressed_html(self, url, html):
+    def _download_compressed_html(self, url, html) -> Tuple[str, str]:
         """
         Attempt to compress and save the HTML content to disk, with retry
 
