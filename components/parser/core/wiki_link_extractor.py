@@ -2,7 +2,6 @@ import logging
 from urllib.parse import urlparse
 from typing import List
 from lxml import html
-from components.parser.configs.app_configs import IMAGE_EXTENSIONS
 from shared.rabbitmq.schemas.scheduling import LinkData
 from shared.utils import get_timestamp_eastern_time
 from shared.utils import is_internal_link, normalize_url
@@ -122,6 +121,7 @@ class PageLinkExtractor:
         """
         Classifies a URL based on its structure, domain, and metadata
         """
+        image_extensions = tuple(self.selectors["image_extensions"])
         try:
             rel = (rel or "").lower()
             text = (text or "").lower()
@@ -133,12 +133,12 @@ class PageLinkExtractor:
                     return 'category_link'
                 if path.startswith('/wiki/file:'):
                     return 'file_link'
-                if path.startswith('/wiki/') and not path.endswith(IMAGE_EXTENSIONS):
+                if path.startswith('/wiki/') and not path.endswith(image_extensions):
                     return 'wikilink'
                 return 'internal_other'
 
             # External link classification
-            if raw_href.endswith(IMAGE_EXTENSIONS) or text.endswith(IMAGE_EXTENSIONS):
+            if raw_href.endswith(image_extensions) or text.endswith(image_extensions):
                 return 'external_image_link'
             if 'nofollow' in rel:
                 return 'external_link_nofollow'
