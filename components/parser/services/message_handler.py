@@ -41,7 +41,6 @@ def handle_parsing_message(ch, method, properties, body, parsing_service: Parsin
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
     except Exception as e:
-        # TODO: look into if retrying could help the situation
         error_type = type(e).__name__
         logger.exception("Unexpected error while processing message")
         PARSER_MESSAGE_FAILURES_TOTAL.labels(error_type=error_type).inc()

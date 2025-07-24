@@ -23,6 +23,12 @@ LINKS_EXTRACTED_TOTAL = Counter(
     "Total number of links extracted"
 )
 
+PUBLISHED_MESSAGES_TOTAL = Counter(
+    "parser_published_messages_total",
+    "Total messages published to RabbitMQ queues by the parser",
+    ["queue", "status"]  # e.g. queue="parsed_content_to_save", status="success"
+)
+
 # Histograms for latency
 STAGE_DURATION_SECONDS = Histogram(
     "parser_stage_duration_seconds",
