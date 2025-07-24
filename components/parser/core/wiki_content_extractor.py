@@ -8,8 +8,8 @@ from shared.utils import create_hash, get_timestamp_eastern_time
 
 
 class PageContentExtractor:
-    def __init__(self, selectors, logger: logging.Logger):
-        self.selectors = selectors
+    def __init__(self, configs, logger: logging.Logger):
+        self.configs = configs
         self.logger = logger
 
     def extract(self, url: str, html_content: str) -> SaveParsedContent:
@@ -32,6 +32,7 @@ class PageContentExtractor:
             tmp_tree = html.fromstring(clean_html)
 
             text_content = tmp_tree.text_content().strip()
+            text_content = '\n'.join(line.strip() for line in text_content.splitlines() if line.strip())
             text_content_hash = create_hash(text_content)
         else:
             self.logger.warning(
@@ -49,7 +50,7 @@ class PageContentExtractor:
 
     def _extract_title(self, tree) -> Optional[str]:
         try:
-            title_list = tree.xpath(self.selectors['title'])
+            title_list = tree.xpath(self.configs['selectors']['title'])
             if title_list:
                 return title_list[0].strip()
 
@@ -63,7 +64,7 @@ class PageContentExtractor:
     def _extract_main_body_content(self, tree) -> Optional[Tag]:
         try:
             # content_container_id
-            return tree.xpath(self.selectors['content_container_id'])
+            return tree.xpath(self.configs['selectors']['content_container_id'])
         except Exception as e:
             self.logger.error(
                 f"An exception of type '{type(e).__name__}' occurred: {e}")
@@ -74,12 +75,12 @@ class PageContentExtractor:
             categories = []
 
             normal_catlinks_div_list = tree.xpath(
-                self.selectors['categories_div_id'])
+                self.configs['selectors']['categories_div_id'])
 
             if normal_catlinks_div_list:
                 catlinks_div = normal_catlinks_div_list[0]
                 category_links = catlinks_div.xpath(
-                    self.selectors['categories_links']
+                    self.configs['selectors']['categories_links']
                 )
 
                 for link in category_links:

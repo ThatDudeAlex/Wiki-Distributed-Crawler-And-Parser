@@ -8,8 +8,8 @@ from shared.utils import is_internal_link, normalize_url
 
 
 class PageLinkExtractor:
-    def __init__(self, selectors, logger: logging.Logger):
-        self.selectors = selectors
+    def __init__(self, configs, logger: logging.Logger):
+        self.configs = configs
         self.logger = logger
 
     def extract(self, source_page_url: str, html_content: str, depth: int) -> LinkData:
@@ -17,7 +17,7 @@ class PageLinkExtractor:
         Parses a Wikipedia HTML page and returns structured data for links within the main body
         """
         tree = html.fromstring(html_content)
-        main_list = tree.xpath(self.selectors['content_container_id'])
+        main_list = tree.xpath(self.configs['selectors']['content_container_id'])
 
         if not main_list:
             self.logger.warning(
@@ -25,7 +25,7 @@ class PageLinkExtractor:
             return []
 
         main_content = main_list[0]
-        all_links = main_content.xpath(self.selectors['all_links'])
+        all_links = main_content.xpath(self.configs['selectors']['all_links'])
         extracted_links: List[LinkData] = []
 
         for link in all_links:
@@ -84,7 +84,7 @@ class PageLinkExtractor:
 
             # Dynamically extract attributes
             link_attributes = {
-                attr: link_tag.get(attr) for attr in self.selectors['attributes']
+                attr: link_tag.get(attr) for attr in self.configs['selectors']['attributes']
             }
 
             if link_attributes['rel']:
@@ -121,7 +121,7 @@ class PageLinkExtractor:
         """
         Classifies a URL based on its structure, domain, and metadata
         """
-        image_extensions = tuple(self.selectors["image_extensions"])
+        image_extensions = tuple(self.configs['selectors']["image_extensions"])
         try:
             rel = (rel or "").lower()
             text = (text or "").lower()

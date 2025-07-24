@@ -1,23 +1,29 @@
+import re
 from unittest.mock import Mock
 
 import pytest
 from components.parser.core.wiki_link_extractor import PageLinkExtractor
-from components.parser.configs.parser_config import configs as loaded_configs
+from shared.configs.config_loader import component_config_loader
 
 
 @pytest.fixture
 def logger():
     return Mock()
 
+@pytest.fixture
+def configs():
+    return component_config_loader("parser", True)
 
 @pytest.fixture
-def link_extractor(logger):
-    return PageLinkExtractor(loaded_configs.selectors, logger)
+def link_extractor(configs, logger):
+    return PageLinkExtractor(configs, logger)
 
 
 @pytest.fixture
-def content_id():
-    return loaded_configs.selectors.content_container_id.lstrip('#')
+def content_id(configs):
+    id_selector = configs['selectors']['content_container_id']
+    match = re.search(r'id="([^"]+)"', id_selector)
+    return match.group(1)
 
 
 def test_internal_link(link_extractor, content_id):
