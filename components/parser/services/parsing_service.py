@@ -51,11 +51,10 @@ class ParsingService:
                 self._publisher.publish_process_links_task(page_links)
 
             self._logger.info('Parsing Task Successfully Completed!')
-        except Exception as e:
-            exception_type_name = type(e).__name__
-            self._logger.error(
-                f"An exception of type '{exception_type_name}' occurred: {e}")
-            return
+
+        except Exception:
+            # TODO: Consider sending failed parsing task to DLQ
+            self._logger.exception("Unexpected error during parsing task")
+
         finally:
             PAGES_PARSED_TOTAL.inc()
-            pass

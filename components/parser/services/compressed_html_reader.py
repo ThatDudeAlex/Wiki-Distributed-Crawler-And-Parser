@@ -1,27 +1,25 @@
-
-
 import gzip
 import logging
+from typing import Optional
 
 
-def load_compressed_html(filepath: str, logger: logging.Logger) -> str:
+def load_compressed_html(filepath: str, logger: logging.Logger) -> Optional[str]:
     """
-    Loads and decompresses gzipped HTML content from a given file path
+    Loads and decompresses gzipped HTML content from the specified file path
 
-    :param filepath: path to the compressed .gz file
+    Args:
+        filepath (str): Path to the .gz compressed HTML file
+        logger (logging.Logger): Logger instance for logging events
 
-    :return: Decompressed HTML string
+    Returns:
+        Optional[str]: Decompressed HTML content, or None if an error occurred
     """
-
-    # TODO: Investigate if a `Retry Mechanism` would help here
     try:
         with gzip.open(filepath, "rt", encoding="utf-8") as f:
             html_content = f.read()
 
-        logger.info(f"Loaded compressed HTML file in filepath: {filepath}")
+        logger.info(f"Loaded compressed HTML file from: {filepath}")
         return html_content
     except Exception as e:
-        exception_type_name = type(e).__name__
-        logger.error(
-            f"An exception of type '{exception_type_name}' occurred: {e}")
+        logger.exception(f"Failed to load compressed HTML from {filepath}")
         return None

@@ -2,7 +2,7 @@ from prometheus_client import start_http_server
 from shared.rabbitmq.enums.queue_names import ParserQueueChannels
 from shared.rabbitmq.queue_service import QueueService
 from components.parser.services.parsing_service import ParsingService
-from components.parser.message_handler import start_parser_listener
+from components.parser.services.message_handler import start_parser_listener
 from shared.logging_utils import get_logger
 from shared.configs.config_loader import component_config_loader
 
