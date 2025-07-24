@@ -1,114 +1,111 @@
 import logging
+from typing import List, Optional
 from urllib.parse import urlparse
-from typing import List
+
 from lxml import html
 from shared.rabbitmq.schemas.scheduling import LinkData
-from shared.utils import get_timestamp_eastern_time
-from shared.utils import is_internal_link, normalize_url
+from shared.utils import get_timestamp_eastern_time, is_internal_link, normalize_url
 
 
 class PageLinkExtractor:
+    """
+    Extracts and classifies hyperlinks from the main content section of a Wikipedia-style HTML page
+    """
+
     def __init__(self, configs, logger: logging.Logger):
+        """
+        Initializes the PageLinkExtractor
+
+        Args:
+            configs (dict): Configuration dictionary containing XPath selectors and image extensions
+            logger (logging.Logger): Logger instance
+        """
         self.configs = configs
         self.logger = logger
+        self.image_extensions = tuple(self.configs['selectors']['image_extensions'])
 
-    def extract(self, source_page_url: str, html_content: str, depth: int) -> LinkData:
+
+    def extract(self, source_page_url: str, html_content: str, depth: int) -> List[LinkData]:
         """
-        Parses a Wikipedia HTML page and returns structured data for links within the main body
+        Extracts and classifies hyperlinks from the main content of a Wikipedia-style HTML page
+
+        Args:
+            source_page_url (str): The original page URL being parsed
+            html_content (str): Raw HTML content of the page
+            depth (int): The crawl depth of the current page
+
+        Returns:
+            List[LinkData]: A list of structured LinkData objects
         """
         tree = html.fromstring(html_content)
         main_list = tree.xpath(self.configs['selectors']['content_container_id'])
 
         if not main_list:
-            self.logger.warning(
-                "No main body while extracting links: %s", source_page_url)
+            self.logger.warning("No main content found: %s", source_page_url)
             return []
 
         main_content = main_list[0]
-        all_links = main_content.xpath(self.configs['selectors']['all_links'])
+        raw_links = main_content.xpath(self.configs['selectors']['all_links'])
         extracted_links: List[LinkData] = []
 
-        for link in all_links:
-            data = self._construct_link_data(link, source_page_url, depth)
-
-            if data:
-                extracted_links.append(data)
+        for link in raw_links:
+            link_data = self._build_link_data(link, source_page_url, depth)
+            if link_data:
+                extracted_links.append(link_data)
 
         if not extracted_links:
-            self.logger.warning(
-                "No links found in main body of %s", source_page_url)
+            self.logger.warning("No valid links found: %s", source_page_url)
 
         return extracted_links
 
-    def _construct_link_data(self, link, source_page_url: str, depth: str):
-        href = link.get('href') or ''
 
-        if not href:
-            return None
-
-        anchor_text = link.text_content().strip()
-        normalized_href = normalize_url(href)
-        is_internal = is_internal_link(normalized_href)
-
-        title_attr = link.get('title') or ''
-        rel_attr = link.get('rel') or ''
-        id_attr = link.get('id') or ''
-        type = self._determine_type(
-            is_internal, normalized_href, href, anchor_text, rel_attr
-        )
-        return LinkData(
-            source_page_url=source_page_url,
-            url=normalized_href,
-            depth=depth + 1,  # update the depth of the link
-            discovered_at=get_timestamp_eastern_time(isoformat=True),
-            anchor_text=anchor_text,
-            title_attribute=title_attr,
-            rel_attribute=rel_attr,
-            id_attribute=id_attr,
-            link_type=type,
-            is_internal=is_internal
-        )
-
-    def _extract_link(self, link_tag, source_page_url: str, depth: str) -> LinkData:
+    def _build_link_data(self, link, source_page_url: str, depth: int) -> Optional[LinkData]:
         """
-        Extracts metadata from an <a> tag and returns structured LinkData
+        Constructs a LinkData object from a single <a> element
+
+        Args:
+            link: lxml Element representing the <a> tag
+            source_page_url (str): URL of the page containing the link
+            depth (int): Current depth of crawling
+
+        Returns:
+            Optional[LinkData]: Structured link object, or None if invalid or error occurs
         """
-        href = link_tag.get('href')
+        href = link.get('href')
         if not href:
             return None
 
         try:
             normalized_href = normalize_url(href)
             is_internal = is_internal_link(normalized_href)
-            text_content = link_tag.get_text(strip=True)
 
-            # Dynamically extract attributes
-            link_attributes = {
-                attr: link_tag.get(attr) for attr in self.configs['selectors']['attributes']
-            }
+            # extract link attributes
+            anchor_text = (link.text_content() or '').strip()
+            rel_attr = link.get('rel') or ''
+            title_attr = link.get('title') or ''
+            id_attr = link.get('id') or ''
 
-            if link_attributes['rel']:
-                link_attributes['rel'] = " ".join(link_attributes['rel'])
-
-            link_type = self._determine_type(
-                is_internal, normalized_href, href, text_content, link_attributes['rel']
+            type = self._determine_type(
+                is_internal, normalized_href, href, anchor_text, rel_attr
             )
 
             return LinkData(
                 source_page_url=source_page_url,
                 url=normalized_href,
                 depth=depth + 1,  # update the depth of the link
-                discovered_at=get_timestamp_eastern_time(True),
-                anchor_text=text_content,
-                title_attribute=link_attributes['title'],
-                rel_attribute=link_attributes['rel'],
-                id_attribute=link_attributes['id'],
-                link_type=link_type,
+                discovered_at=get_timestamp_eastern_time(isoformat=True),
+                anchor_text=anchor_text,
+                title_attribute=title_attr,
+                rel_attribute=rel_attr,
+                id_attribute=id_attr,
+                link_type=type,
                 is_internal=is_internal
             )
-        except Exception as e:
-            self.logger.error("Unexpected error extracting data: %s", e)
+        
+        except Exception:
+            self.logger.exception("Error extracting link data")
             return None
+
 
     def _determine_type(
         self,
@@ -119,32 +116,40 @@ class PageLinkExtractor:
         rel: str
     ) -> str:
         """
-        Classifies a URL based on its structure, domain, and metadata
+        Determines the classification of a link based on its structure and metadata
+
+        Args:
+            is_internal (bool): Whether the link is internal to the target domain
+            norm_url (str): Normalized URL of the link
+            raw_href (str): Raw href string
+            text (str): Anchor text of the link
+            rel (str): Value of the 'rel' attribute
+
+        Returns:
+            str: The classification the input link falls under
         """
-        image_extensions = tuple(self.configs['selectors']["image_extensions"])
         try:
-            rel = (rel or "").lower()
-            text = (text or "").lower()
-            raw_href = (raw_href or "").lower()
             path = urlparse(norm_url).path.lower()
+            raw_href = raw_href.lower()
+            text = text.lower()
+            rel = rel.lower()
 
             if is_internal:
                 if path.startswith('/wiki/category:'):
                     return 'category_link'
                 if path.startswith('/wiki/file:'):
                     return 'file_link'
-                if path.startswith('/wiki/') and not path.endswith(image_extensions):
+                if path.startswith('/wiki/') and not path.endswith(self.image_extensions):
                     return 'wikilink'
                 return 'internal_other'
 
             # External link classification
-            if raw_href.endswith(image_extensions) or text.endswith(image_extensions):
+            if raw_href.endswith(self.image_extensions) or text.endswith(self.image_extensions):
                 return 'external_image_link'
             if 'nofollow' in rel:
                 return 'external_link_nofollow'
             return 'external_link'
 
-        except Exception as e:
-            self.logger.error(
-                f"Error determining link type for '{raw_href}': {e}", exc_info=True)
+        except Exception:
+            self.logger.exception(f"Error classifying link: {raw_href}")
             return 'error_determining_type'
