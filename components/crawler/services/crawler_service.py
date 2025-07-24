@@ -104,7 +104,6 @@ class CrawlerService:
                 crawl_status=task_status
             ).inc()
            
-
         # Finally is NEEDED to increase CRAWL_PAGES_TOTAL counter & record crawl time
         finally:
             latency = time.time() - start_time
@@ -171,6 +170,7 @@ class CrawlerService:
                 if attempt == retries:
                     self._logger.error(f"[GIVEUP] Could not download HTML after {retries+1} attempts")
                     raise
+                attempt += 1
                 time.sleep(grace_period)
 
     def _get_crawl_timestamps_isoformat(self) -> tuple[str, str]:

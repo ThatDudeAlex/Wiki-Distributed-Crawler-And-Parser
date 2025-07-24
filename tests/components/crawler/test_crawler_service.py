@@ -2,12 +2,13 @@ import pytest
 from unittest.mock import MagicMock, patch
 from components.crawler.services.crawler_service import CrawlerService
 from components.crawler.types.crawler_types import FetchResponse
+from shared.configs.config_loader import component_config_loader
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.rabbitmq.schemas.crawling import CrawlTask
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # TODO: update with new config_loader and remove this
-from components.crawler.configs.crawler_config import configs as loaded_configs
+# from components.crawler.configs.crawler_config import configs as loaded_configs
 from shared.configs.load_config import Path
 
 # Gets the root of the project relative to this test file
@@ -19,9 +20,12 @@ def crawl_task():
     return CrawlTask(
         url="http://example.com",
         depth=1,
-        scheduled_at=datetime.fromisoformat(
-            '2025-07-08T12:00:00Z')
+        scheduled_at='2025-07-08T12:00:00Z'
     )
+
+@pytest.fixture
+def configs():
+    return component_config_loader("crawler")
 
 
 @pytest.fixture
@@ -35,113 +39,180 @@ def mock_queue_service():
 
 
 @pytest.fixture
+def crawler_service(configs, mock_queue_service, mock_logger):
+    return CrawlerService(
+        configs=configs,
+        queue_service=mock_queue_service,
+        logger=mock_logger
+    )
+
+
+
+@pytest.fixture
 def mock_publisher():
     publisher = MagicMock()
     return publisher
 
 
-@pytest.fixture
-def mock_heartbeat():
-    heartbeat = MagicMock()
-    return heartbeat
+def test_config_loaded(crawler_service):
+    assert crawler_service.configs is not None
+    assert crawler_service.configs['rate_limit'] is not None
+    assert crawler_service.configs['recrawl_interval'] is not None
+    assert crawler_service.configs['storage_path'] is not None
 
 
-def test_config_loaded(mock_logger, mock_queue_service):
-    with patch('components.crawler.core.heartbeat.CacheService') as MockCacheService:
-        mock_cache_instance = MagicMock()
-        MockCacheService.return_value = mock_cache_instance
-        service = CrawlerService(
-            configs=loaded_configs, queue_service=mock_queue_service, logger=mock_logger
+@pytest.mark.parametrize(
+    "mock_fetch_response, expected_result",
+    [
+        (
+            FetchResponse(
+                url="http://example.com",
+                text="<html>OK</html>",
+                success=True,
+                crawl_status=CrawlStatus.SUCCESS,
+                error_type=None,
+                error_message=None,
+                headers={"Content-Type": "text/html"},
+                status_code=200
+            ),
+            True, # expects a response
+        ),
+        (
+            FetchResponse(
+                url="http://example.com",
+                text=None,
+                success=False,
+                crawl_status=CrawlStatus.FAILED,
+                error_type="TimeoutError",
+                error_message="Request timed out",
+                headers=None,
+                status_code=None
+            ),
+            False,  # expects None to be returned
         )
-        assert service._configs is not None
-        assert service._configs.rate_limit is not None
-        assert service._configs.heartbeat is not None
-        assert service._configs.headers is not None
+    ]
+)
+def test_fetch_page(crawler_service, mock_fetch_response, expected_result):
+    # Setup
+    crawler_service.http_fetcher = MagicMock()
+    crawler_service.http_fetcher.crawl_url.return_value = mock_fetch_response
+    crawler_service.publisher = MagicMock()
+
+    # Act
+    result = crawler_service._fetch_page("http://test.com")
+
+    # Assert
+    if expected_result:
+        assert result == mock_fetch_response
+    else:
+        assert result is None
 
 
-def test_run_success_path(crawl_task, mock_logger, mock_queue_service, mock_publisher):
-    html_content = "<html>test</html>"
+@pytest.mark.parametrize(
+    "side_effect, expect_exception",
+    [
+        # Success case: returns a tuple
+        (("abc123", "/tmp/abc123.html.gz"), False),
 
-    with patch("components.crawler.services.crawler_service.crawl") as mock_crawl, \
-            patch("components.crawler.services.crawler_service.create_hash") as mock_create_hash, \
-            patch("components.crawler.services.crawler_service.download_compressed_html_content") as mock_download, \
-            patch('components.crawler.core.heartbeat.CacheService') as MockCacheService, \
-            patch("components.crawler.services.crawler_service.get_timestamp_eastern_time") as mock_timestamp:
-
+        # Failure case: raises OSError every time
+        (OSError("disk write failed"), True),
+    ]
+)
+def test_download_compressed_html(crawler_service, side_effect, expect_exception):
+    with patch("components.crawler.services.crawler_service.download_compressed_html_content") as mock_download:
         # Setup
-        mock_crawl.return_value = FetchResponse(
-            success=True,
-            url=crawl_task.url,
-            crawl_status=CrawlStatus.SUCCESS,
-            status_code=200,
-            headers={},
-            text=html_content
-        )
-        mock_create_hash.return_value = "html_hash"
-        mock_download.return_value = ("url_hash", "/tmp/file.html")
-        mock_timestamp.return_value = "2025-07-08T12:00:00Z"
+        if expect_exception:
+            mock_download.side_effect = OSError("disk write failed")
+        else:
+            mock_download.return_value = side_effect
 
-        mock_cache_instance = MagicMock()
-        MockCacheService.return_value = mock_cache_instance
-        service = CrawlerService(
-            configs=loaded_configs, queue_service=mock_queue_service, logger=mock_logger
-        )
 
-        service = CrawlerService(
-            loaded_configs, queue_service=mock_queue_service, logger=mock_logger)
-        service.publisher = mock_publisher
+        if expect_exception:
+            with pytest.raises(OSError):
+                crawler_service._download_compressed_html("http://example.com", "<html></html>")
+            assert mock_download.call_count == crawler_service.configs['download_retry']['attempts'] + 1
+        else:
+            result = crawler_service._download_compressed_html("http://example.com", "<html></html>")
+            assert result == side_effect
+            assert mock_download.call_count == 1
 
+
+def test_get_crawl_timestamps_isoformat(crawler_service):
+    # Setup
+    fixed_now = "2025-07-24T12:00:00"
+    recrawl_seconds = crawler_service.configs['recrawl_interval']
+
+    # Patch the timestamp utility to return fixed_time
+    with patch("components.crawler.services.crawler_service.get_timestamp_eastern_time", return_value=fixed_now):
         # Act
-        service.run(crawl_task)
+        fetched_at, next_crawl = crawler_service._get_crawl_timestamps_isoformat()
 
         # Assert
-        mock_crawl.assert_called_once_with(crawl_task.url, mock_logger)
-        mock_create_hash.assert_called_once_with(html_content)
-        mock_download.assert_called_once()
-        mock_timestamp.assert_called()
-        mock_publisher.store_successful_crawl.assert_called_once()
-        mock_publisher.publish_parsing_task.assert_called_once_with(
-            crawl_task.url, crawl_task.depth, "/tmp/file.html"
-        )
+        assert fetched_at == fixed_now
+
+    
+        fetched_dt = datetime.fromisoformat(fetched_at)
+        next_crawl_dt = datetime.fromisoformat(next_crawl)
+        delta = next_crawl_dt - fetched_dt
+
+        # Make sure the delta is correct
+        assert delta == timedelta(seconds=recrawl_seconds)
 
 
-def test_run_failed_crawl(crawl_task, mock_logger, mock_queue_service, mock_publisher):
-    with patch("components.crawler.services.crawler_service.crawl") as mock_crawl, \
-            patch('components.crawler.core.heartbeat.CacheService') as MockCacheService, \
-            patch("components.crawler.services.crawler_service.get_timestamp_eastern_time") as mock_timestamp:
+def test_run_success(crawler_service, crawl_task):
+    crawler = crawler_service
 
-        # Setup
-        mock_crawl.return_value = FetchResponse(
-            success=False,
-            url=crawl_task.url,
-            crawl_status=CrawlStatus.FAILED,
-            error_type="Timeout",
-            error_message="Request timed out"
-        )
-        mock_timestamp.return_value = "2025-07-08T12:00:00Z"
+    # Setup
+    crawler._fetch_page = MagicMock(return_value=MagicMock(text="<html>OK</html>", url="http://example.com"))
+    crawler._download_compressed_html = MagicMock(return_value=("abc123", "/tmp/abc123.html.gz"))
+    crawler._get_crawl_timestamps_isoformat = MagicMock(return_value=("2025-07-24T12:00:00", "2025-07-24T13:00:00"))
+    crawler.publisher = MagicMock()
 
-        mock_cache_instance = MagicMock()
-        MockCacheService.return_value = mock_cache_instance
-        service = CrawlerService(
-            configs=loaded_configs, queue_service=mock_queue_service, logger=mock_logger
-        )
-
-        service = CrawlerService(
-            loaded_configs, queue_service=mock_queue_service, logger=mock_logger)
-        service.publisher = mock_publisher
-
+    with patch("components.crawler.services.crawler_service.PAGE_CRAWL_LATENCY_SECONDS"), \
+         patch("components.crawler.services.crawler_service.CRAWL_PAGES_TOTAL"):
         # Act
-        service.run(crawl_task)
+        crawler.run(crawl_task)
 
-        # Assert
-        mock_crawl.assert_called_once_with(crawl_task.url, mock_logger)
-        mock_timestamp.assert_called_once()
-        mock_publisher.store_failed_crawl.assert_called_once_with(
-            crawl_task.url,
-            CrawlStatus.FAILED,
-            "2025-07-08T12:00:00Z",
-            "Timeout",
-            "Request timed out"
-        )
-        mock_publisher.store_successful_crawl.assert_not_called()
-        mock_publisher.publish_parsing_task.assert_not_called()
+    # Assert
+    crawler._fetch_page.assert_called_once()
+    crawler._download_compressed_html.assert_called_once()
+    crawler.publisher.store_successful_crawl.assert_called_once()
+    crawler.publisher.publish_parsing_task.assert_called_once()
+
+
+def test_run_fetch_failure(crawler_service, crawl_task):
+    # Setup
+    crawler = crawler_service
+    crawler._fetch_page = MagicMock(return_value=None)
+    crawler.publisher = MagicMock()
+
+    with patch("components.crawler.services.crawler_service.CRAWL_PAGES_TOTAL") as mock_total, \
+         patch("components.crawler.services.crawler_service.PAGE_CRAWL_LATENCY_SECONDS"):
+        # Act
+        crawler.run(crawl_task)
+
+    # Assert
+    crawler._fetch_page.assert_called_once()
+    crawler.publisher.store_successful_crawl.assert_not_called()
+    crawler.publisher.publish_parsing_task.assert_not_called()
+    mock_total.labels().inc.assert_called_once()
+
+
+def test_run_raises_unexpected_exception(crawler_service, crawl_task):
+    # Setup
+    crawler = crawler_service
+    crawler._fetch_page = MagicMock(return_value=MagicMock(text="<html>OK</html>"))
+    crawler._download_compressed_html = MagicMock(side_effect=OSError("disk error"))
+    crawler.publisher = MagicMock()
+
+    with patch("components.crawler.services.crawler_service.CRAWL_PAGES_TOTAL") as mock_total, \
+         patch("components.crawler.services.crawler_service.CRAWL_PAGES_FAILURES_TOTAL") as mock_fail, \
+         patch("components.crawler.services.crawler_service.PAGE_CRAWL_LATENCY_SECONDS"):
+        # Act
+        crawler.run(crawl_task)
+
+    # Assert
+    crawler._fetch_page.assert_called_once()
+    crawler._download_compressed_html.assert_called_once()
+    mock_fail.labels.return_value.inc.assert_called_once()
+    mock_total.labels.return_value.inc.assert_called_once()
