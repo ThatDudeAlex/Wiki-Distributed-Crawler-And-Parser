@@ -32,10 +32,7 @@ jobs:
           echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
           echo "DL_HTML_PATH=${{ secrets.DL_HTML_PATH }}" >> .env
 
-      - name: Check docker-compose syntax
-        run: docker compose config
-  
-  image-build-test:
+  unit-test:
     runs-on: ubuntu-latest
     env:
       RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
@@ -49,33 +46,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Generate .env file
-        run: |
-          echo "RABBITMQ_USER=${{ secrets.RABBITMQ_USER }}" >> .env
-          echo "RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}" >> .env
-          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
-          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
-          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
-          echo "DL_HTML_PATH=${{ secrets.DL_HTML_PATH }}" >> .env
-
-      - name: Build services
-        run: |
-          docker compose build
-
-  unit-test:
-    runs-on: ubuntu-latest
-    env:
-      RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
-      RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
-      POSTGRES_DB: ${{ secrets.POSTGRES_DB}}
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD}}
-      DL_HTML_PATH: ${{ secrets.DL_HTML_PATH }}
-    needs: image-build-test
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -85,6 +55,7 @@ jobs:
         run: |
           pip install pytest
           pip install testcontainers
+          pip install pytest-mock
           pip install -r requirements-common.txt
 
           for d in components/*; do
