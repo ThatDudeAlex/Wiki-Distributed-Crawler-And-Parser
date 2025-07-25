@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from lxml import html
 from readability import Document
@@ -15,7 +15,7 @@ class PageContentExtractor:
     Designed for use in a distributed parsing pipeline.
     """
 
-    def __init__(self, configs, logger: logging.Logger):
+    def __init__(self, configs: dict[str, Any], logger: logging.Logger):
         """
         Initializes the PageContentExtractor
 
@@ -32,6 +32,17 @@ class PageContentExtractor:
         Parses HTML content from a Wikipedia-like page and returns structured content including
         title, categories, main body text, and a hash of the text content.
         """
+        # Handles blank pages (if any)
+        if not html_content.strip():
+            self.logger.warning("Blank HTML content received — skipping page")
+            return SaveParsedContent(
+                source_page_url=url,
+                title="Page is blank - skipped",
+                categories=[],
+                text_content=None,
+                text_content_hash=None,
+                parsed_at=get_timestamp_eastern_time(isoformat=True)
+            )
         tree = html.fromstring(html_content)
 
         title = self._extract_title(tree)
