@@ -1,6 +1,7 @@
 
 import logging
 from time import sleep
+from typing import Any
 from components.dispatcher.services.db_client import DBReaderClient
 from components.dispatcher.services.publisher import PublishingService
 from shared.rabbitmq.queue_service import QueueService
@@ -10,14 +11,17 @@ from shared.utils import get_timestamp_eastern_time
 
 class Dispatcher:
     """
-    Dispatcher service responsible for orchestrating crawl jobs.
+    Dispatcher service responsible for orchestrating crawl jobs
 
     It continuously polls the DB for scheduled links, converts them into CrawlTask
     objects, and publishes them to the crawl queue. It also seeds the queue with
     initial links if the database is empty on startup.
     """
 
-    def __init__(self, configs, global_configs, queue_service: QueueService, logger: logging.Logger):
+    def __init__(
+            self, configs: dict[str, Any], global_configs: dict[str, Any], 
+            queue_service: QueueService, logger: logging.Logger
+        ):
         """
         Initialize the Dispatcher.
 
@@ -47,24 +51,30 @@ class Dispatcher:
         """
 
         while True:
-            try:
-                links = self._dbclient.pop_links_from_schedule(self.configs['dispatch_count'])
+            self._dispatch()
+            sleep(self.configs['dispatch_tick'])
 
-                if links:
-                    tasks = [
-                        CrawlTask(
-                            url=link['url'],
-                            scheduled_at=link['scheduled_at'],
-                            depth=link['depth']
-                        )
-                        for link in links
-                    ]
-                    self._publisher.publish_crawl_tasks(tasks)
+    def _dispatch(self) -> None:
+        """
+        Perform one iteration of the dispatcher loop:
+        Fetch scheduled links from DB, convert them to crawl tasks, and publish.
+        """
+        try:
+            links = self._dbclient.pop_links_from_schedule(self.configs['dispatch_count'])
 
-                sleep(self.configs['dispatch_tick'])
-                
-            except Exception:
-                self._logger.exception("Dispatcher encountered an unexpected error")
+            if links:
+                tasks = [
+                    CrawlTask(
+                        url=link['url'],
+                        scheduled_at=link['scheduled_at'],
+                        depth=link['depth']
+                    )
+                    for link in links
+                ]
+                self._publisher.publish_crawl_tasks(tasks)
+
+        except Exception:
+            self._logger.exception("Dispatcher encountered an unexpected error")
 
     def seed_empty_queue(self) -> None:
         """
