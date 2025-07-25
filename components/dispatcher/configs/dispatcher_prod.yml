@@ -5,8 +5,8 @@ logging:
 
 dispatch_count: 8
 
-seed_urls:
-  - https://en.wikipedia.org/wiki/Computer_science
-
 # seconds between each dispatch
 dispatch_tick: 1 
+
+seed_urls:
+  - https://en.wikipedia.org/wiki/Computer_science

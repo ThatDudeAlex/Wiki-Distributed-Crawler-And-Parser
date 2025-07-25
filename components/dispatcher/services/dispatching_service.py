@@ -9,12 +9,15 @@ from shared.utils import get_timestamp_eastern_time
 
 
 class Dispatcher:
-    def __init__(self, configs, queue_service: QueueService, logger: logging.Logger):
+    def __init__(self, configs, global_configs, queue_service: QueueService, logger: logging.Logger):
         self.configs = configs
         self._queue_service = queue_service
         self.logger = logger
-        self._dbclient = DBReaderClient()
-        self._publisher = PublishingService(self._queue_service, self.logger)
+        self._dbclient = DBReaderClient(
+            logger, 
+            configs['db_reader_timeout_seconds'],
+            global_configs['postgres']['host'])
+        self._publisher = PublishingService(queue_service, logger)
 
         if self._dbclient.tables_are_empty():
             self.seed_empty_queue()
