@@ -19,15 +19,13 @@ class Dispatcher:
     """
 
     def __init__(
-            self, configs: dict[str, Any], global_configs: dict[str, Any], 
-            queue_service: QueueService, logger: logging.Logger
+            self, configs: dict[str, Any], queue_service: QueueService, logger: logging.Logger
         ):
         """
-        Initialize the Dispatcher.
+        Initialize the Dispatcher
 
         Args:
             configs (dict): Component-specific configuration dictionary
-            global_configs (dict): Global system-wide configuration
             queue_service (QueueService): RabbitMQ queue publisher
             logger (logging.Logger): Logger instance
         """
@@ -37,22 +35,22 @@ class Dispatcher:
         self._logger = logger
         self._dbclient = DBReaderClient(
             logger, 
-            configs['db_reader_timeout_seconds'],
-            global_configs['postgres']['host'])
+            self.configs['db_reader_timeout_seconds'])
         self._publisher = PublishingService(queue_service, logger)
 
         if self._dbclient.tables_are_empty():
             self.seed_empty_queue()
+
 
     def run(self) -> None:
         """
         Main dispatcher loop — fetches links from db_reader and emits crawl tasks
         at a fixed interval defined in config
         """
-
         while True:
             self._dispatch()
             sleep(self.configs['dispatch_tick'])
+
 
     def _dispatch(self) -> None:
         """
@@ -75,6 +73,7 @@ class Dispatcher:
 
         except Exception:
             self._logger.exception("Dispatcher encountered an unexpected error")
+
 
     def seed_empty_queue(self) -> None:
         """

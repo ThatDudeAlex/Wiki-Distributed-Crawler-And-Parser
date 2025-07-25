@@ -8,5 +8,7 @@ dispatch_count: 8
 # seconds between each dispatch
 dispatch_tick: 1 
 
+db_reader_timeout_seconds: 10
+
 seed_urls:
   - https://en.wikipedia.org/wiki/Computer_science

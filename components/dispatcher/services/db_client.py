@@ -14,6 +14,7 @@ class DBReaderClient:
     Uses a persistent requests.Session for performance
     """
 
+
     def __init__(self, logger: logging.Logger, db_timeout: int, host: str = None) -> None:
         """
         Initialize the DBReaderClient
@@ -35,6 +36,7 @@ class DBReaderClient:
         
         self._session = requests.Session()
 
+
     def pop_links_from_schedule(self, count: int) -> Optional[list]:
         """
         Request a number of scheduled links from the db_reader service
@@ -54,6 +56,7 @@ class DBReaderClient:
         
         except requests.RequestException:
             self._logger.exception("Failed to fetch scheduled links from db_reader")
+
 
     def tables_are_empty(self) -> Optional[bool]:
         """
