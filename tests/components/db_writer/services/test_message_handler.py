@@ -2,9 +2,10 @@ import logging
 import pytest
 import json
 from unittest.mock import Mock
-from components.db_writer.services.message_handler import consume_add_links_to_schedule, consume_save_page_metadata, consume_save_parsed_content, consume_save_processed_links
+from components.db_writer.services.message_handler import consume_add_links_to_schedule, consume_save_page_metadata, consume_save_parsed_content, consume_save_processed_links, start_db_service_listener
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.rabbitmq.schemas.save_to_db import SavePageMetadataTask, SaveParsedContent
+from shared.rabbitmq.enums.queue_names import DbWriterQueueChannels
 
 
 @pytest.fixture
@@ -131,21 +132,6 @@ def test_consume_save_parsed_content_valid(mock_ch, mock_method, mock_logger, mo
     mock_ch.basic_ack.assert_called_once_with(delivery_tag="abc123")
     mock_ch.basic_nack.assert_not_called()
     mock_save.assert_called_once_with(SaveParsedContent(**valid_payload), mock_logger)
-
-
-def test_consume_save_parsed_content_value_error(mock_ch, mock_method, mock_logger):
-    invalid_payload = {
-        "source_page_url": "not_a_url",  # Invalid
-        "title": "Example Title",
-        "parsed_at": "2025-07-24T12:00:00"
-    }
-
-    body = json.dumps(invalid_payload).encode("utf-8")
-
-    consume_save_parsed_content(mock_ch, mock_method, None, body, mock_logger)
-
-    mock_ch.basic_nack.assert_called_once_with(delivery_tag="abc123", requeue=False)
-    mock_ch.basic_ack.assert_not_called()
 
 
 def test_consume_save_parsed_content_validation_error(mock_ch, mock_method, mock_logger):
@@ -336,10 +322,6 @@ def test_consume_add_links_to_schedule_raises_unexpected_error(mock_ch, mock_met
 
     mock_ch.basic_nack.assert_called_once_with(delivery_tag="abc123", requeue=False)
     mock_ch.basic_ack.assert_not_called()
-
-
-from components.db_writer.services.message_handler import start_db_service_listener
-from shared.rabbitmq.enums.queue_names import DbWriterQueueChannels
 
 
 def test_start_db_service_listener_registers_consumers_correctly(mocker, mock_logger):

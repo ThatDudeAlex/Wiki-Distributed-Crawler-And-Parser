@@ -1,5 +1,4 @@
 from functools import partial
-import json
 import logging
 from components.scheduler.services.schedule_service import ScheduleService
 from shared.rabbitmq.queue_service import QueueService

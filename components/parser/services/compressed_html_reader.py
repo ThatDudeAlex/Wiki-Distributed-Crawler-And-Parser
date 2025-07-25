@@ -20,6 +20,6 @@ def load_compressed_html(filepath: str, logger: logging.Logger) -> Optional[str]
 
         logger.info(f"Loaded compressed HTML file from: {filepath}")
         return html_content
-    except Exception as e:
+    except Exception:
         logger.exception(f"Failed to load compressed HTML from {filepath}")
         return None

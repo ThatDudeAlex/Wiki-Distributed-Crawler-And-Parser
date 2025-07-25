@@ -44,7 +44,6 @@ class PublishingService:
 
     # TODO: Implement retry mechanism and dead-letter
     def publish_links_to_schedule(self, links_to_crawl: List[LinkData]):
-        link_count = 0
         scheduled_links = []
         for link in links_to_crawl:
             task = CrawlTask(
@@ -60,6 +59,4 @@ class PublishingService:
             SchedulerQueueChannels.ADD_LINKS_TO_SCHEDULE.value, 
             message.model_dump_json())
         
-        # link_count += 1
-
         self._logger.info("Published: %s Links Scheduled", len(scheduled_links))

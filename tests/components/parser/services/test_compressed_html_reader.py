@@ -1,9 +1,5 @@
-import unittest
-import tempfile
 import gzip
-import os
 import logging
-from io import StringIO
 from unittest.mock import Mock
 from components.parser.services.compressed_html_reader import load_compressed_html
 

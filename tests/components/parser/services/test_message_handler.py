@@ -1,7 +1,7 @@
 from functools import partial
 import logging
 import os
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, patch
 import pytest
 
 from components.parser.services.message_handler import handle_parsing_message, start_parser_listener

@@ -23,17 +23,18 @@ def pop_links(count: int):
         return JSONResponse(content=[], status_code=500)
 
 
-@database_router.get("/get_need_rescheduling")
-def pop_links(count: int):
-    try:
-        links = pop_links_from_schedule(count=count, logger=logger)
-        if links:
-            return JSONResponse(content=jsonable_encoder(links))
-        return []
-    except Exception as e:
-        logger.error(
-            f"Exception in pop_links_from_schedule: {e}", exc_info=True)
-        return JSONResponse(content=[], status_code=500)
+# TODO: uncomment once rescheduler component is done
+# @database_router.get("/get_need_rescheduling")
+# def pop_links(count: int):
+#     try:
+#         links = pop_links_from_schedule(count=count, logger=logger)
+#         if links:
+#             return JSONResponse(content=jsonable_encoder(links))
+#         return []
+#     except Exception as e:
+#         logger.error(
+#             f"Exception in pop_links_from_schedule: {e}", exc_info=True)
+#         return JSONResponse(content=[], status_code=500)
 
 
 @database_router.get("/tables/empty")

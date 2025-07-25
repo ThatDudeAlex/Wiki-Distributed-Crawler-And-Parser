@@ -12,8 +12,8 @@ def main():
     try:
         queue_service = QueueService(logger, DbWriterQueueChannels.get_values())
         start_db_service_listener(queue_service, logger)
-    except Exception as e:
-        logger.exception(f"Unhandled exception in db_writer service")
+    except Exception:
+        logger.exception("Unhandled exception in db_writer service")
 
 
 if __name__ == "__main__":

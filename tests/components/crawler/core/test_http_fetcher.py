@@ -1,7 +1,6 @@
 import pytest
-import pytest
 from unittest.mock import MagicMock, patch
-from requests import Response, HTTPError, Timeout
+from requests import Response, Timeout
 from components.crawler.core.http_fetcher import HttpFetcher
 from components.crawler.types.crawler_types import CrawlerErrorType
 from shared.configs.config_loader import component_config_loader

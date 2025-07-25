@@ -1,7 +1,6 @@
 import logging
-from unittest.mock import ANY, Mock
+from unittest.mock import Mock
 import pytest
-from datetime import datetime
 from components.db_writer.core.db_writer import _get_or_create_categories, add_links_to_schedule, save_page_metadata, save_parsed_data, save_processed_links
 from shared.rabbitmq.schemas.save_to_db import CrawlTask, SaveLinksToSchedule, SavePageMetadataTask, SaveParsedContent, SaveProcessedLinks
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
