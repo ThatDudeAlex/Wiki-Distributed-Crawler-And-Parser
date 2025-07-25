@@ -66,5 +66,5 @@ jobs:
           done
 
       - name: Run test suite
-        run: DATABASE_URL=test/url PYTHONPATH=${{ github.workspace }} pytest -m "not integration" tests/
+        run: DATABASE_URL=postgresql://user:password@host:port/dbname PYTHONPATH=${{ github.workspace }} pytest -m "not integration" tests/
         
