@@ -1,0 +1,19 @@
+
+# Testing
+pytest
+pytest-cov
+pytest-mock
+testcontainers
+coverage
+
+# Linting and formatting
+ruff
+isort
+
+# Utilities for testing or development
+Pygments
+colorlog
+
+# Pytest-related internals (if not already installed as pytest deps)
+iniconfig
+pluggy

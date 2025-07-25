@@ -228,7 +228,6 @@ def test_add_links_to_schedule_raises_on_failure(mock_db_context, mock_logger):
         add_links_to_schedule(data, mock_logger)
 
 
-
 def test_get_or_create_categories_all_exist(mocker):
     db = mocker.Mock()
 

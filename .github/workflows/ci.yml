@@ -53,9 +53,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pytest
-          pip install testcontainers
-          pip install pytest-mock
+          pip install -r requirements-dev.txt
           pip install -r requirements-common.txt
 
           for d in components/*; do
