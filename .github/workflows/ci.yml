@@ -84,5 +84,6 @@ jobs:
       - name: Run test suite
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          DB_READER_HOST: http://localhost:8001
         run: PYTHONPATH=${{ github.workspace }} pytest -m "not integration" tests/
         
