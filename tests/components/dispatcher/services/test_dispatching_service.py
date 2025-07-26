@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from components.dispatcher.services.dispatching_service import Dispatcher
-from shared.configs.config_loader import component_config_loader, global_config_loader
+from shared.configs.config_loader import component_config_loader
 from shared.rabbitmq.schemas.crawling import CrawlTask
 
 
