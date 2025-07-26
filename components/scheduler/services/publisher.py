@@ -58,14 +58,15 @@ class PublishingService:
             return
         
         scheduled_links = []
+        
         for link in links_to_crawl:
             task = CrawlTask(
                 url=link.url,
                 scheduled_at=get_timestamp_eastern_time(isoformat=True),
                 depth=link.depth
             )
-
             scheduled_links.append(task)
+
         message = SaveLinksToSchedule(links=scheduled_links)
 
         self._queue_service.publish(
