@@ -1,0 +1,26 @@
+
+wikipedia:
+  base_url: https://en.wikipedia.org
+
+filters:
+  robots_txt: https://en.wikipedia.org/robots.txt
+
+  allowed_domains:
+    - en.wikipedia.org
+  
+  # TODO: Imple the use of this in the code
+  excluded_prefixes:
+    - "/wiki/Special:"
+    - "/wiki/Help:"
+    - "/wiki/Portal:"
+    - "/wiki/File:"
+    - "/wiki/Template:"
+    - "/wiki/Template_talk:"
+    - "/wiki/Wikipedia:"
+    - "/wiki/Talk:"
+    - "/wiki/Category:"
+    - "/wiki/Book:"
+    - "/wiki/User:"
+    - "/wiki/Module:"
+    - "/wiki/Project:"
+    - "/wiki/Main_Page"

@@ -6,32 +6,5 @@ logging:
 
 max_workers: 50
 
-deduplication:
-  redis_cache_ttl: 43200 #12 Hrs
-
-wikipedia:
-  base_url: https://en.wikipedia.org
-
 filters:
-  robots_txt: https://en.wikipedia.org/robots.txt
-
   max_depth: 4
-
-  allowed_domains:
-    - en.wikipedia.org
-  
-  excluded_prefixes:
-    - "/wiki/Special:"
-    - "/wiki/Help:"
-    - "/wiki/Portal:"
-    - "/wiki/File:"
-    - "/wiki/Template:"
-    - "/wiki/Template_talk:"
-    - "/wiki/Wikipedia:"
-    - "/wiki/Talk:"
-    - "/wiki/Category:"
-    - "/wiki/Book:"
-    - "/wiki/User:"
-    - "/wiki/Module:"
-    - "/wiki/Project:"
-    - "/wiki/Main_Page"

@@ -7,6 +7,7 @@ from components.scheduler.core.filter import FilteringService, LinkData
 from components.scheduler.services.publisher import PublishingService
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# TODO: use config for this
 MAX_WORKERS = 50
 
 
