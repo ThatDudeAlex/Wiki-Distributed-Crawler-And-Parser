@@ -2,6 +2,12 @@
 wikipedia:
   base_url: https://en.wikipedia.org
 
+http_headers:
+  accept: text/html
+  accept-language: en-US
+  user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36
+
+
 filters:
   robots_txt: https://en.wikipedia.org/robots.txt
 
