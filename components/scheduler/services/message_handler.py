@@ -1,5 +1,13 @@
-from functools import partial
+"""
+Message handler for the Scheduler component.
+
+Defines the consumer callback for processing discovered links and sets up
+the RabbitMQ listener to receive scheduling tasks.
+"""
+
 import logging
+from functools import partial
+
 from components.scheduler.services.schedule_service import ScheduleService
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
@@ -7,40 +15,49 @@ from shared.rabbitmq.schemas.scheduling import ProcessDiscoveredLinks
 
 
 def links_to_schedule(ch, method, properties, body, scheduler: ScheduleService, logger: logging.Logger):
+    """
+    Callback function to handle incoming scheduling messages
+
+    Decodes the message, validates it as a ProcessDiscoveredLinks task,
+    and forwards it to the scheduler for processing
+
+    Acknowledges or rejects the message based on processing outcome
+    """
     try:
         message_str = body.decode('utf-8')
         task = ProcessDiscoveredLinks.model_validate_json(message_str)
-
         scheduler.process_links(task)
 
-        # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     except ValueError as e:
         logger.error("Message Skipped - Invalid task message: %s", e)
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
-    except Exception as e:
-        # TODO: look into if retrying could help the situation
-        # maybe requeue for OperationalError or add a dead-letter queue
+    except Exception:
+        # TODO: Requeue only on transient errors (e.g., database OperationalError)
+        #       Consider adding dead-letter queue handling for persistent failures
         logger.exception("Unexpected error processing links to schedule")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
 def start_schedule_listener(scheduler_service: ScheduleService, queue_service: QueueService, logger: logging.Logger):
-    # Partial allows us to inject the value of a param into a function
-    # This allows me to inject the logger while still complying with
-    # the RabbitMQ api for listening to messages
+    """
+    Initializes RabbitMQ consumer for scheduling messages.
+
+    Binds the `links_to_schedule` callback with the required scheduler service
+    and logger, and begins consuming messages from the relevant queue.
+    """
     links_to_schedule_partial = partial(
         links_to_schedule, scheduler=scheduler_service, logger=logger
     )
 
-    # listen for links to schedule
+    # TODO: Replace direct access to _channel with a public consume method on QueueService
     queue_service._channel.basic_consume(
         queue=SchedulerQueueChannels.LINKS_TO_SCHEDULE.value,
         on_message_callback=links_to_schedule_partial,
         auto_ack=False
     )
 
-    logger.info("Scheduler is listerning...")
+    logger.info("Scheduler is listening for scheduling messages...")
     queue_service._channel.start_consuming()
