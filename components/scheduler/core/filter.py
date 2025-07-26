@@ -43,7 +43,7 @@ class FilteringService:
         """
         return (
             self._exceeds_max_depth(link) or
-            self._is_external_domain()(link) or
+            self._is_external_domain(link) or
             self._is_not_article_page(link) or
             self._is_blocked_by_robot(link)
         )
