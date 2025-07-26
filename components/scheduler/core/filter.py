@@ -1,14 +1,3 @@
-"""
-Filtering service for validating whether a discovered link should be scheduled for crawling
-
-Includes logic for:
-    - Maximum depth enforcement
-    - Domain and language filtering
-    - Excluded prefixes
-    - Home page filtering
-    - robots.txt disallow rules
-"""
-
 import logging
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
@@ -16,10 +5,27 @@ from shared.rabbitmq.schemas.scheduling import LinkData
 
 
 class FilteringService:
+    """
+    Provides filtering logic to determine whether a discovered link should be excluded
+    from the crawling pipeline.
+
+    Filters include:
+        - Max crawl depth
+        - Domain restrictions
+        - Prefix/path exclusions
+        - robots.txt disallow rules
+        - Home page exclusion
+
+    Attributes:
+        _configs (dict): Component-specific filtering configuration.
+        _logger (logging.Logger): Logger for diagnostics.
+        _robots_parser (RobotFileParser): Preloaded robots.txt parser.
+    """
+
     def __init__(self, configs, logger: logging.Logger):
-        self.configs = configs
+        self._configs = configs
         self._logger = logger
-        self.robots_parser = self._load_robots_txt(
+        self._robots_parser = self._load_robots_txt(
             configs['filters']['robots_txt']
         )
 
@@ -49,11 +55,11 @@ class FilteringService:
         )
 
     def _exceeds_max_depth(self, link: LinkData) -> bool:
-        return link.depth > self.configs['filters']['max_depth']
+        return link.depth > self._configs['filters']['max_depth']
 
     def _is_external_domain(self, link: LinkData) -> bool:
         parsed = urlparse(link.url)
-        return parsed.netloc not in self.configs['filters']['allowed_domains']
+        return parsed.netloc not in self._configs['filters']['allowed_domains']
 
 
     def _is_not_article_page(self, link: LinkData) -> bool:
@@ -62,15 +68,15 @@ class FilteringService:
 
     def _is_blocked_by_robot(self, link: LinkData) -> bool:
         path = urlparse(link.url).path
-        return not self.robots_parser.can_fetch(
-            self.configs['http_headers']['user-agent'], path
+        return not self._robots_parser.can_fetch(
+            self._configs['http_headers']['user-agent'], path
         )
     
 
     def _has_excluded_prefix(self, url: str) -> bool:
         # strip fragment/query to test path alone
         path = urlparse(url).path
-        excluded_prefixes = self.configs.get("filters", {}).get("excluded_prefixes", [])
+        excluded_prefixes = self._configs.get("filters", {}).get("excluded_prefixes", [])
 
         # check if it's in any excluded namespace
         for prefix in excluded_prefixes:
