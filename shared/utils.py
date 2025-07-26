@@ -22,13 +22,6 @@ def normalize_url(href: str) -> str:
 
 
 # ===== TODO: This methods seem better suited in the filter rules =====
-def is_external_link(href: str) -> bool:
-    """
-    Determines if a given href points to an external (non-Wikipedia) link
-    """
-
-    return not is_internal_link(href)
-
 
 def is_internal_link(href: str) -> bool:
     """
@@ -39,26 +32,6 @@ def is_internal_link(href: str) -> bool:
     # 'wikipedia.org'
     return parsed.scheme in ["http", "https"] and \
         "wikipedia.org" in parsed.netloc
-
-
-# TODO: Move this into Scheduler (is part of filtering)
-def has_excluded_prefix(href: str) -> bool:
-    """
-    Excludes Non-Article Wikipedia Pages
-    """
-    # strip fragment/query to test path alone
-    path = urlparse(href).path
-
-    # check if it's in any excluded namespace
-    for prefix in EXCLUDED_PREFIXES:
-        if path.startswith(prefix):
-            return True
-    return False
-
-
-def is_home_page(href: str) -> bool:
-    parsed = urlparse(href)
-    return parsed.path.strip("/") == "" and parsed.netloc in ["", "en.wikipedia.org"]
 
 # =====================================================================================
 

@@ -12,9 +12,7 @@ Includes logic for:
 import logging
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
-
 from shared.rabbitmq.schemas.scheduling import LinkData
-from shared.utils import is_external_link, has_excluded_prefix, is_home_page
 
 
 class FilteringService:
@@ -30,6 +28,7 @@ class FilteringService:
         parser.set_url(robots_url)
         try:
             parser.read()
+
         except Exception:
             self._logger.warning("Failed to read robots.txt from: %s", robots_url)
         return parser
@@ -40,31 +39,46 @@ class FilteringService:
         based on filtering rules
 
         Returns:
-            True if the link should be filtered, else False
+            True if the link should be filtered, False otherwise
         """
         return (
             self._exceeds_max_depth(link) or
-            self._is_external(link) or
+            self._is_external_domain()(link) or
             self._is_not_article_page(link) or
-            self._is_cross_language_domain(link) or
             self._is_blocked_by_robot(link)
         )
 
     def _exceeds_max_depth(self, link: LinkData) -> bool:
         return link.depth > self.configs['filters']['max_depth']
 
-    def _is_external(self, link: LinkData) -> bool:
-        return is_external_link(link.url)
-
-    def _is_not_article_page(self, link: LinkData) -> bool:
-        return has_excluded_prefix(link.url) or is_home_page(link.url)
-
-    def _is_cross_language_domain(self, link: LinkData) -> bool:
+    def _is_external_domain(self, link: LinkData) -> bool:
         parsed = urlparse(link.url)
         return parsed.netloc not in self.configs['filters']['allowed_domains']
+
+
+    def _is_not_article_page(self, link: LinkData) -> bool:
+        return self._has_excluded_prefix(link.url) or self._is_home_page(link.url)
+
 
     def _is_blocked_by_robot(self, link: LinkData) -> bool:
         path = urlparse(link.url).path
         return not self.robots_parser.can_fetch(
             self.configs['http_headers']['user-agent'], path
         )
+    
+
+    def _has_excluded_prefix(self, url: str) -> bool:
+        # strip fragment/query to test path alone
+        path = urlparse(url).path
+        excluded_prefixes = self.configs.get("filters", {}).get("excluded_prefixes", [])
+
+        # check if it's in any excluded namespace
+        for prefix in excluded_prefixes:
+            if path.startswith(prefix):
+                return True
+        return False
+    
+    
+    def _is_home_page(self, url: str) -> bool:
+        parsed = urlparse(url)
+        return parsed.path.strip("/") == "" and parsed.netloc in ["", "en.wikipedia.org"]
