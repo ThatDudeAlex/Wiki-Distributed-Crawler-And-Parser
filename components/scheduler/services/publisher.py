@@ -1,3 +1,11 @@
+"""
+Publishes messages from the Scheduler component to appropriate RabbitMQ queues
+
+Handles serialization and routing of:
+    - Processed links for database storage
+    - Scheduling newly discovered links for future crawling
+"""
+
 import logging
 from typing import List
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels, DelayQueues
@@ -8,17 +16,26 @@ from shared.rabbitmq.queue_service import QueueService
 from shared.utils import get_timestamp_eastern_time
 
 
-# TODO: I temporarily commented out logging to test how it affects performace
-#       put them back when needed
-
 class PublishingService:
     def __init__(self, queue_service: QueueService, logger: logging.Logger):
         self._queue_service = queue_service
         self._logger = logger
 
 
-    # TODO: Implement retry mechanism and dead-letter
+    # TODO: Implement retry mechanism or dead-letter
     def publish_save_processed_links(self, links_to_save: List[LinkData]):
+        """
+        Publishes a list of processed links to the database writer queue
+
+        Args:
+            links_to_save (List[LinkData]): 
+                - Newly discovered Links that have been processed, scheduled & need to be
+                  added into the link graph
+        """
+        if not links_to_save:
+            self._logger.warning("No links provided to publish_save_processed_links - skipping publish")
+            return
+        
         message = SaveProcessedLinks(links=links_to_save)
 
         self._queue_service.publish(
@@ -30,6 +47,16 @@ class PublishingService:
 
     # TODO: Implement retry mechanism and dead-letter
     def publish_links_to_schedule(self, links_to_crawl: List[LinkData]):
+        """
+        Publishes a list of links to schedule to the database writer queue
+
+        Args:
+            links_to_crawl (List[LinkData]): Links to schedule for crawling
+        """
+        if not links_to_crawl:
+            self._logger.warning("No links provided to publish_links_to_schedule - skipping publish")
+            return
+        
         scheduled_links = []
         for link in links_to_crawl:
             task = CrawlTask(
