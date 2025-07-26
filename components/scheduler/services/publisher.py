@@ -16,21 +16,6 @@ class PublishingService:
         self._queue_service = queue_service
         self._logger = logger
 
-    def publish_links_to_delay_queue(self, page_links: ProcessDiscoveredLinks):
-        # BASE_INTERVAL_MS = 1000  # for ~33 URLs/sec
-
-        # for i, link in enumerate(page_links.links):
-        # ttl = BASE_INTERVAL_MS * (i + 1)  # staggered TTLs
-        message = page_links
-        message.validate_publish()
-
-        # self._logger.debug("Publishing to delay queue: %s", page_links.links)
-
-        self._queue_service.publish_with_ttl(
-            queue_name=DelayQueues.SCHEDULER_DELAY_30MS.value,
-            message=message,
-            ttl_ms=1000
-        )
 
     # TODO: Implement retry mechanism and dead-letter
     def publish_save_processed_links(self, links_to_save: List[LinkData]):
@@ -41,6 +26,7 @@ class PublishingService:
             message.model_dump_json())
 
         self._logger.info("Published: Save Processed Links")
+
 
     # TODO: Implement retry mechanism and dead-letter
     def publish_links_to_schedule(self, links_to_crawl: List[LinkData]):

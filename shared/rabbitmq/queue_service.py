@@ -78,6 +78,8 @@ class QueueService:
         )
         self._logger.debug(f"Message published to {queue_name}: {message}")
 
+
+    # TODO: remove if not needed
     def setup_delay_queue(self, delay_queue_name: str, processing_queue_name: str, exchange: str = ''):
         """
         Declare a delay queue with dead-letter routing and fixed TTL for rate limiting.

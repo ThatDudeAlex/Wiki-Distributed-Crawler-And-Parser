@@ -11,38 +11,19 @@ def links_to_schedule(ch, method, properties, body, scheduler: ScheduleService, 
         message_str = body.decode('utf-8')
         task = ProcessDiscoveredLinks.model_validate_json(message_str)
 
-        # scheduler.schedule_links(task)
         scheduler.process_links(task)
 
         # acknowledge success
         ch.basic_ack(delivery_tag=method.delivery_tag)
+
     except ValueError as e:
         logger.error("Message Skipped - Invalid task message: %s", e)
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+
     except Exception as e:
         # TODO: look into if retrying could help the situation
         # maybe requeue for OperationalError or add a dead-letter queue
-        logger.error("Error processing message: %s", e)
-        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-
-
-def scheduled_links_to_process(ch, method, properties, body, scheduler: ScheduleService, logger: logging.Logger):
-    try:
-        message_str = body.decode('utf-8')
-        task = ProcessDiscoveredLinks.model_validate_json(message_str)
-        # logger.info('GOT FROM LEAKY BUCKET: %s', link.url)
-
-        scheduler.process_links(task)
-
-        # acknowledge success
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-    except ValueError as e:
-        logger.error("Message Skipped - Invalid task message: %s", e)
-        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-    except Exception as e:
-        # TODO: look into if retrying could help the situation
-        # maybe requeue for OperationalError or add a dead-letter queue
-        logger.error("Error processing message: %s", e)
+        logger.exception("Unexpected error processing links to schedule")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
@@ -54,20 +35,10 @@ def start_schedule_listener(scheduler_service: ScheduleService, queue_service: Q
         links_to_schedule, scheduler=scheduler_service, logger=logger
     )
 
-    scheduled_links_to_process_partial = partial(
-        scheduled_links_to_process, scheduler=scheduler_service, logger=logger
-    )
-
     # listen for links to schedule
     queue_service._channel.basic_consume(
         queue=SchedulerQueueChannels.LINKS_TO_SCHEDULE.value,
         on_message_callback=links_to_schedule_partial,
-        auto_ack=False
-    )
-    # listen for scheduled links to process
-    queue_service._channel.basic_consume(
-        queue=SchedulerQueueChannels.SCHEDULED_LINKS_TO_PROCESS.value,
-        on_message_callback=scheduled_links_to_process_partial,
         auto_ack=False
     )
 

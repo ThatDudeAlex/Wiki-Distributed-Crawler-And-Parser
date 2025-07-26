@@ -14,10 +14,6 @@ def run():
     )
 
     queue_service = QueueService(logger, SchedulerQueueChannels.get_values())
-    queue_service.setup_delay_queue(
-        delay_queue_name=DelayQueues.SCHEDULER_DELAY_30MS.value,
-        processing_queue_name=SchedulerQueueChannels.SCHEDULED_LINKS_TO_PROCESS.value,
-    )
 
     scheduler_service = ScheduleService(configs, queue_service, logger)
 
