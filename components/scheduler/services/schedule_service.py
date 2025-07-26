@@ -20,6 +20,7 @@ class ScheduleService:
         - Publishing to downstream queues
     """
     
+    # TODO: remove docstrings from all __init__ methods
     def __init__(self, configs, queue_service: QueueService, logger: logging.Logger):
         self.configs = configs
         self._logger = logger
