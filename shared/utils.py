@@ -2,7 +2,7 @@ from datetime import datetime
 import hashlib
 from urllib.parse import urlparse, urljoin, urlunparse
 from zoneinfo import ZoneInfo
-from shared.config import EXCLUDED_PREFIXES, WIKI_BASE
+from shared.config import WIKI_BASE
 
 # TODO: pull any common utility function into the
 # my python-utilities package

@@ -8,9 +8,9 @@ Handles serialization and routing of:
 
 import logging
 from typing import List
-from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels, DelayQueues
+from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
 from shared.rabbitmq.schemas.crawling import CrawlTask
-from shared.rabbitmq.schemas.scheduling import LinkData, ProcessDiscoveredLinks
+from shared.rabbitmq.schemas.scheduling import LinkData
 from shared.rabbitmq.schemas.save_to_db import SaveProcessedLinks, SaveLinksToSchedule
 from shared.rabbitmq.queue_service import QueueService
 from shared.utils import get_timestamp_eastern_time

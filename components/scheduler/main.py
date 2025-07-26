@@ -31,6 +31,6 @@ def run(configs_override=None):
 if __name__ == "__main__":
     try:
         run()
-    except Exception as e:
+    except Exception:
         logging.basicConfig(level=logging.ERROR)
         logging.getLogger(COMPONENT_NAME).exception("Fatal error during scheduler startup")
