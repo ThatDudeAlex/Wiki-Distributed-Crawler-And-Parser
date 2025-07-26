@@ -21,12 +21,8 @@ def configs():
 
 
 @pytest.fixture
-def global_configs():
-    return global_config_loader()
-
-@pytest.fixture
-def mock_dispatcher(configs, global_configs, mock_queue_service, mock_logger):
-    service = Dispatcher(configs, global_configs, mock_queue_service, mock_logger)
+def mock_dispatcher(configs, mock_queue_service, mock_logger):
+    service = Dispatcher(configs, mock_queue_service, mock_logger)
     service._publisher = MagicMock()
     service._dbclient = MagicMock()
     return service
@@ -37,7 +33,7 @@ def mock_dispatcher(configs, global_configs, mock_queue_service, mock_logger):
 @patch("components.dispatcher.services.dispatching_service.PublishingService")
 def test_dispatcher_init_seeds_if_tables_empty(
     mock_publisher_cls, mock_db_cls, mock_queue_service,
-    mock_logger, configs, global_configs
+    mock_logger, configs
 ):
 
     # Setup
@@ -49,7 +45,7 @@ def test_dispatcher_init_seeds_if_tables_empty(
     mock_publisher_cls.return_value = mock_publisher
 
     # Act
-    Dispatcher(configs, global_configs, mock_queue_service, mock_logger)
+    Dispatcher(configs, mock_queue_service, mock_logger)
 
     # Assert
     mock_publisher.publish_crawl_tasks.assert_called_once()
@@ -60,7 +56,7 @@ def test_dispatcher_init_seeds_if_tables_empty(
 @patch("components.dispatcher.services.dispatching_service.PublishingService")
 def test_dispatcher_init_skips_seeding_if_not_empty(
     mock_publisher_cls, mock_db_cls, mock_queue_service,
-    mock_logger, configs, global_configs
+    mock_logger, configs
 ):
 
     mock_db = MagicMock()
@@ -70,7 +66,7 @@ def test_dispatcher_init_skips_seeding_if_not_empty(
     mock_publisher = MagicMock()
     mock_publisher_cls.return_value = mock_publisher
 
-    Dispatcher(configs, global_configs, mock_queue_service, mock_logger)
+    Dispatcher(configs, mock_queue_service, mock_logger)
 
     mock_publisher.publish_crawl_tasks.assert_not_called()
 
@@ -94,9 +90,8 @@ def test_seed_empty_queue_creates_and_publishes_tasks(
         "db_reader_timeout_seconds": 5,
         "seed_urls": ["https://a.com", "https://b.com"]
     }
-    global_configs = {"postgres": {"host": "fake-host"}}
 
-    dispatcher = Dispatcher(configs, global_configs, MagicMock(), mock_logger)
+    dispatcher = Dispatcher(configs, MagicMock(), mock_logger)
     dispatcher.seed_empty_queue()
 
     expected_tasks = [
