@@ -456,10 +456,24 @@ services:
       - postgres
       - postgres_initiator
       - db_reader
-      - redis
     environment:
       - DB_READER_HOST=${DB_READER_HOST}
     command: [ "python", "-m", "components.dispatcher.main" ]
+
+  rescheduler:
+    container_name: rescheduler
+    build:
+      context: ..
+      dockerfile: components/rescheduler/Dockerfile
+    env_file: .env
+    depends_on:
+      - rabbitmq
+      - postgres
+      - postgres_initiator
+      - db_reader
+    environment:
+      - DB_READER_HOST=${DB_READER_HOST}
+    command: [ "python", "-m", "components.rescheduler.main" ]
 
   # === Node & Host lvl-monitoring ===
 

@@ -167,9 +167,5 @@ class ReschedulerQueueChannels(EnumCommonMethods, str, Enum):
     ---------
     - urls_to_crawl
     """
-    ADD_LINKS_TO_SCHEDULE = QueueNames.ADD_LINKS_TO_SCHEDULE.value
+    URLS_TO_CRAWL = QueueNames.URLS_TO_CRAWL.value
 
-
-class DelayQueues(EnumCommonMethods, str, Enum):
-    SCHEDULER_DELAY_30MS = 'scheduler_delay_30ms'
-    CRAWLER_DELAY_30MS = 'crawler_delay_30ms'

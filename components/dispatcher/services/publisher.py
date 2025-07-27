@@ -14,13 +14,6 @@ class PublishingService:
     """
 
     def __init__(self, queue_service: QueueService, logger: logging.Logger):
-        """
-        Initialize the publishing service
-
-        Args:
-            queue_service (QueueService): Service for publishing messages to RabbitMQ
-            logger (logging.Logger): Logger instance
-        """
         self._queue_service = queue_service
         self._logger = logger
 

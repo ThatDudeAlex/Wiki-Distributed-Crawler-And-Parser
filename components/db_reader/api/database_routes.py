@@ -3,7 +3,7 @@ from fastapi.applications import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import SQLAlchemyError
 from shared.logging_utils import get_logger
-from components.db_reader.core.db_reader import pop_links_from_schedule, are_tables_empty
+from components.db_reader.core.db_reader import get_due_pages, pop_links_from_schedule, are_tables_empty
 
 
 database_router = APIRouter()
@@ -24,17 +24,16 @@ def pop_links(count: int):
 
 
 # TODO: uncomment once rescheduler component is done
-# @database_router.get("/get_need_rescheduling")
-# def pop_links(count: int):
-#     try:
-#         links = pop_links_from_schedule(count=count, logger=logger)
-#         if links:
-#             return JSONResponse(content=jsonable_encoder(links))
-#         return []
-#     except Exception as e:
-#         logger.error(
-#             f"Exception in pop_links_from_schedule: {e}", exc_info=True)
-#         return JSONResponse(content=[], status_code=500)
+@database_router.get("/get_need_rescheduling")
+def get_pages_need_recrawling():
+    try:
+        pages = get_due_pages(logger=logger)
+        if pages:
+            return JSONResponse(content=jsonable_encoder(pages), status_code=200)
+        return JSONResponse(content=[], status_code=200)
+    except Exception as e:
+        logger.error(f"Exception in get_due_pages: {e}", exc_info=True)
+        return JSONResponse(content={"error": "Internal Server Error"}, status_code=500)
 
 
 @database_router.get("/tables/empty")
