@@ -24,6 +24,6 @@ download_retry:
   grace_period_seconds: 2
 
 # How much time until pages are allowed to be recrawled
-recrawl_interval: 3600 # 1 hr in seconds
+recrawl_interval: 1800 # 30 min in seconds
 
 storage_path: /data/html

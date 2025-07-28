@@ -27,9 +27,7 @@ class QueueService:
         rabbitmq_cfg = global_config["rabbitmq"]
         self._host = rabbitmq_cfg["host"]
         self._port = rabbitmq_cfg["port"]
-    
-        # logger.info('rabbitmq_cfg: %s', rabbitmq_cfg)
-        
+            
         self.retry_interval = retry_interval
         self.max_retries = max_retries
         self.prefetch_count = prefetch_count
@@ -39,27 +37,29 @@ class QueueService:
 
         self._wait_for_rabbit(queue_names)
 
+
     def _declare_queues(self, names: list[str]):
         for name in names:
             self._channel.queue_declare(queue=name, durable=True)
+
 
     def _wait_for_rabbit(self, queue_names: list):
         retries = 0
         while retries < self.max_retries:
             try:
                 self._logger.debug("Attempting RabbitMQ connection...")
-
-                creds = pika.PlainCredentials(
-                    os.environ["RABBITMQ_USER"],
-                    os.environ["RABBITMQ_PASSWORD"],
-                )
-                self._connection = pika.BlockingConnection(
-                    pika.ConnectionParameters(self._host, port=self._port, credentials=creds))
-                self._channel = self._connection.channel()
+                self._connect()
+                # creds = pika.PlainCredentials(
+                #     os.environ["RABBITMQ_USER"],
+                #     os.environ["RABBITMQ_PASSWORD"],
+                # )
+                # self._connection = pika.BlockingConnection(
+                #     pika.ConnectionParameters(self._host, port=self._port, credentials=creds))
+                # self._channel = self._connection.channel()
                 self._channel.basic_qos(prefetch_count=self.prefetch_count)
                 self._declare_queues(queue_names)
 
-                self._logger.info("RabbitMQ connection established")
+                self._logger.info("Initial RabbitMQ connection established")
                 return
             except AMQPConnectionError as e:
                 retries += 1
@@ -68,8 +68,32 @@ class QueueService:
                 time.sleep(self.retry_interval)
 
         raise RuntimeError("RabbitMQ not reachable after multiple retries")
+    
+    def _connect(self):
+        if self._connection and not self._connection.is_closed:
+            return  # Already connected
+        
+        try:
+            creds = pika.PlainCredentials(
+                    os.environ["RABBITMQ_USER"],
+                    os.environ["RABBITMQ_PASSWORD"],
+                )
+            self._connection = pika.BlockingConnection(
+                pika.ConnectionParameters(self._host, port=self._port, credentials=creds))
+            self._channel = self._connection.channel()
+
+        except Exception as e:
+            self._logger.error(f"Failed to connect to RabbitMQ: {e}", exc_info=True)
+            raise
+
+    def _ensure_channel_open(self):
+        if self._channel is None or self._channel.is_closed:
+            self._logger.warning("Channel is closed — reconnecting...")
+            self._connect()
 
     def publish(self, queue_name: str, message: QueueMsgSchemaInterface):
+        self._ensure_channel_open()
+        
         self._channel.basic_publish(
             exchange="",
             routing_key=queue_name,

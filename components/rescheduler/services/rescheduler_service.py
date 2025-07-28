@@ -49,4 +49,4 @@ class Rescheduler:
                 self._publisher.publish_crawl_tasks(tasks)
 
         except Exception:
-            self._logger.exception("Dispatcher encountered an unexpected error")
+            self._logger.exception("Rescheduler encountered an unexpected error")

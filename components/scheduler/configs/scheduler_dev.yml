@@ -7,4 +7,4 @@ logging:
 max_workers: 5
 
 filters:
-  max_depth: 2
+  max_depth: 1

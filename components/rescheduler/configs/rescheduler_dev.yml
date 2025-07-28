@@ -4,6 +4,6 @@ logging:
   logger_name: Rescheduler
 
 # In seconds
-rescheduling_tick: 600 # 10 mins
+rescheduling_tick: 1200 # 20 mins
 
 db_reader_timeout_seconds: 10

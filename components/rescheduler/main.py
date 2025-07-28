@@ -1,3 +1,4 @@
+from time import sleep
 from shared.logging_utils import get_logger
 from shared.rabbitmq.queue_service import QueueService
 from components.rescheduler.services.rescheduler_service import Rescheduler
@@ -16,6 +17,7 @@ def main():
 
     dispatcher = Rescheduler(configs, queue_service, logger)
 
+    logger.info("Starting Rescheduler Component...")
     dispatcher.run()
 
 

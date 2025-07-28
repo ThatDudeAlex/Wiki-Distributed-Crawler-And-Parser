@@ -51,13 +51,8 @@ def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logg
         session_factory (optional): Optional custom SQLAlchemy session factory for testing or injection
     """
     with get_db(session_factory=session_factory) as db:
-        next_crawl_at = None
 
         try:
-            last_crawled_at = datetime.fromisoformat(page_metadata.fetched_at)
-
-            if page_metadata.fetched_at:
-                next_crawl_at = datetime.fromisoformat(page_metadata.fetched_at)
 
             stmt = insert(Page).values(
                 url=page_metadata.url,
@@ -66,8 +61,8 @@ def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logg
                 url_hash=page_metadata.url_hash,
                 html_content_hash=page_metadata.html_content_hash,
                 compressed_filepath=page_metadata.compressed_filepath,
-                last_crawled_at=last_crawled_at,
-                next_crawl_at=next_crawl_at,
+                last_crawled_at=page_metadata.fetched_at,
+                next_crawl_at=page_metadata.next_crawl,
                 total_crawl_attempts=1,
                 failed_crawl_attempts=0,
                 last_error_seen=page_metadata.error_message
@@ -82,6 +77,7 @@ def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logg
                     'http_status_code': stmt.excluded.http_status_code,
                     'html_content_hash': stmt.excluded.html_content_hash,
                     'last_crawled_at': stmt.excluded.last_crawled_at,
+                    'next_crawl_at': stmt.excluded.next_crawl_at,
                     'last_error_seen': stmt.excluded.last_error_seen,
                     'total_crawl_attempts': Page.total_crawl_attempts + 1,
                     'failed_crawl_attempts': case(
