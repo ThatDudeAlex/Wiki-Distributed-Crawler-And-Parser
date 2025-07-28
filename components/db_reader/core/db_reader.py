@@ -1,7 +1,5 @@
-import datetime
 import logging
 from contextlib import contextmanager
-from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import aliased
 
@@ -132,7 +130,7 @@ def get_due_pages(logger: logging.Logger, session_factory=None) -> list[dict]:
             db.query(Page.url, LinkAlias.depth)
             .outerjoin(LinkAlias, LinkAlias.url == Page.url)
             .filter(
-                Page.next_crawl_at != None,
+                Page.next_crawl_at is not None,
                 Page.next_crawl_at < now_est
             )
             .order_by(Page.next_crawl_at.asc())
