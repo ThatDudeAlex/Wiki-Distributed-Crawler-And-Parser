@@ -1,10 +1,10 @@
 import logging
 from typing import List, Optional
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse, urlunparse
 
 from lxml import html
 from shared.rabbitmq.schemas.scheduling import LinkData
-from shared.utils import get_timestamp_eastern_time, is_internal_link, normalize_url
+from shared.utils import get_timestamp_eastern_time
 
 
 class PageLinkExtractor:
@@ -76,8 +76,8 @@ class PageLinkExtractor:
             return None
 
         try:
-            normalized_href = normalize_url(href)
-            is_internal = is_internal_link(normalized_href)
+            normalized_href = self.normalize_url(href)
+            is_internal = self.is_internal_link(normalized_href)
 
             # extract link attributes
             anchor_text = (link.text_content() or '').strip()
@@ -105,6 +105,32 @@ class PageLinkExtractor:
         except Exception:
             self.logger.exception("Error extracting link data")
             return None
+        
+    
+    def normalize_url(self, href: str) -> str:
+        """
+        Normalizes a URL by converting to absolute, and removing fragments/query parameters.
+        """
+        # Convert relative URL to absolute
+        full_url = urljoin(self.configs['wikipedia']['base_url'], href)
+
+        # Remove fragments (#section) and query params (?foo=bar)
+        parsed = urlparse(full_url)
+        cleaned = parsed._replace(fragment="", query="")
+        return urlunparse(cleaned)
+    
+    
+    def is_internal_link(self, href: str) -> bool:
+        """
+        Determines if a given href points to an internal (Wikipedia) link
+        """
+        parsed = urlparse(href)
+        # Check for http/https scheme and ensure it's in a Wikipedia domain
+        # 'wikipedia.org'
+        return (
+            parsed.scheme in ["http", "https"]
+            and self.configs['wikipedia']['domain'] in parsed.netloc
+        )
 
 
     def _determine_type(

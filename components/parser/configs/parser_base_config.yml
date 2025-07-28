@@ -1,3 +1,7 @@
+wikipedia:
+  domain: 'wikipedia.org'
+  base_url: 'https://en.wikipedia.org'
+
 # Specific Wikipedia boilerplate selectors
 selectors:
   title: '//title/text()'
