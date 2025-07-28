@@ -32,6 +32,24 @@ crawl_status_enum = SqlEnum(
 
 
 class Page(Base):
+    """
+    Represents a crawled web page and stores crawl-related metadata.
+
+    Fields:
+        - url: Unique URL of the page.
+        - last_crawl_status: Result of the most recent crawl attempt.
+        - http_status_code: HTTP response status from last crawl.
+        - url_hash, html_content_hash: Help detect duplicate or changed pages.
+        - compressed_filepath: Filepath to stored HTML content.
+        - last_crawled_at, next_crawl_at: Crawl scheduling.
+        - total_crawl_attempts, failed_crawl_attempts: Retry tracking.
+        - last_error_seen: Optional crawl failure info.
+        - created_at, updated_at: Timestamps.
+    
+    Relationships:
+        - links: Outgoing hyperlinks discovered on this page.
+        - parsed_page: One-to-one relationship with PageContent.
+    """
     __tablename__ = 'pages'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
 
@@ -88,6 +106,22 @@ class Page(Base):
 
 
 class Link(Base):
+    """
+    Represents a hyperlink discovered during parsing of a source page.
+
+    Composite Primary Key:
+        - (source_page_url, url): Prevents duplicate links from the same source.
+
+    Fields:
+        - url: Target URL the link points to.
+        - depth: Distance from seed page.
+        - is_internal: Whether it's in-domain.
+        - anchor_text, id/rel/title/link_type: HTML attributes.
+        - discovered_at, created_at: Metadata timestamps.
+
+    Relationships:
+        - source_page: Many-to-one relationship with Page.
+    """
     __tablename__ = "links"
 
     source_page_url = Column(
@@ -126,6 +160,18 @@ class Link(Base):
 
 
 class ScheduledLinks(Base):
+    """
+    Stores links that have been queued for crawling by the scheduler.
+
+    Fields:
+        - url: The URL to crawl.
+        - depth: Crawl depth of this link.
+        - scheduled_at: Timestamp when it was scheduled.
+    
+    Used by:
+        - Scheduler to queue links.
+        - Dispatcher to convert queued links into crawl tasks.
+    """
     __tablename__ = "scheduled_links"
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     url = Column(String(2048), unique=True, nullable=False)
@@ -137,7 +183,12 @@ class ScheduledLinks(Base):
     )
 
 
-# Association table for many-to-many relationship
+"""
+    Association table mapping pages to categories.
+
+    Used in the many-to-many relationship between PageContent and Category.
+    Each row links one page to one category.
+"""
 page_category_association = Table(
     'page_categories',
     Base.metadata,
@@ -150,6 +201,20 @@ page_category_association = Table(
 
 
 class PageContent(Base):
+    """
+    Stores extracted content from a successfully parsed page.
+
+    Fields:
+        - source_page_url: FK to the original Page.
+        - title, summary: Headline and opening paragraph (if present).
+        - text_content: Extracted main body text of the article.
+        - text_content_hash: For change detection.
+        - parsed_at, created_at, updated_at: Timestamps.
+
+    Relationships:
+        - page: One-to-one with Page.
+        - categories: Many-to-many with Category via association table.
+    """
     __tablename__ = 'page_content'
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -189,6 +254,15 @@ class PageContent(Base):
 
 
 class Category(Base):
+    """
+    Represents a semantic category (e.g., Wikipedia category) assigned to parsed pages.
+
+    Fields:
+        - name: Unique name of the category.
+
+    Relationships:
+        - pages: Many-to-many relationship with PageContent.
+    """
     __tablename__ = 'categories'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
