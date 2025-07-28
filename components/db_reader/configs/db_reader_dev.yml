@@ -1,0 +1,9 @@
+
+logging:
+  log_to_file: true
+  log_level: DEBUG
+  logger_name: Db_Reader
+
+network:
+  host: 0.0.0.0
+  port: 8001
