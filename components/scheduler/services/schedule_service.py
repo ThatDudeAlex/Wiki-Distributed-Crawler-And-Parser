@@ -1,5 +1,4 @@
 import logging
-import time
 from typing import List, Optional
 from components.scheduler.monitoring.metrics import (
     SCHEDULER_LINKS_DEDUPLICATED_TOTAL,
