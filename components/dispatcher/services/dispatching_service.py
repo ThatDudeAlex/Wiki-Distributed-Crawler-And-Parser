@@ -1,12 +1,20 @@
-
 import logging
 from time import sleep
 from typing import Any
+
 from components.dispatcher.services.db_client import DBReaderClient
 from components.dispatcher.services.publisher import PublishingService
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling import CrawlTask
 from shared.utils import get_timestamp_eastern_time
+
+from components.dispatcher.monitoring.metrics import (
+    DISPATCHER_LINKS_FETCHED_TOTAL,
+    DISPATCHER_CRAWL_TASKS_PUBLISHED_TOTAL,
+    DISPATCHER_DISPATCH_ERRORS_TOTAL,
+    DISPATCHER_EMPTY_DB_STARTUP_TOTAL,
+    DISPATCHER_DISPATCH_LATENCY_SECONDS,
+)
 
 
 class Dispatcher:
@@ -19,26 +27,19 @@ class Dispatcher:
     """
 
     def __init__(
-            self, configs: dict[str, Any], queue_service: QueueService, logger: logging.Logger
-        ):
-        """
-        Initialize the Dispatcher
-
-        Args:
-            configs (dict): Component-specific configuration dictionary
-            queue_service (QueueService): RabbitMQ queue publisher
-            logger (logging.Logger): Logger instance
-        """
-
+        self, configs: dict[str, Any], queue_service: QueueService, logger: logging.Logger
+    ):
         self.configs = configs
         self._queue_service = queue_service
         self._logger = logger
         self._dbclient = DBReaderClient(
             logger, 
-            self.configs['db_reader_timeout_seconds'])
+            self.configs['db_reader_timeout_seconds']
+        )
         self._publisher = PublishingService(queue_service, logger)
 
         if self._dbclient.tables_are_empty():
+            DISPATCHER_EMPTY_DB_STARTUP_TOTAL.inc()
             self.seed_empty_queue()
 
 
@@ -58,21 +59,26 @@ class Dispatcher:
         Fetch scheduled links from DB, convert them to crawl tasks, and publish.
         """
         try:
-            links = self._dbclient.pop_links_from_schedule(self.configs['dispatch_count'])
+            with DISPATCHER_DISPATCH_LATENCY_SECONDS.time():
+                links = self._dbclient.pop_links_from_schedule(self.configs['dispatch_count'])
 
-            if links:
-                tasks = [
-                    CrawlTask(
-                        url=link['url'],
-                        scheduled_at=link['scheduled_at'],
-                        depth=link['depth']
-                    )
-                    for link in links
-                ]
-                self._publisher.publish_crawl_tasks(tasks)
+                if links:
+                    DISPATCHER_LINKS_FETCHED_TOTAL.inc(len(links))
+
+                    tasks = [
+                        CrawlTask(
+                            url=link['url'],
+                            scheduled_at=link['scheduled_at'],
+                            depth=link['depth']
+                        )
+                        for link in links
+                    ]
+                    self._publisher.publish_crawl_tasks(tasks)
+                    DISPATCHER_CRAWL_TASKS_PUBLISHED_TOTAL.inc(len(tasks))
 
         except Exception:
             self._logger.exception("Dispatcher encountered an unexpected error")
+            DISPATCHER_DISPATCH_ERRORS_TOTAL.inc()
 
 
     def seed_empty_queue(self) -> None:
@@ -82,12 +88,13 @@ class Dispatcher:
         Called at startup if the database is initially empty
         """
         self._logger.info("Seeding Crawl Queue")
-        seed_links = []
-
-        for link in self.configs['seed_urls']:
-            seed_links.append(CrawlTask(
+        seed_links = [
+            CrawlTask(
                 url=link,
                 depth=0,
                 scheduled_at=get_timestamp_eastern_time(isoformat=True)
-            ))
+            )
+            for link in self.configs['seed_urls']
+        ]
         self._publisher.publish_crawl_tasks(seed_links)
+        DISPATCHER_CRAWL_TASKS_PUBLISHED_TOTAL.inc(len(seed_links))
