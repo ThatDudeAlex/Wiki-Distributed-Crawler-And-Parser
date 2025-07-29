@@ -1,6 +1,7 @@
 import logging
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
+from components.scheduler.monitoring.metrics import FILTERED_LINKS_TOTAL
 from shared.rabbitmq.schemas.scheduling import LinkData
 
 
@@ -55,11 +56,18 @@ class FilteringService:
         )
 
     def _exceeds_max_depth(self, link: LinkData) -> bool:
-        return link.depth > self._configs['filters']['max_depth']
+        if link.depth > self._configs['filters']['max_depth']:
+            FILTERED_LINKS_TOTAL.labels(filter_type="depth").inc()
+            return True
+        return False
+
 
     def _is_external_domain(self, link: LinkData) -> bool:
         parsed = urlparse(link.url)
-        return parsed.netloc not in self._configs['filters']['allowed_domains']
+        if parsed.netloc not in self._configs['filters']['allowed_domains']:
+            FILTERED_LINKS_TOTAL.labels(filter_type="domain").inc()
+            return True
+        return False
 
 
     def _is_not_article_page(self, link: LinkData) -> bool:
@@ -68,9 +76,14 @@ class FilteringService:
 
     def _is_blocked_by_robot(self, link: LinkData) -> bool:
         path = urlparse(link.url).path
-        return not self._robots_parser.can_fetch(
+        allowed = self._robots_parser.can_fetch(
             self._configs['http_headers']['user-agent'], path
         )
+
+        if not allowed:
+            FILTERED_LINKS_TOTAL.labels(filter_type="robots_txt").inc()
+
+        return not allowed
     
 
     def _has_excluded_prefix(self, url: str) -> bool:
@@ -81,10 +94,14 @@ class FilteringService:
         # check if it's in any excluded namespace
         for prefix in excluded_prefixes:
             if path.startswith(prefix):
+                FILTERED_LINKS_TOTAL.labels(filter_type="prefix").inc()
                 return True
         return False
     
     
     def _is_home_page(self, url: str) -> bool:
         parsed = urlparse(url)
-        return parsed.path.strip("/") == "" and parsed.netloc in ["", "en.wikipedia.org"]
+        if parsed.path.strip("/") == "" and parsed.netloc in ["", "en.wikipedia.org"]:
+            FILTERED_LINKS_TOTAL.labels(filter_type="home_page").inc()
+            return True
+        return False

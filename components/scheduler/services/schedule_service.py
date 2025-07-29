@@ -1,6 +1,13 @@
 import logging
 import time
 from typing import List, Optional
+from components.scheduler.monitoring.metrics import (
+    SCHEDULER_LINKS_DEDUPLICATED_TOTAL,
+    SCHEDULER_LINKS_RECEIVED_TOTAL,
+    SCHEDULER_LINKS_SCHEDULED_TOTAL,
+    SCHEDULER_PROCESSING_DURATION_SECONDS,
+
+)
 from shared.rabbitmq.schemas.scheduling import ProcessDiscoveredLinks
 from shared.redis.cache_service import CacheService
 from shared.rabbitmq.queue_service import QueueService
@@ -43,14 +50,16 @@ class ScheduleService:
             page_links (ProcessDiscoveredLinks): All links discovered on a page awaiting processing
         """
         total_links = len(page_links.links)
-        start_time = time.perf_counter()
+        SCHEDULER_LINKS_RECEIVED_TOTAL.inc(total_links)
+        
 
-        unseen_links = self._get_unseen_links(page_links.links)
-        valid_links = self._process_links_concurrently(unseen_links)
+        with SCHEDULER_PROCESSING_DURATION_SECONDS.time():
+            unseen_links = self._get_unseen_links(page_links.links)
+            valid_links = self._process_links_concurrently(unseen_links)
 
-        elapsed = time.perf_counter() - start_time
-        self._logger.info("Link Processing Completed — %d valid out of %d in %.2fs",
-                          len(valid_links), total_links, elapsed)
+        self._logger.info("Link Processing Completed — %d valid out of %d",
+                      len(valid_links), total_links)
+
 
         if not valid_links:
             self._logger.info("No valid links found — skipping publish")
@@ -63,10 +72,15 @@ class ScheduleService:
 
         try:
             seen_flags = self.cache.batch_is_seen_url(all_urls)
+            unseen_links = [link for link, seen in zip(all_links, seen_flags) if not seen]
 
-            return [
-                link for link, seen in zip(all_links, seen_flags) if not seen
-            ]
+            deduplicated_count = len(all_links) - len(unseen_links)
+
+            # Increment the metric by however many URLs were dropped because they had already
+            # been processed before
+            SCHEDULER_LINKS_DEDUPLICATED_TOTAL.inc(deduplicated_count)
+
+            return unseen_links
         
         except Exception:
             self._logger.exception("Redis batch seen check failed")
@@ -102,5 +116,6 @@ class ScheduleService:
 
     def _publish_valid_links(self, links: List[LinkData]) -> None:
         self._logger.info("Publishing %d valid links", len(links))
+        SCHEDULER_LINKS_SCHEDULED_TOTAL.inc(len(links))
         self._publisher.publish_save_processed_links(links)
         self._publisher.publish_links_to_schedule(links)
