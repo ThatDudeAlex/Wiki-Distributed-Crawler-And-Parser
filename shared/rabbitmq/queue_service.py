@@ -36,10 +36,44 @@ class QueueService:
 
         self._wait_for_rabbit(queue_names)
 
+    def declare_queue_with_dlq(self, queue_name: str, durable=True, dlq_enabled=True):
+        """
+        Declares a queue with an optional Dead Letter Queue (DLQ) configuration.
+
+        Args:
+            queue_name (str): Name of the primary queue.
+            durable (bool): If True, the queue survives broker restarts.
+            dlq_enabled (bool): If True, sets up DLX/DLQ for message failures.
+        """
+
+        if dlq_enabled:
+            dlx_name = f"{queue_name}.dlx"
+            dlq_name = f"{queue_name}.dlq"
+
+            # Declare DLX exchange
+            self._channel.exchange_declare(exchange=dlx_name, exchange_type='direct', durable=True)
+            self._logger.info(f"Declared DLX: {dlx_name}")
+
+            # Declare DLQ
+            self._channel.queue_declare(queue=dlq_name, durable=durable)
+            self._channel.queue_bind(queue=dlq_name, exchange=dlx_name, routing_key=dlq_name)
+            self._logger.info(f"Declared and bound DLQ: {dlq_name} to DLX: {dlx_name}")
+
+            queue_args = {
+                "x-dead-letter-exchange": dlx_name,
+                "x-dead-letter-routing-key": dlq_name,
+            }
+        else:
+            queue_args = {}
+        
+        # Declare the main queue
+        self._channel.queue_declare(queue=queue_name, durable=durable, arguments=queue_args)
+        self._logger.info(f"Declared queue: {queue_name} with DLQ: {dlq_enabled}")
+
 
     def _declare_queues(self, names: list[str]):
         for name in names:
-            self._channel.queue_declare(queue=name, durable=True)
+            self.declare_queue_with_dlq(queue_name=name, durable=True)
 
 
     def _wait_for_rabbit(self, queue_names: list):
