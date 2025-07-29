@@ -14,7 +14,6 @@ class CacheService:
 
         self._redis = redis.Redis(
             host='redis', port=6379, decode_responses=True)
-        # self._expiration_seconds = 3600  # 1hr
         self._logger = logger
 
     def batch_is_seen_url(self, urls: list[str]) -> list[bool]:
@@ -38,6 +37,7 @@ class CacheService:
             # Fail-safe: treat all as unseen
             return [False] * len(urls)
 
+
     def add_to_seen_set(self, url: str) -> bool:
         """
         Add ``URL`` to the ``seen`` set
@@ -46,7 +46,6 @@ class CacheService:
         """
         try:
             if url:
-                # cache url temporarily
                 was_added = self._redis.set(url, 1, nx=True)
                 return was_added is True
             return False
@@ -54,6 +53,7 @@ class CacheService:
             self._logger.warning(
                 'Redis insert failed: %s (URL: %s)', e, url, exc_info=True)
             return False
+
 
     def is_seen_url(self, url: str) -> bool:
         try:
@@ -74,32 +74,4 @@ class CacheService:
                 'Redis Cache check failed: %s (URL: %s)', e, url, exc_info=True)
             return False
 
-    def submit_heartbeat(self, key: str, ttl: int):
-        self._redis.set(key, time.time(), ex=ttl)
 
-    def get_heartbeat_count(self, key_pattern, scan_count):
-        count = 0
-        cursor = 0
-
-        while True:
-            cursor, keys = self._redis.scan(
-                cursor=cursor, match=key_pattern, count=scan_count)
-            count += len(keys)
-            if cursor == 0:
-                break
-
-        return count
-
-    # TODO: Used for testing, remove or make private
-    def inspect_submitted_heartbeat(self, key: str):
-        value = self._redis.get(key)
-        ttl = self._redis.ttl(key)
-
-        if value is not None:
-            # since it's stored as time.time(), cast it back to float
-            value = float(value)
-        return {
-            "key": key,
-            "value": value,
-            "ttl": ttl
-        }

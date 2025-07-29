@@ -1,7 +1,7 @@
+from pathlib import Path
 import docker
 import uuid
 
-from shared.configs.load_config import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 client = docker.from_env()

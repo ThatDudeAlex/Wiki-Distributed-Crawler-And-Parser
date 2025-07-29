@@ -28,8 +28,8 @@ def content_id(configs):
     return match.group(1)
 
 
-@patch("components.parser.core.wiki_link_extractor.normalize_url", return_value="http://example.com/wiki/Test_Page")
-@patch("components.parser.core.wiki_link_extractor.is_internal_link", return_value=True)
+@patch.object(PageLinkExtractor, "normalize_url", return_value="http://example.com/wiki/Test_Page")
+@patch.object(PageLinkExtractor, "is_internal_link", return_value=True)
 @patch.object(PageLinkExtractor, "_determine_type", return_value="wikilink")
 @patch("components.parser.core.wiki_link_extractor.get_timestamp_eastern_time", return_value="2025-07-24T12:00:00")
 def test_build_link_data_valid(mock_time, mock_type, mock_internal, mock_norm, link_extractor):
@@ -123,7 +123,7 @@ def test_build_link_data_missing_href(link_extractor):
     assert result is None
 
 
-@patch("components.parser.core.wiki_link_extractor.normalize_url", side_effect=Exception("Fail"))
+@patch.object(PageLinkExtractor, "normalize_url", side_effect=Exception("Fail"))
 def test_build_link_data_exception(mock_norm, link_extractor):
     html_snippet = '<a href="/wiki/Fail">Bad Link</a>'
     element = html.fromstring(html_snippet)

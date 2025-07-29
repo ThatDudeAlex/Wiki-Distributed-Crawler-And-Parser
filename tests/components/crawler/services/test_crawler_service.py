@@ -1,3 +1,4 @@
+from pathlib import Path
 import pytest
 from unittest.mock import MagicMock, patch
 from components.crawler.services.crawler_service import CrawlerService
@@ -9,7 +10,6 @@ from datetime import datetime, timedelta
 
 # TODO: update with new config_loader and remove this
 # from components.crawler.configs.crawler_config import configs as loaded_configs
-from shared.configs.load_config import Path
 
 # Gets the root of the project relative to this test file
 PROJECT_ROOT = Path(__file__).resolve().parents[3]

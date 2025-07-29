@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from shared.redis.cache_service import CacheService
-# from shared.config import RedisSets
 
 # TODO: Update test cases
 

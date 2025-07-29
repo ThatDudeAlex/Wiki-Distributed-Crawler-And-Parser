@@ -7,14 +7,15 @@ from components.crawler.services.publisher import PublishingService
 from components.crawler.core.downloader import download_compressed_html_content
 from components.crawler.core.http_fetcher import HttpFetcher
 from components.crawler.types.crawler_types import FetchResponse
+from components.crawler.monitoring.metrics import (
+    CRAWL_PAGES_TOTAL, CRAWL_PAGES_FAILURES_TOTAL, PAGE_CRAWL_LATENCY_SECONDS
+)
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling import CrawlTask
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.utils import get_timestamp_eastern_time, create_hash
 
-from shared.monitoring.metrics import (
-    CRAWL_PAGES_TOTAL, CRAWL_PAGES_FAILURES_TOTAL, PAGE_CRAWL_LATENCY_SECONDS
-)
+
 
 
 class CrawlerService:

@@ -22,7 +22,6 @@ class QueueService:
     ):
         self._logger = logger
 
-        # config_path = Path(__file__).resolve().parents[1] / "configs" / "global_config.yml"
         global_config = global_config_loader()
         rabbitmq_cfg = global_config["rabbitmq"]
         self._host = rabbitmq_cfg["host"]
@@ -49,13 +48,7 @@ class QueueService:
             try:
                 self._logger.debug("Attempting RabbitMQ connection...")
                 self._connect()
-                # creds = pika.PlainCredentials(
-                #     os.environ["RABBITMQ_USER"],
-                #     os.environ["RABBITMQ_PASSWORD"],
-                # )
-                # self._connection = pika.BlockingConnection(
-                #     pika.ConnectionParameters(self._host, port=self._port, credentials=creds))
-                # self._channel = self._connection.channel()
+
                 self._channel.basic_qos(prefetch_count=self.prefetch_count)
                 self._declare_queues(queue_names)
 
