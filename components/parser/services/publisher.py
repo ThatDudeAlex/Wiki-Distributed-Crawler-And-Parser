@@ -1,6 +1,6 @@
 import logging
 from typing import List
-from components.parser.core.metrics import PUBLISHED_MESSAGES_TOTAL
+from components.parser.monitoring.metrics import PUBLISHED_MESSAGES_TOTAL
 from shared.rabbitmq.schemas.save_to_db import SaveParsedContent
 from shared.rabbitmq.enums.queue_names import ParserQueueChannels
 from shared.rabbitmq.schemas.scheduling import LinkData, ProcessDiscoveredLinks
