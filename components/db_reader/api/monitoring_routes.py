@@ -1,5 +1,3 @@
-import datetime
-from zoneinfo import ZoneInfo
 from fastapi import APIRouter
 
 from shared.utils import get_timestamp_eastern_time
