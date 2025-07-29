@@ -11,20 +11,24 @@ from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
 from components.scheduler.services.message_handler import start_schedule_listener
 from components.scheduler.services.schedule_service import ScheduleService
-from shared.configs.config_loader import component_config_loader
+from shared.configs.config_loader import component_config_loader, global_config_loader
+
 
 COMPONENT_NAME = "scheduler"
 
 def run(configs_override=None):
-    configs = configs_override or component_config_loader(COMPONENT_NAME, True)
+    global_configs = global_config_loader()
+
+    redis_configs = global_configs['redis']
+    component_configs = configs_override or component_config_loader(COMPONENT_NAME, True)
     logger = get_logger(
-        configs['logging']['logger_name'], configs['logging']['log_level']
+        component_configs['logging']['logger_name'], component_configs['logging']['log_level']
     )
 
     logger.info("🚀 Scheduler service is starting up...")
 
     queue_service = QueueService(logger, SchedulerQueueChannels.get_values())
-    scheduler_service = ScheduleService(configs, queue_service, logger)
+    scheduler_service = ScheduleService(component_configs, redis_configs, queue_service, logger)
     start_schedule_listener(scheduler_service, queue_service, logger)
 
 

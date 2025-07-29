@@ -21,13 +21,13 @@ class ScheduleService:
     """
     
     # TODO: remove docstrings from all __init__ methods
-    def __init__(self, configs, queue_service: QueueService, logger: logging.Logger):
-        self.configs = configs
+    def __init__(self, component_configs, redis_configs, queue_service: QueueService, logger: logging.Logger):
+        self.configs = component_configs
         self._logger = logger
         self._queue_service = queue_service
-        self.cache = CacheService(logger)
+        self.cache = CacheService(redis_configs, logger)
         self._publisher = PublishingService(queue_service, logger)
-        self.filter = FilteringService(configs, logger)
+        self.filter = FilteringService(component_configs, logger)
 
         self._logger.debug("Scheduler service initialized.")
 
