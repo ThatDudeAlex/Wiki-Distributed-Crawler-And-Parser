@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import List
 
+from components.db_writer.monitoring.metrics import DB_WRITER_INSERT_FAILURE_TOTAL, DB_WRITER_INSERT_LATENCY_SECONDS, DB_WRITER_INSERT_SUCCESS_TOTAL
 from database.db_models.models import (
     Category,
     Link,
@@ -53,47 +54,50 @@ def save_page_metadata(page_metadata: SavePageMetadataTask, logger: logging.Logg
     with get_db(session_factory=session_factory) as db:
 
         try:
+            with DB_WRITER_INSERT_LATENCY_SECONDS.labels(operation="save_page_metadata").time():
+                stmt = insert(Page).values(
+                    url=page_metadata.url,
+                    last_crawl_status=page_metadata.status.value,
+                    http_status_code=page_metadata.http_status_code,
+                    url_hash=page_metadata.url_hash,
+                    html_content_hash=page_metadata.html_content_hash,
+                    compressed_filepath=page_metadata.compressed_filepath,
+                    last_crawled_at=page_metadata.fetched_at,
+                    next_crawl_at=page_metadata.next_crawl,
+                    total_crawl_attempts=1,
+                    failed_crawl_attempts=0,
+                    last_error_seen=page_metadata.error_message
+                )
 
-            stmt = insert(Page).values(
-                url=page_metadata.url,
-                last_crawl_status=page_metadata.status.value,
-                http_status_code=page_metadata.http_status_code,
-                url_hash=page_metadata.url_hash,
-                html_content_hash=page_metadata.html_content_hash,
-                compressed_filepath=page_metadata.compressed_filepath,
-                last_crawled_at=page_metadata.fetched_at,
-                next_crawl_at=page_metadata.next_crawl,
-                total_crawl_attempts=1,
-                failed_crawl_attempts=0,
-                last_error_seen=page_metadata.error_message
-            )
+                # INSERT or UPDATE (aka Upsert)
+                stmt = stmt.on_conflict_do_update(
+                    # Assumes `url` has a UNIQUE constraint
+                    index_elements=['url'],
+                    set_={
+                        'last_crawl_status': stmt.excluded.last_crawl_status,
+                        'http_status_code': stmt.excluded.http_status_code,
+                        'html_content_hash': stmt.excluded.html_content_hash,
+                        'last_crawled_at': stmt.excluded.last_crawled_at,
+                        'next_crawl_at': stmt.excluded.next_crawl_at,
+                        'last_error_seen': stmt.excluded.last_error_seen,
+                        'total_crawl_attempts': Page.total_crawl_attempts + 1,
+                        'failed_crawl_attempts': case(
+                            (
+                                stmt.excluded.last_crawl_status.in_(
+                                    [CrawlStatus.FAILED.value, CrawlStatus.SKIPPED.value]),
+                                Page.failed_crawl_attempts + 1
+                            ),
+                            else_=Page.failed_crawl_attempts
+                        )
+                    }
+                )
+                db.execute(stmt)
 
-            # INSERT or UPDATE (aka Upsert)
-            stmt = stmt.on_conflict_do_update(
-                # Assumes `url` has a UNIQUE constraint
-                index_elements=['url'],
-                set_={
-                    'last_crawl_status': stmt.excluded.last_crawl_status,
-                    'http_status_code': stmt.excluded.http_status_code,
-                    'html_content_hash': stmt.excluded.html_content_hash,
-                    'last_crawled_at': stmt.excluded.last_crawled_at,
-                    'next_crawl_at': stmt.excluded.next_crawl_at,
-                    'last_error_seen': stmt.excluded.last_error_seen,
-                    'total_crawl_attempts': Page.total_crawl_attempts + 1,
-                    'failed_crawl_attempts': case(
-                        (
-                            stmt.excluded.last_crawl_status.in_(
-                                [CrawlStatus.FAILED.value, CrawlStatus.SKIPPED.value]),
-                            Page.failed_crawl_attempts + 1
-                        ),
-                        else_=Page.failed_crawl_attempts
-                    )
-                }
-            )
-            db.execute(stmt)
+            DB_WRITER_INSERT_SUCCESS_TOTAL.labels(operation="save_page_metadata").inc()
             logger.info("Succesfully inserted/updated into DB page: %s", page_metadata.url)
 
         except Exception as e:
+            DB_WRITER_INSERT_FAILURE_TOTAL.labels(operation="save_page_metadata").inc()
             logger.error(
                 "Unexpected error while fetching page metadata: %s, %s", page_metadata.url, e)
 
@@ -116,40 +120,44 @@ def save_processed_links(processed_links: SaveProcessedLinks, logger: logging.Lo
                 logger.warning("No links to insert")
                 return
 
-            values = []
-            for link in processed_links.links:
-                discovered_at_dt = datetime.fromisoformat(link.discovered_at)
-                values.append({
-                    'source_page_url': link.source_page_url,
-                    'url': link.url,
-                    'depth': link.depth,
-                    'discovered_at': discovered_at_dt,
-                    'is_internal': link.is_internal,
-                    'anchor_text': link.anchor_text,
-                    'title_attribute': link.title_attribute,
-                    'rel_attribute': link.rel_attribute,
-                    'id_attribute': link.id_attribute,
-                    'link_type': link.link_type,
-                })
+            with DB_WRITER_INSERT_LATENCY_SECONDS.labels(operation="save_processed_links").time():
+                values = []
+                for link in processed_links.links:
+                    discovered_at_dt = datetime.fromisoformat(link.discovered_at)
+                    values.append({
+                        'source_page_url': link.source_page_url,
+                        'url': link.url,
+                        'depth': link.depth,
+                        'discovered_at': discovered_at_dt,
+                        'is_internal': link.is_internal,
+                        'anchor_text': link.anchor_text,
+                        'title_attribute': link.title_attribute,
+                        'rel_attribute': link.rel_attribute,
+                        'id_attribute': link.id_attribute,
+                        'link_type': link.link_type,
+                    })
 
-            # Single bulk INSERT ... ON CONFLICT UPDATE
-            stmt = insert(Link).values(values)
+                # Single bulk INSERT ... ON CONFLICT UPDATE
+                stmt = insert(Link).values(values)
 
-            stmt = stmt.on_conflict_do_update(
-                index_elements=['source_page_url', 'url'],
-                set_={
-                    'anchor_text': stmt.excluded.anchor_text,
-                    'title_attribute': stmt.excluded.title_attribute,
-                    'rel_attribute': stmt.excluded.rel_attribute,
-                    'id_attribute': stmt.excluded.id_attribute,
-                    'link_type': stmt.excluded.link_type,
-                }
-            )
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=['source_page_url', 'url'],
+                    set_={
+                        'anchor_text': stmt.excluded.anchor_text,
+                        'title_attribute': stmt.excluded.title_attribute,
+                        'rel_attribute': stmt.excluded.rel_attribute,
+                        'id_attribute': stmt.excluded.id_attribute,
+                        'link_type': stmt.excluded.link_type,
+                    }
+                )
 
-            db.execute(stmt)
+                db.execute(stmt)
+
+            DB_WRITER_INSERT_SUCCESS_TOTAL.labels(operation="save_processed_links").inc()
             logger.info("Bulk upserted %d links into the Link table", len(values))
 
         except Exception:
+            DB_WRITER_INSERT_FAILURE_TOTAL.labels(operation="save_processed_links").inc()
             logger.exception("Unexpected error while bulk saving processed links")
 
 
@@ -171,35 +179,39 @@ def save_parsed_data(page_data: SaveParsedContent, logger: logging.Logger, sessi
     """
     with get_db(session_factory=session_factory) as db:
         try:
-            # Get or create categories
-            category_objs = _get_or_create_categories(db, page_data.categories)
+            with DB_WRITER_INSERT_LATENCY_SECONDS.labels(operation="save_parsed_data").time():
+                # Get or create categories
+                category_objs = _get_or_create_categories(db, page_data.categories)
 
-            # Insert or update PageContent
-            existing_page = db.query(PageContent).filter_by(
-                source_page_url=page_data.source_page_url).first()
+                # Insert or update PageContent
+                existing_page = db.query(PageContent).filter_by(
+                    source_page_url=page_data.source_page_url).first()
 
-            if existing_page:
-                # Update existing fields
-                existing_page.title = page_data.title
-                existing_page.text_content = page_data.text_content
-                existing_page.text_content_hash = page_data.text_content_hash
-                existing_page.parsed_at = page_data.parsed_at
-                existing_page.categories = category_objs  # update associations
-            else:
-                # Create new PageContent
-                page = PageContent(
-                    source_page_url=page_data.source_page_url,
-                    title=page_data.title,
-                    text_content=page_data.text_content,
-                    text_content_hash=page_data.text_content_hash,
-                    parsed_at=page_data.parsed_at,
-                    categories=category_objs  # set relationship
-                )
-                db.add(page)
+                if existing_page:
+                    # Update existing fields
+                    existing_page.title = page_data.title
+                    existing_page.text_content = page_data.text_content
+                    existing_page.text_content_hash = page_data.text_content_hash
+                    existing_page.parsed_at = page_data.parsed_at
+                    existing_page.categories = category_objs  # update associations
+                else:
+                    # Create new PageContent
+                    page = PageContent(
+                        source_page_url=page_data.source_page_url,
+                        title=page_data.title,
+                        text_content=page_data.text_content,
+                        text_content_hash=page_data.text_content_hash,
+                        parsed_at=page_data.parsed_at,
+                        categories=category_objs  # set relationship
+                    )
+                    db.add(page)
 
+            DB_WRITER_INSERT_SUCCESS_TOTAL.labels(operation="save_parsed_data").inc()
             logger.info("Parsed content saved for: %s", page_data.source_page_url)
             return True
+
         except Exception:
+            DB_WRITER_INSERT_FAILURE_TOTAL.labels(operation="save_parsed_data").inc()
             logger.exception(
                 "Unexpected error while saving parsed content: %s", page_data.source_page_url)
             return False
@@ -218,26 +230,30 @@ def add_links_to_schedule(links_to_schedule: SaveLinksToSchedule, logger: loggin
         session_factory (optional): Optional SQLAlchemy session factory for dependency injection or testing
     """
     with get_db(session_factory=session_factory) as db:
-        values = []
-        for link in links_to_schedule.links:
-            values.append({
-                "url": link.url,
-                "scheduled_at": link.scheduled_at,
-                'depth': link.depth
-            })
-
-        # Skip if no values
-        if not values:
-            logger.warning('Skipped scheduling links into the DB: no values received')
-            return
-
-        # Single bulk INSERT ... ON CONFLICT DO NOTHING
-        stmt = insert(ScheduledLinks).values(values)
-        stmt = stmt.on_conflict_do_nothing(index_elements=['url'])
-        logger.info("Bulk inserted %d links into schedule table", len(values))
         try:
-            db.execute(stmt)
+            values = []
+            for link in links_to_schedule.links:
+                values.append({
+                    "url": link.url,
+                    "scheduled_at": link.scheduled_at,
+                    'depth': link.depth
+                })
+
+            # Skip if no values
+            if not values:
+                logger.warning('Skipped scheduling links into the DB: no values received')
+                return
+
+            with DB_WRITER_INSERT_LATENCY_SECONDS.labels(operation="add_links_to_schedule").time():
+                stmt = insert(ScheduledLinks).values(values)
+                stmt = stmt.on_conflict_do_nothing(index_elements=['url'])
+                db.execute(stmt)
+
+            DB_WRITER_INSERT_SUCCESS_TOTAL.labels(operation="add_links_to_schedule").inc()
+            logger.info("Bulk inserted %d links into schedule table", len(values))
+
         except Exception:
+            DB_WRITER_INSERT_FAILURE_TOTAL.labels(operation="add_links_to_schedule").inc()
             logger.exception("Bulk insert into schedule_links failed")
             raise
 
