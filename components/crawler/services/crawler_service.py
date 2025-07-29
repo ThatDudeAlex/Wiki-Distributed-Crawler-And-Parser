@@ -3,19 +3,20 @@ import logging
 import time
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
+
 from components.crawler.services.publisher import PublishingService
 from components.crawler.core.downloader import download_compressed_html_content
 from components.crawler.core.http_fetcher import HttpFetcher
 from components.crawler.types.crawler_types import FetchResponse
 from components.crawler.monitoring.metrics import (
-    CRAWL_PAGES_TOTAL, CRAWL_PAGES_FAILURES_TOTAL, PAGE_CRAWL_LATENCY_SECONDS
+    CRAWL_PAGES_TOTAL, CRAWL_PAGES_FAILURES_TOTAL, 
+    CRAWLER_HTML_DOWNLOAD_RETRIES_TOTAL, PAGE_CRAWL_LATENCY_SECONDS
 )
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling import CrawlTask
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.utils import get_timestamp_eastern_time, create_hash
-
-
+from urllib.parse import urlparse
 
 
 class CrawlerService:
@@ -176,9 +177,15 @@ class CrawlerService:
                 return download_compressed_html_content(self.configs['storage_path'], url, html, self._logger)
             except OSError as e:
                 self._logger.warning(f"[RETRY] HTML download failed ({attempt+1}/{retries+1}) for {url}: {e}")
+
+                if attempt > 0:
+                    parsed_host = urlparse(url).netloc or "unknown"
+                    CRAWLER_HTML_DOWNLOAD_RETRIES_TOTAL.labels(url_host=parsed_host).inc()
+
                 if attempt == retries:
                     self._logger.error(f"[GIVEUP] Could not download HTML after {retries+1} attempts")
                     raise
+                
                 attempt += 1
                 time.sleep(grace_period)
 
