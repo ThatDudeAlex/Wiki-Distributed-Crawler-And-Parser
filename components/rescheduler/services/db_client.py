@@ -11,16 +11,6 @@ class DBReaderClient:
     """
 
     def __init__(self, logger: logging.Logger, db_timeout: int, host: str = None) -> None:
-        """
-        Initialize the DBReaderClient
-
-        Args:
-            host (str, optional): Base URL for db_reader. If not provided,
-                                  uses the DB_READER_HOST environment variable.
-
-        Raises:
-            ValueError: If no host is provided or found in environment
-        """
         self._logger = logger
         self.db_timeout = db_timeout
         self._base_url = host or os.getenv('DB_READER_HOST')
@@ -30,6 +20,7 @@ class DBReaderClient:
                 "DB_READER_HOST must be provided either as an argument or environment variable")
         
         self._session = requests.Session()
+
 
     def get_pages_need_rescheduling(self) -> list:
         try:
