@@ -7,6 +7,12 @@ from database.engine import SessionLocal
 from database.db_models.models import Link, Page, PageContent, ScheduledLinks
 from shared.utils import get_timestamp_eastern_time
 
+from components.db_reader.monitoring.metrics import (
+    DB_READER_LINKS_POPPED_TOTAL,
+    DB_READER_DUE_PAGES_FOUND_TOTAL,
+    DB_READER_EMPTY_CHECKS_TOTAL,
+    DB_READER_QUERY_LATENCY_SECONDS,
+)
 
 @contextmanager
 def get_db(session_factory=None):
@@ -23,8 +29,6 @@ def get_db(session_factory=None):
         raise
     finally:
         db.close()
-
-
 
 def pop_links_from_schedule(count: int, logger: logging.Logger, session_factory=None) -> list[dict]:
     """
@@ -45,33 +49,34 @@ def pop_links_from_schedule(count: int, logger: logging.Logger, session_factory=
         list[dict]: A list of scheduled link metadata dictionaries
     """
     with get_db(session_factory) as db:
-        scheduled_links = (
-            db.query(ScheduledLinks)
-            .order_by(ScheduledLinks.id)
-            .limit(count)
-            .with_for_update(skip_locked=True)
-            .all()
-        )
+        with DB_READER_QUERY_LATENCY_SECONDS.labels(operation="pop_links_from_schedule").time():
+            scheduled_links = (
+                db.query(ScheduledLinks)
+                .order_by(ScheduledLinks.id)
+                .limit(count)
+                .with_for_update(skip_locked=True)
+                .all()
+            )
 
-        if not scheduled_links:
-            return []
+            if not scheduled_links:
+                return []
 
-        logger.info("Fetched %d links from scheduled queue", len(scheduled_links))
+            logger.info("Fetched %d links from scheduled queue", len(scheduled_links))
+            DB_READER_LINKS_POPPED_TOTAL.inc(len(scheduled_links))
 
-        links = [
-            {
-                'url': link.url,
-                'scheduled_at': link.scheduled_at,
-                'depth': link.depth
-            }
-            for link in scheduled_links
-        ]
+            links = [
+                {
+                    'url': link.url,
+                    'scheduled_at': link.scheduled_at,
+                    'depth': link.depth
+                }
+                for link in scheduled_links
+            ]
 
-        ids = [link.id for link in scheduled_links]
-        db.query(ScheduledLinks).filter(ScheduledLinks.id.in_(ids)).delete(synchronize_session=False)
+            ids = [link.id for link in scheduled_links]
+            db.query(ScheduledLinks).filter(ScheduledLinks.id.in_(ids)).delete(synchronize_session=False)
 
-        return links
-
+            return links
 
 def are_tables_empty(logger: logging.Logger, session_factory=None) -> bool:
     """
@@ -88,19 +93,18 @@ def are_tables_empty(logger: logging.Logger, session_factory=None) -> bool:
         bool: True if all relevant tables are empty, False otherwise.
     """
     with get_db(session_factory=session_factory) as db:
-        # Count rows in the relevant tables
-        page_count = db.query(Page).count()
-        page_content_count = db.query(PageContent).count()
-        scheduled_links_count = db.query(ScheduledLinks).count()
+        with DB_READER_QUERY_LATENCY_SECONDS.labels(operation="are_tables_empty").time():
+            page_count = db.query(Page).count()
+            page_content_count = db.query(PageContent).count()
+            scheduled_links_count = db.query(ScheduledLinks).count()
 
-        # Check if all tables are empty (this is the trigger to seed the rabbitMQ queue)
-        if not page_count and not page_content_count and not scheduled_links_count:
-            logger.info(
-                "The DB tables are empty - this is a fresh instance of the DB")
-            return True
+        is_empty = not page_count and not page_content_count and not scheduled_links_count
+        DB_READER_EMPTY_CHECKS_TOTAL.labels(empty=str(is_empty).lower()).inc()
 
-        return False
+        if is_empty:
+            logger.info("The DB tables are empty - this is a fresh instance of the DB")
 
+        return is_empty
 
 def get_due_pages(logger: logging.Logger, session_factory=None) -> list[dict]:
     """
@@ -124,20 +128,22 @@ def get_due_pages(logger: logging.Logger, session_factory=None) -> list[dict]:
         now_est = get_timestamp_eastern_time()
         logger.info("Searching for pages due for recrawl")
 
-        LinkAlias = aliased(Link)
+        with DB_READER_QUERY_LATENCY_SECONDS.labels(operation="get_due_pages").time():
+            LinkAlias = aliased(Link)
 
-        results = (
-            db.query(Page.url, LinkAlias.depth)
-            .outerjoin(LinkAlias, LinkAlias.url == Page.url)
-            .filter(
-                Page.next_crawl_at is not None,
-                Page.next_crawl_at < now_est
+            results = (
+                db.query(Page.url, LinkAlias.depth)
+                .outerjoin(LinkAlias, LinkAlias.url == Page.url)
+                .filter(
+                    Page.next_crawl_at is not None,
+                    Page.next_crawl_at < now_est
+                )
+                .order_by(Page.next_crawl_at.asc())
+                .all()
             )
-            .order_by(Page.next_crawl_at.asc())
-            .all()
-        )
 
         logger.info("Found %d pages due for recrawl", len(results))
+        DB_READER_DUE_PAGES_FOUND_TOTAL.inc(len(results))
 
         return [
             {"url": url, "depth": depth or 0}
