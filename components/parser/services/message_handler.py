@@ -5,7 +5,7 @@ from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.parsing import ParsingTask
 from shared.rabbitmq.enums.queue_names import ParserQueueChannels
 from components.parser.services.parsing_service import ParsingService
-from components.parser.core.metrics import (
+from components.parser.monitoring.metrics import (
     PARSER_MESSAGES_RECEIVED_TOTAL,
     PARSER_MESSAGE_FAILURES_TOTAL,
 )
