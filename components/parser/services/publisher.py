@@ -38,7 +38,7 @@ class PublishingService:
             self._queue_service.publish(
                 ParserQueueChannels.PARSED_CONTENT_TO_SAVE.value, message.model_dump_json())
             
-            self._logger.info("Published SaveParsedContent for URL: %s", page_content.url)
+            self._logger.info("Published SaveParsedContent for URL: %s", page_content.source_page_url)
             PUBLISHED_MESSAGES_TOTAL.labels(
                 queue=ParserQueueChannels.PARSED_CONTENT_TO_SAVE.value,
                 status="success"

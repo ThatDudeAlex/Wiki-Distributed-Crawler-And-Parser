@@ -22,7 +22,7 @@ def publisher(mock_queue_service, mock_logger):
 def test_publish_save_parsed_data_success(publisher, mock_queue_service, mock_logger):
     # Setup
     mock_content = Mock()
-    mock_content.url = "http://example.com"
+    mock_content.source_page_url = "http://example.com"
     mock_content.model_dump_json.return_value = '{"url": "http://example.com"}'
 
     with patch("components.parser.services.publisher.PUBLISHED_MESSAGES_TOTAL") as mock_metric:

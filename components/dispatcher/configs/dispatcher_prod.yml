@@ -3,7 +3,7 @@ logging:
   log_level: INFO
   logger_name: Dispatcher
 
-dispatch_count: 8
+dispatch_count: 60
 
 # seconds between each dispatch
 dispatch_tick: 1 
