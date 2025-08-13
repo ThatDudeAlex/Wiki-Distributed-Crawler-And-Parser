@@ -141,7 +141,7 @@ class CrawlerService:
             fetched_at = get_timestamp_eastern_time()
 
             self.publisher.store_failed_crawl(
-                url, fetched_response.crawl_status, fetched_at,
+                fetched_response.crawl_status, fetched_at, url,
                 fetched_response.error_type, fetched_response.error_message)
 
             # Increment failure counter
