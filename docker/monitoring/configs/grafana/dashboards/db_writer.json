@@ -50,11 +50,11 @@
             },
             "gridPos": {
                 "h": 3,
-                "w": 8,
+                "w": 12,
                 "x": 0,
                 "y": 0
             },
-            "id": 8,
+            "id": 1,
             "options": {
                 "colorMode": "value",
                 "graphMode": "none",
@@ -75,8 +75,12 @@
             "pluginVersion": "12.1.1",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
                     "editorMode": "code",
-                    "expr": "sum(rate(parser_messages_received_total[$__rate_interval]))",
+                    "expr": "sum(rate(db_writer_messages_received_total[$__rate_interval]))",
                     "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
@@ -100,84 +104,12 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": 0
-                            },
-                            {
                                 "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    }
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 3,
-                "w": 8,
-                "x": 8,
-                "y": 0
-            },
-            "id": 12,
-            "options": {
-                "colorMode": "value",
-                "graphMode": "none",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "percentChangeColorMode": "standard",
-                "reduceOptions": {
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "fields": "",
-                    "values": false
-                },
-                "showPercentChange": false,
-                "textMode": "auto",
-                "wideLayout": true
-            },
-            "pluginVersion": "12.1.1",
-            "targets": [
-                {
-                    "editorMode": "code",
-                    "expr": "sum(rate(pages_parsed_total[$__rate_interval]))",
-                    "legendFormat": "__auto",
-                    "range": true,
-                    "refId": "A"
-                }
-            ],
-            "title": "Current parse rate (pages/sec)",
-            "type": "stat"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "dark-red",
                                 "value": 0
                             },
                             {
-                                "color": "#EAB839",
-                                "value": 1
-                            },
-                            {
-                                "color": "orange",
-                                "value": 100
-                            },
-                            {
                                 "color": "green",
-                                "value": 500
+                                "value": 1
                             }
                         ]
                     }
@@ -186,11 +118,11 @@
             },
             "gridPos": {
                 "h": 3,
-                "w": 8,
-                "x": 16,
+                "w": 12,
+                "x": 12,
                 "y": 0
             },
-            "id": 13,
+            "id": 2,
             "options": {
                 "colorMode": "value",
                 "graphMode": "none",
@@ -211,14 +143,18 @@
             "pluginVersion": "12.1.1",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
                     "editorMode": "code",
-                    "expr": "sum(rate(parser_links_extracted_total[$__rate_interval]))",
+                    "expr": "sum(rate(db_writer_insert_success_total[$__rate_interval]))",
                     "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
                 }
             ],
-            "title": "Current links extracted (links/sec)",
+            "title": "Current insert rate (inserts/sec)",
             "type": "stat"
         },
         {
@@ -251,11 +187,11 @@
             },
             "gridPos": {
                 "h": 3,
-                "w": 8,
+                "w": 12,
                 "x": 0,
                 "y": 3
             },
-            "id": 10,
+            "id": 3,
             "options": {
                 "colorMode": "value",
                 "graphMode": "none",
@@ -276,8 +212,12 @@
             "pluginVersion": "12.1.1",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
                     "editorMode": "code",
-                    "expr": "sum(rate(parser_messages_received_total{status=\"valid\"}[$__rate_interval]))\n/\nclamp_min(sum(rate(parser_messages_received_total[$__rate_interval])), 1e-12)",
+                    "expr": "sum(rate(db_writer_messages_received_total{status=\"valid\"}[$__rate_interval]))\n/\nclamp_min(sum(rate(db_writer_messages_received_total[$__rate_interval])), 1e-12)",
                     "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
@@ -303,71 +243,6 @@
                             {
                                 "color": "green",
                                 "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    },
-                    "unit": "percentunit"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 3,
-                "w": 8,
-                "x": 8,
-                "y": 3
-            },
-            "id": 9,
-            "options": {
-                "colorMode": "value",
-                "graphMode": "none",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "percentChangeColorMode": "standard",
-                "reduceOptions": {
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "fields": "",
-                    "values": false
-                },
-                "showPercentChange": false,
-                "textMode": "auto",
-                "wideLayout": true
-            },
-            "pluginVersion": "12.1.1",
-            "targets": [
-                {
-                    "editorMode": "code",
-                    "expr": "sum(rate(parser_published_messages_total{status=\"success\"}[$__rate_interval]))\n/\nclamp_min(sum(rate(parser_published_messages_total[$__rate_interval])), 1e-12)",
-                    "legendFormat": "__auto",
-                    "range": true,
-                    "refId": "A"
-                }
-            ],
-            "title": "Current Messages Published Successfully (%)",
-            "type": "stat"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": 0
                             }
                         ]
                     }
@@ -376,11 +251,11 @@
             },
             "gridPos": {
                 "h": 3,
-                "w": 8,
-                "x": 16,
+                "w": 12,
+                "x": 12,
                 "y": 3
             },
-            "id": 11,
+            "id": 5,
             "options": {
                 "colorMode": "value",
                 "graphMode": "none",
@@ -401,8 +276,12 @@
             "pluginVersion": "12.1.1",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
                     "editorMode": "code",
-                    "expr": "sum by (error_type) (rate(parser_message_failures_total[$__rate_interval])) or vector(0)",
+                    "expr": "sum(rate(db_writer_message_failures_total[$__rate_interval])) or vector(0)",
                     "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
@@ -416,7 +295,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "Incoming workload in messages/sec across all instances. Drops to zero can mean upstream idle or a stuck parser.",
+            "description": "Incoming workload in messages/sec across all instances. ",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -426,7 +305,7 @@
                         "axisBorderShow": false,
                         "axisCenteredZero": false,
                         "axisColorMode": "text",
-                        "axisLabel": "",
+                        "axisLabel": "Messages Per Sec",
                         "axisPlacement": "auto",
                         "barAlignment": 0,
                         "barWidthFactor": 0.6,
@@ -469,292 +348,12 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 8,
-                "w": 8,
+                "h": 7,
+                "w": 12,
                 "x": 0,
-                "y": 6
-            },
-            "id": 2,
-            "options": {
-                "legend": {
-                    "calcs": [],
-                    "displayMode": "list",
-                    "placement": "bottom",
-                    "showLegend": true
-                },
-                "tooltip": {
-                    "hideZeros": false,
-                    "mode": "single",
-                    "sort": "none"
-                }
-            },
-            "pluginVersion": "12.1.1",
-            "targets": [
-                {
-                    "editorMode": "code",
-                    "expr": "sum(rate(parser_messages_received_total[$__rate_interval]))",
-                    "legendFormat": "__auto",
-                    "range": true,
-                    "refId": "A"
-                }
-            ],
-            "title": "Traffic (workload)",
-            "type": "timeseries"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-            },
-            "description": "Throughput of pages successfully parsed (pages/sec)",
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "axisBorderShow": false,
-                        "axisCenteredZero": false,
-                        "axisColorMode": "text",
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "barWidthFactor": 0.6,
-                        "drawStyle": "line",
-                        "fillOpacity": 0,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "insertNulls": false,
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    }
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 8,
-                "x": 8,
                 "y": 6
             },
             "id": 6,
-            "options": {
-                "legend": {
-                    "calcs": [],
-                    "displayMode": "list",
-                    "placement": "bottom",
-                    "showLegend": true
-                },
-                "tooltip": {
-                    "hideZeros": false,
-                    "mode": "single",
-                    "sort": "none"
-                }
-            },
-            "pluginVersion": "12.1.1",
-            "targets": [
-                {
-                    "editorMode": "code",
-                    "expr": "sum(rate(pages_parsed_total[$__rate_interval]))\n",
-                    "legendFormat": "__auto",
-                    "range": true,
-                    "refId": "A"
-                }
-            ],
-            "title": "Output — Pages Parsed",
-            "type": "timeseries"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-            },
-            "description": "Throughput of links extracted (links/sec). Drops may indicate parsing problems or reduced coverage.",
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "axisBorderShow": false,
-                        "axisCenteredZero": false,
-                        "axisColorMode": "text",
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "barWidthFactor": 0.6,
-                        "drawStyle": "line",
-                        "fillOpacity": 0,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "insertNulls": false,
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    }
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 8,
-                "x": 16,
-                "y": 6
-            },
-            "id": 7,
-            "options": {
-                "legend": {
-                    "calcs": [],
-                    "displayMode": "list",
-                    "placement": "bottom",
-                    "showLegend": true
-                },
-                "tooltip": {
-                    "hideZeros": false,
-                    "mode": "single",
-                    "sort": "none"
-                }
-            },
-            "pluginVersion": "12.1.1",
-            "targets": [
-                {
-                    "editorMode": "code",
-                    "expr": "sum(rate(parser_links_extracted_total[$__rate_interval]))",
-                    "legendFormat": "__auto",
-                    "range": true,
-                    "refId": "A"
-                }
-            ],
-            "title": "Output — Links Extracted",
-            "type": "timeseries"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-            },
-            "description": "% of received messages handled successfully.",
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
-                    },
-                    "custom": {
-                        "axisBorderShow": false,
-                        "axisCenteredZero": false,
-                        "axisColorMode": "text",
-                        "axisLabel": "Success Rate (%)",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "barWidthFactor": 0.6,
-                        "drawStyle": "line",
-                        "fillOpacity": 0,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "insertNulls": false,
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
-                    },
-                    "mappings": [],
-                    "min": 0,
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": 0
-                            }
-                        ]
-                    },
-                    "unit": "percentunit"
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 9,
-                "w": 8,
-                "x": 0,
-                "y": 14
-            },
-            "id": 1,
             "options": {
                 "legend": {
                     "calcs": [],
@@ -776,13 +375,13 @@
                         "uid": "PBFA97CFB590B2093"
                     },
                     "editorMode": "code",
-                    "expr": "sum(rate(parser_messages_received_total{status=\"valid\"}[$__rate_interval]))\n/\nclamp_min(sum(rate(parser_messages_received_total[$__rate_interval])), 1e-12)",
-                    "legendFormat": "Message Received Successfully",
+                    "expr": "sum(rate(db_writer_messages_received_total[$__rate_interval]))",
+                    "legendFormat": "Traffic",
                     "range": true,
                     "refId": "A"
                 }
             ],
-            "title": "Successfully Received Messages (%)",
+            "title": "Traffic (workload)",
             "type": "timeseries"
         },
         {
@@ -790,7 +389,101 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "% of publishes to RabbitMQ that succeeded",
+            "description": "",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "Writes Per Sec",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 12,
+                "y": 6
+            },
+            "id": 7,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.1.1",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "sum by (operation) (rate(db_writer_insert_success_total[$__rate_interval]))",
+                    "legendFormat": "__auto",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Db Writes",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "description": "% of received messages handled successfully. ",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -837,10 +530,6 @@
                             {
                                 "color": "green",
                                 "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
                             }
                         ]
                     },
@@ -849,12 +538,12 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 9,
-                "w": 8,
-                "x": 8,
-                "y": 14
+                "h": 7,
+                "w": 12,
+                "x": 0,
+                "y": 13
             },
-            "id": 3,
+            "id": 8,
             "options": {
                 "legend": {
                     "calcs": [],
@@ -871,14 +560,18 @@
             "pluginVersion": "12.1.1",
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
                     "editorMode": "code",
-                    "expr": "sum(rate(parser_published_messages_total{status=\"success\"}[$__rate_interval]))\n/\nclamp_min(sum(rate(parser_published_messages_total[$__rate_interval])), 1e-12)",
-                    "legendFormat": "Message Published Successfully",
+                    "expr": "sum(rate(db_writer_messages_received_total{status=\"valid\"}[$__rate_interval]))\n/\nclamp_min(sum(rate(db_writer_messages_received_total[$__rate_interval])), 1e-12)",
+                    "legendFormat": "Message Received Successfully",
                     "range": true,
                     "refId": "A"
                 }
             ],
-            "title": "Successfully Published Messages (%)",
+            "title": "Successfully Received Messages (%)",
             "type": "timeseries"
         },
         {
@@ -926,16 +619,13 @@
                         }
                     },
                     "mappings": [],
+                    "min": 0,
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
                             {
                                 "color": "green",
                                 "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
                             }
                         ]
                     }
@@ -943,12 +633,12 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 9,
-                "w": 8,
-                "x": 16,
-                "y": 14
+                "h": 7,
+                "w": 12,
+                "x": 12,
+                "y": 13
             },
-            "id": 4,
+            "id": 10,
             "options": {
                 "legend": {
                     "calcs": [],
@@ -970,12 +660,10 @@
                         "uid": "PBFA97CFB590B2093"
                     },
                     "editorMode": "code",
-                    "expr": "sum by (error_type) (rate(parser_message_failures_total[$__rate_interval])) or vector(0)\n",
-                    "hide": false,
-                    "instant": false,
+                    "expr": "sum(rate(db_writer_message_failures_total[$__rate_interval])) or vector(0)",
                     "legendFormat": "Failures & Errors",
                     "range": true,
-                    "refId": "B"
+                    "refId": "A"
                 }
             ],
             "title": "Failures & Errors",
@@ -986,6 +674,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
+            "description": "",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -1025,16 +714,13 @@
                         }
                     },
                     "mappings": [],
+                    "min": 0,
                     "thresholds": {
                         "mode": "absolute",
                         "steps": [
                             {
                                 "color": "green",
                                 "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
                             }
                         ]
                     }
@@ -1042,12 +728,12 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 8,
+                "h": 7,
                 "w": 12,
                 "x": 0,
-                "y": 23
+                "y": 20
             },
-            "id": 14,
+            "id": 12,
             "options": {
                 "legend": {
                     "calcs": [],
@@ -1064,107 +750,18 @@
             "pluginVersion": "12.1.1",
             "targets": [
                 {
-                    "editorMode": "code",
-                    "expr": "histogram_quantile(\n  0.95,\n  sum by (stage, le) (rate(parser_stage_duration_seconds_bucket{stage=\"total_latency\"}[$__rate_interval]))\n)\n",
-                    "legendFormat": "Total Latency",
-                    "range": true,
-                    "refId": "A"
-                }
-            ],
-            "title": "Process - Latency p95",
-            "type": "timeseries"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "PBFA97CFB590B2093"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "palette-classic"
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
                     },
-                    "custom": {
-                        "axisBorderShow": false,
-                        "axisCenteredZero": false,
-                        "axisColorMode": "text",
-                        "axisLabel": "",
-                        "axisPlacement": "auto",
-                        "barAlignment": 0,
-                        "barWidthFactor": 0.6,
-                        "drawStyle": "line",
-                        "fillOpacity": 0,
-                        "gradientMode": "none",
-                        "hideFrom": {
-                            "legend": false,
-                            "tooltip": false,
-                            "viz": false
-                        },
-                        "insertNulls": false,
-                        "lineInterpolation": "linear",
-                        "lineWidth": 1,
-                        "pointSize": 5,
-                        "scaleDistribution": {
-                            "type": "linear"
-                        },
-                        "showPoints": "auto",
-                        "spanNulls": false,
-                        "stacking": {
-                            "group": "A",
-                            "mode": "none"
-                        },
-                        "thresholdsStyle": {
-                            "mode": "off"
-                        }
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
-                            }
-                        ]
-                    }
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 8,
-                "w": 12,
-                "x": 12,
-                "y": 23
-            },
-            "id": 5,
-            "options": {
-                "legend": {
-                    "calcs": [],
-                    "displayMode": "list",
-                    "placement": "bottom",
-                    "showLegend": true
-                },
-                "tooltip": {
-                    "hideZeros": false,
-                    "mode": "single",
-                    "sort": "none"
-                }
-            },
-            "pluginVersion": "12.1.1",
-            "targets": [
-                {
                     "editorMode": "code",
-                    "expr": "histogram_quantile(\n  0.95,\n  sum by (stage, le) (rate(parser_stage_duration_seconds_bucket{stage!=\"total_latency\"}[$__rate_interval]))\n)\n",
+                    "expr": "histogram_quantile(\n  0.95,\n  sum by (operation, le) (rate(db_writer_insert_latency_seconds_bucket[$__rate_interval]))\n)\n",
                     "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
                 }
             ],
-            "title": "Per Stage - Latency p95",
+            "title": "Latency p95 - Per Stage",
             "type": "timeseries"
         }
     ],
@@ -1180,7 +777,7 @@
     },
     "timepicker": {},
     "timezone": "browser",
-    "title": "Parser",
-    "uid": "294e9472-390e-4412-bd23-965ca71e5cff",
+    "title": "Db Writer",
+    "uid": "a8729bbe-e897-40b2-8ef7-8e4230bed1e2",
     "version": 1
 }

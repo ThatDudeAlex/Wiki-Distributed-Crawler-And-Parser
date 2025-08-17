@@ -231,26 +231,27 @@ def add_links_to_schedule(links_to_schedule: SaveLinksToSchedule, logger: loggin
     """
     with get_db(session_factory=session_factory) as db:
         try:
-            values = []
-            for link in links_to_schedule.links:
-                values.append({
-                    "url": link.url,
-                    "scheduled_at": link.scheduled_at,
-                    'depth': link.depth
-                })
-
-            # Skip if no values
-            if not values:
-                logger.warning('Skipped scheduling links into the DB: no values received')
-                return
-
             with DB_WRITER_INSERT_LATENCY_SECONDS.labels(operation="add_links_to_schedule").time():
+                values = []
+                for link in links_to_schedule.links:
+                    values.append({
+                        "url": link.url,
+                        "scheduled_at": link.scheduled_at,
+                        'depth': link.depth
+                    })
+
+                # Skip if no values
+                if not values:
+                    logger.warning('Skipped scheduling links into the DB: no values received')
+                    return
+
+                
                 stmt = insert(ScheduledLinks).values(values)
                 stmt = stmt.on_conflict_do_nothing(index_elements=['url'])
                 db.execute(stmt)
 
-            DB_WRITER_INSERT_SUCCESS_TOTAL.labels(operation="add_links_to_schedule").inc()
             logger.info("Bulk inserted %d links into schedule table", len(values))
+            DB_WRITER_INSERT_SUCCESS_TOTAL.labels(operation="add_links_to_schedule").inc()
 
         except Exception:
             DB_WRITER_INSERT_FAILURE_TOTAL.labels(operation="add_links_to_schedule").inc()
