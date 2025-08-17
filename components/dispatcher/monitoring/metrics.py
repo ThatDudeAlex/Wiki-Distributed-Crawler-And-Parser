@@ -7,7 +7,8 @@ DISPATCHER_LINKS_FETCHED_TOTAL = Counter(
 
 DISPATCHER_CRAWL_TASKS_PUBLISHED_TOTAL = Counter(
     "dispatcher_crawl_tasks_published_total",
-    "Number of crawl tasks published to the crawl queue"
+    "Number of crawl tasks published to the crawl queue",
+    ["status"]
 )
 
 DISPATCHER_DISPATCH_ERRORS_TOTAL = Counter(

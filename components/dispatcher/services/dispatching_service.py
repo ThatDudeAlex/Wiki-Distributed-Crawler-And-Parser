@@ -10,7 +10,6 @@ from shared.utils import get_timestamp_eastern_time
 
 from components.dispatcher.monitoring.metrics import (
     DISPATCHER_LINKS_FETCHED_TOTAL,
-    DISPATCHER_CRAWL_TASKS_PUBLISHED_TOTAL,
     DISPATCHER_DISPATCH_ERRORS_TOTAL,
     DISPATCHER_EMPTY_DB_STARTUP_TOTAL,
     DISPATCHER_DISPATCH_LATENCY_SECONDS,
@@ -74,7 +73,6 @@ class Dispatcher:
                         for link in links
                     ]
                     self._publisher.publish_crawl_tasks(tasks)
-                    DISPATCHER_CRAWL_TASKS_PUBLISHED_TOTAL.inc(len(tasks))
 
         except Exception:
             self._logger.exception("Dispatcher encountered an unexpected error")
@@ -97,4 +95,3 @@ class Dispatcher:
             for link in self.configs['seed_urls']
         ]
         self._publisher.publish_crawl_tasks(seed_links)
-        DISPATCHER_CRAWL_TASKS_PUBLISHED_TOTAL.inc(len(seed_links))
