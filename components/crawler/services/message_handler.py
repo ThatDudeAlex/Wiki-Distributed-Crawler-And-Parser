@@ -2,7 +2,7 @@ import logging
 from functools import partial
 
 from pydantic import ValidationError
-from components.crawler.monitoring.metrics import CRAWLER_MESSAGE_FAILURES_TOTAL, CRAWLER_MESSAGES_RECEIVED_TOTAL
+from components.crawler.monitoring.metrics import CRAWLER_MESSAGE_FAILURES_TOTAL, CRAWLER_MESSAGES_RECEIVED_TOTAL, PAGE_CRAWL_LATENCY_SECONDS
 from components.crawler.services.crawler_service import CrawlerService
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling import CrawlTask
@@ -19,8 +19,10 @@ def handle_crawl_message(ch, method, properties, body, crawler_service: CrawlerS
     try:
         task = parse_crawl_task(body)
 
-        logger.info("Initiating crawl for URL: %s", task.url)
-        crawler_service.run(task)
+
+        with PAGE_CRAWL_LATENCY_SECONDS.labels("total_latency").time():
+            logger.info("Initiating crawl for URL: %s", task.url)
+            crawler_service.run(task)
 
         # Acknowledge message
         CRAWLER_MESSAGES_RECEIVED_TOTAL.labels(status="valid").inc()

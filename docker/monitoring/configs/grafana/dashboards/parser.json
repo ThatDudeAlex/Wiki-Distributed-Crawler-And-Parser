@@ -36,12 +36,12 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
+                                "color": "red",
                                 "value": 0
                             },
                             {
-                                "color": "red",
-                                "value": 80
+                                "color": "green",
+                                "value": 1
                             }
                         ]
                     }
@@ -236,12 +236,12 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
+                                "color": "red",
                                 "value": 0
                             },
                             {
-                                "color": "red",
-                                "value": 80
+                                "color": "green",
+                                "value": 0.7
                             }
                         ]
                     },
@@ -368,10 +368,6 @@
                             {
                                 "color": "green",
                                 "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
                             }
                         ]
                     }
@@ -412,7 +408,7 @@
                     "refId": "A"
                 }
             ],
-            "title": "Current Errors (errors/sec).",
+            "title": "Current Errors (errors/sec)",
             "type": "stat"
         },
         {
@@ -420,7 +416,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "Incoming workload in messages/sec. Drops to zero can mean upstream idle or a stuck parser.",
+            "description": "Incoming workload in messages/sec across all instances. Drops to zero can mean upstream idle or a stuck parser.",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -466,10 +462,6 @@
                             {
                                 "color": "green",
                                 "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
                             }
                         ]
                     }
@@ -702,7 +694,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "% of received messages handled successfully. ",
+            "description": "% of received messages handled successfully.",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -749,10 +741,6 @@
                             {
                                 "color": "green",
                                 "value": 0
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
                             }
                         ]
                     },
@@ -762,7 +750,7 @@
             },
             "gridPos": {
                 "h": 9,
-                "w": 12,
+                "w": 8,
                 "x": 0,
                 "y": 14
             },
@@ -789,12 +777,12 @@
                     },
                     "editorMode": "code",
                     "expr": "sum(rate(parser_messages_received_total{status=\"valid\"}[$__rate_interval]))\n/\nclamp_min(sum(rate(parser_messages_received_total[$__rate_interval])), 1e-12)",
-                    "legendFormat": "Parser Message Handling Success Rate (%)",
+                    "legendFormat": "Message Received Successfully",
                     "range": true,
                     "refId": "A"
                 }
             ],
-            "title": "Parser Availability — Successfully Received Messages (%)",
+            "title": "Successfully Received Messages (%)",
             "type": "timeseries"
         },
         {
@@ -802,7 +790,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "% of publishes to RabbitMQ that succeeded.",
+            "description": "% of publishes to RabbitMQ that succeeded",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -862,8 +850,8 @@
             },
             "gridPos": {
                 "h": 9,
-                "w": 12,
-                "x": 12,
+                "w": 8,
+                "x": 8,
                 "y": 14
             },
             "id": 3,
@@ -885,12 +873,12 @@
                 {
                     "editorMode": "code",
                     "expr": "sum(rate(parser_published_messages_total{status=\"success\"}[$__rate_interval]))\n/\nclamp_min(sum(rate(parser_published_messages_total[$__rate_interval])), 1e-12)",
-                    "legendFormat": "Parser Message Published Success Rate (%)",
+                    "legendFormat": "Message Published Successfully",
                     "range": true,
                     "refId": "A"
                 }
             ],
-            "title": "Parser Availability — Successfully Published Messages (%)",
+            "title": "Successfully Published Messages (%)",
             "type": "timeseries"
         },
         {
@@ -898,7 +886,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "Exceptions during message handling; Shows Total rate and break down by error_type.",
+            "description": "",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -908,7 +896,106 @@
                         "axisBorderShow": false,
                         "axisCenteredZero": false,
                         "axisColorMode": "text",
-                        "axisLabel": "Errors/sec",
+                        "axisLabel": "Fails/Errors Per Sec",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 9,
+                "w": 8,
+                "x": 16,
+                "y": 14
+            },
+            "id": 4,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.1.1",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "sum by (error_type) (rate(parser_message_failures_total[$__rate_interval])) or vector(0)\n",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "Failures & Errors",
+                    "range": true,
+                    "refId": "B"
+                }
+            ],
+            "title": "Failures & Errors",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "Seconds",
                         "axisPlacement": "auto",
                         "barAlignment": 0,
                         "barWidthFactor": 0.6,
@@ -960,7 +1047,7 @@
                 "x": 0,
                 "y": 23
             },
-            "id": 4,
+            "id": 14,
             "options": {
                 "legend": {
                     "calcs": [],
@@ -977,20 +1064,14 @@
             "pluginVersion": "12.1.1",
             "targets": [
                 {
-                    "datasource": {
-                        "type": "prometheus",
-                        "uid": "PBFA97CFB590B2093"
-                    },
                     "editorMode": "code",
-                    "expr": "sum by (error_type) (rate(parser_message_failures_total[$__rate_interval])) or vector(0)\n",
-                    "hide": false,
-                    "instant": false,
-                    "legendFormat": "{{error_type}} Errors/sec",
+                    "expr": "histogram_quantile(\n  0.95,\n  sum by (stage, le) (rate(parser_stage_duration_seconds_bucket{stage=\"total_latency\"}[$__rate_interval]))\n)\n",
+                    "legendFormat": "Total Latency",
                     "range": true,
-                    "refId": "B"
+                    "refId": "A"
                 }
             ],
-            "title": "Failures — Rate & Breakdown",
+            "title": "Process - Latency p95",
             "type": "timeseries"
         },
         {
@@ -1077,13 +1158,13 @@
             "targets": [
                 {
                     "editorMode": "code",
-                    "expr": "histogram_quantile(\n  0.95,\n  sum by (stage, le) (rate(parser_stage_duration_seconds_bucket[$__rate_interval]))\n)\n",
+                    "expr": "histogram_quantile(\n  0.95,\n  sum by (stage, le) (rate(parser_stage_duration_seconds_bucket{stage!=\"total_latency\"}[$__rate_interval]))\n)\n",
                     "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
                 }
             ],
-            "title": "Latency p95 per stage",
+            "title": "Per Stage - Latency p95",
             "type": "timeseries"
         }
     ],

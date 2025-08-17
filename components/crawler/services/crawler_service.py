@@ -74,35 +74,37 @@ class CrawlerService:
         # Default status (for crawl_pages_total metric)
         task_status = CrawlStatus.SUCCESS.value
 
-        # Start timer for measuring overall crawl time
-        start_time = time.time()
-
         try:
-            self._logger.info('STAGE 1: Fetch URL: %s', url)
-            fetched_response = self._fetch_page(url)
+            with PAGE_CRAWL_LATENCY_SECONDS.labels("fetch_page").time():
+                self._logger.info('STAGE 1: Fetch URL: %s', url)
+                fetched_response = self._fetch_page(url)
 
-            # If fetch failed, move on
-            if not fetched_response:
-                task_status = CrawlStatus.FAILED.value
-                return
+                # If fetch failed, move on
+                if not fetched_response:
+                    task_status = CrawlStatus.FAILED.value
+                    return
 
-            html_content = fetched_response.text
+                html_content = fetched_response.text
 
-            self._logger.info('STAGE 2: Download Compressed Html File')
-            url_hash, filepath = self._download_compressed_html(url, html_content)
+            with PAGE_CRAWL_LATENCY_SECONDS.labels("download_compressed_html").time():
+                self._logger.info('STAGE 2: Download Compressed Html File')
+                url_hash, filepath = self._download_compressed_html(url, html_content)
 
-            self._logger.info('STAGE 3: Create Hash of Html file')
-            html_content_hash = create_hash(html_content)
+            with PAGE_CRAWL_LATENCY_SECONDS.labels("hash_html_file").time():
+                self._logger.info('STAGE 3: Create Hash of Html file')
+                html_content_hash = create_hash(html_content)
 
-            # Timestamp of when crawling finished + next scheduled crawl
-            fetched_at, next_crawl = self._get_crawl_timestamps_isoformat()
+                # Timestamp of when crawling finished + next scheduled crawl
+                fetched_at, next_crawl = self._get_crawl_timestamps_isoformat()
 
-            self._logger.info('STAGE 4: Publish Page Metadata Report')
-            self.publisher.store_successful_crawl(
-                fetched_response, url_hash, html_content_hash, filepath, fetched_at, next_crawl)
+            with PAGE_CRAWL_LATENCY_SECONDS.labels("publish_page_metadata").time():
+                self._logger.info('STAGE 4: Publish Page Metadata Report')
+                self.publisher.store_successful_crawl(
+                    fetched_response, url_hash, html_content_hash, filepath, fetched_at, next_crawl)
 
-            self._logger.info('STAGE 5: Tell Parsers to extract page content')
-            self.publisher.publish_parsing_task(url, depth, filepath)
+            with PAGE_CRAWL_LATENCY_SECONDS.labels("publish_parsing_job").time():
+                self._logger.info('STAGE 5: Tell Parsers to extract page content')
+                self.publisher.publish_parsing_task(url, depth, filepath)
 
             self._logger.info('Crawl Task Successfully Completed!')
 
@@ -116,8 +118,6 @@ class CrawlerService:
            
         # Finally is NEEDED to increase CRAWL_PAGES_TOTAL counter & record crawl time
         finally:
-            latency = time.time() - start_time
-            PAGE_CRAWL_LATENCY_SECONDS.labels(status=task_status).observe(latency)
             CRAWL_PAGES_TOTAL.labels(status=task_status).inc()
 
     def _fetch_page(self, url) -> Optional[FetchResponse]:

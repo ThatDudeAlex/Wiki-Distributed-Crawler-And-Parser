@@ -8,6 +8,7 @@ from components.parser.services.parsing_service import ParsingService
 from components.parser.monitoring.metrics import (
     PARSER_MESSAGES_RECEIVED_TOTAL,
     PARSER_MESSAGE_FAILURES_TOTAL,
+    STAGE_DURATION_SECONDS,
 )
 
 
@@ -27,8 +28,9 @@ def handle_parsing_message(ch, method, properties, body, parsing_service: Parsin
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
             return
 
-        logger.info("Initiating parsing on file: %s", task.compressed_filepath)
-        parsing_service.run(task)
+        with STAGE_DURATION_SECONDS.labels("total_latency").time():
+            logger.info("Initiating parsing on file: %s", task.compressed_filepath)
+            parsing_service.run(task)
 
         PARSER_MESSAGES_RECEIVED_TOTAL.labels(status="valid").inc()
 

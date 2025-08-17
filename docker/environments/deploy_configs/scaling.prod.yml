@@ -3,13 +3,13 @@ components:
     scaling: 1
   
   db_writer:
-    scaling: 4
+    scaling: 1
 
   parser:
-    scaling: 8
+    scaling: 3
   
   scheduler:
-    scaling: 10
+    scaling: 1
   
   dispatcher:
     scaling: 1
@@ -18,7 +18,7 @@ components:
     scaling: 1
 
   crawler:
-    use_proxies: false
+    use_proxies: True
 
     crawler_noproxy:
       scaling: 3
@@ -28,15 +28,15 @@ components:
       crawler_santa_cruz1:
         scaling: 3
       crawler_santa_cruz2:
-        scaling: 3
+        scaling: 0
       crawler_santa_clara:
-        scaling: 3
+        scaling: 0
       crawler_san_jose:
-        scaling: 3
+        scaling: 0
       crawler_la1:
-        scaling: 3
+        scaling: 0
       crawler_la2:
-        scaling: 3
+        scaling: 0
       crawler_la3:
         scaling: 0
       crawler_la4:
@@ -56,25 +56,25 @@ components:
 
       # Florida Proxies
       crawler_boca_raton:
-        scaling: 3
+        scaling: 0
 
       # Kansas
       crawler_kansas_city:
-        scaling: 3
+        scaling: 0
 
       # Louisiana
       crawler_abbeville:
-        scaling: 3
+        scaling: 0
 
       # Nevada
       crawler_las_vegas1:
-        scaling: 3
+        scaling: 0
       crawler_las_vegas2:
         scaling: 0
 
       # New Jersey
       crawler_piscataway1:
-        scaling: 3
+        scaling: 0
       crawler_piscataway2:
         scaling: 0
       crawler_piscataway3:
@@ -82,9 +82,9 @@ components:
       
       # New York
       crawler_buffalo1:
-        scaling: 3
+        scaling: 0
       crawler_buffalo2:
-        scaling: 3
+        scaling: 0
       crawler_buffalo3:
         scaling: 0
       crawler_buffalo4:
@@ -92,9 +92,9 @@ components:
       crawler_buffalo5:
         scaling: 0
       crawler_nyc1:
-        scaling: 3
+        scaling: 0
       crawler_nyc2:
-        scaling: 3
+        scaling: 0
       crawler_nyc3:
         scaling: 0
       crawler_nyc4:
@@ -108,11 +108,11 @@ components:
 
       # Texas Proxies
       crawler_dallas1:
-        scaling: 3
+        scaling: 0
       crawler_dallas2:
         scaling: 0
       crawler_victoria1:
-        scaling: 3
+        scaling: 0
       crawler_victoria2:
         scaling: 0
       crawler_victoria3:
@@ -126,7 +126,7 @@ components:
 
       # Virginia Proxies
       crawler_ashburn1:
-        scaling: 3
+        scaling: 0
       crawler_ashburn2:
         scaling: 0
       crawler_ashburn3:
@@ -142,7 +142,7 @@ components:
 
       # Washington D.C
       crawler_dc1:
-        scaling: 3
+        scaling: 0
       crawler_dc2:
         scaling: 0
       crawler_dc3:

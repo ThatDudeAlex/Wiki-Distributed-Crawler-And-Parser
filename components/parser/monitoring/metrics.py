@@ -7,6 +7,7 @@ PARSER_MESSAGES_RECEIVED_TOTAL = Counter(
     ["status"]
 )
 
+# TODO: reneame metric to parser_failures_total
 PARSER_MESSAGE_FAILURES_TOTAL = Counter(
     "parser_message_failures_total",
     "Unexpected exceptions in parser message handler",

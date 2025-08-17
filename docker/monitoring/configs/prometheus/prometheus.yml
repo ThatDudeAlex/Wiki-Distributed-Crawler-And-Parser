@@ -20,6 +20,36 @@ scrape_configs:
         type: A
         port: 8000
 
+  - job_name: 'db_writers'
+    dns_sd_configs:
+      - names: ['db_writer']
+        type: A
+        port: 8000
+
+  - job_name: 'db_readers'
+    dns_sd_configs:
+      - names: ['db_reader']
+        type: A
+        port: 8000
+
+  - job_name: 'schedulers'
+    dns_sd_configs:
+      - names: ['scheduler']
+        type: A
+        port: 8000
+
+  - job_name: 'dispatchers'
+    dns_sd_configs:
+      - names: ['dispatcher']
+        type: A
+        port: 8000
+
+  - job_name: 'reschedulers'
+    dns_sd_configs:
+      - names: ['rescheduler']
+        type: A
+        port: 8000
+
   - job_name: 'parsers'
     dns_sd_configs:
       - names: ['parser']

@@ -40,8 +40,8 @@ PUBLISHED_MESSAGES_TOTAL = Counter(
 # Histograms for latency
 PAGE_CRAWL_LATENCY_SECONDS = Histogram(
     'page_crawl_latency_seconds',
-    'Latency of page crawl in seconds.',
-    ['status']  # Label to distinguish success/failure
+    'Time spent in each crawler stage',
+    ['stage']
 )
 
 
