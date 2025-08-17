@@ -4,7 +4,7 @@ from prometheus_client import Counter, Histogram
 DB_READER_REQUESTS_RECEIVED_TOTAL = Counter(
     "db_reader_requests_received_total",
     "Total requests received by db_reader",
-    ["status"]
+    ["status", "operation"]
 )
 
 DB_READER_REQUESTS_FAILURES_TOTAL = Counter(

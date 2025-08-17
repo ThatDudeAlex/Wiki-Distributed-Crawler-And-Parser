@@ -15,12 +15,12 @@ logger = get_logger("db_reader")
 def pop_links(count: int):
     try:
         links = pop_links_from_schedule(count=count, logger=logger)
-        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="valid").inc()
+        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="valid", operation="pop_links_from_schedule").inc()
         return JSONResponse(content=jsonable_encoder(links))
     except Exception as e:
         logger.error("Exception in pop_links_from_schedule: %s", e, exc_info=True)
         DB_READER_REQUESTS_FAILURES_TOTAL.labels(error_type="UnexpectedError").inc()
-        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="error").inc()
+        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="error", operation="pop_links_from_schedule").inc()
         return JSONResponse(content=[], status_code=500)
 
 
@@ -32,12 +32,12 @@ def get_pages_need_recrawling():
     """
     try:
         pages = get_due_pages(logger=logger)
-        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="valid").inc()
+        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="valid", operation="get_due_pages").inc()
         return JSONResponse(content=jsonable_encoder(pages))
     except Exception as e:
         logger.error("Exception in get_due_pages: %s", e, exc_info=True)
         DB_READER_REQUESTS_FAILURES_TOTAL.labels(error_type="UnexpectedError").inc()
-        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="error").inc()
+        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="error", operation="get_due_pages").inc()
         return JSONResponse(content={"error": "Internal Server Error"}, status_code=500)
 
 
@@ -49,15 +49,15 @@ def verify_empty_tables():
     """
     try:
         is_empty = are_tables_empty(logger=logger)
-        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="valid").inc()
+        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="valid", operation="are_tables_empty").inc()
         return {"are_tables_empty": is_empty}
     except SQLAlchemyError as e:
         logger.error("Database error in verify_empty_tables: %s", e, exc_info=True)
         DB_READER_REQUESTS_FAILURES_TOTAL.labels(error_type="SQLAlchemyError").inc()
-        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="error").inc()
+        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="error", operation="are_tables_empty").inc()
         return JSONResponse(content={"detail": "Database error occurred"}, status_code=500)
     except Exception as e:
         logger.error("Unexpected error in verify_empty_tables: %s", e, exc_info=True)
         DB_READER_REQUESTS_FAILURES_TOTAL.labels(error_type="UnexpectedError").inc()
-        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="error").inc()
+        DB_READER_REQUESTS_RECEIVED_TOTAL.labels(status="error", operation="are_tables_empty").inc()
         return JSONResponse(content={"detail": "Unexpected error occurred"}, status_code=500)
