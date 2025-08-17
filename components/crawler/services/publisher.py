@@ -1,5 +1,6 @@
 import logging
 from components.crawler.types.crawler_types import FetchResponse
+from components.crawler.monitoring.metrics import PUBLISHED_MESSAGES_TOTAL
 from shared.rabbitmq.enums.queue_names import CrawlerQueueChannels
 from shared.rabbitmq.enums.crawl_status import CrawlStatus
 from shared.rabbitmq.schemas.save_to_db import SavePageMetadataTask
@@ -39,11 +40,23 @@ class PublishingService:
 
             if message.status == CrawlStatus.SUCCESS:
                 self._logger.info("Published: Page Metadata - Success")
+                PUBLISHED_MESSAGES_TOTAL.labels(
+                    queue=CrawlerQueueChannels.PAGE_METADATA_TO_SAVE.value,
+                    status="success"
+                ).inc()
             else:
                 self._logger.info("Published: Page Metadata - Failed Crawl")
+                PUBLISHED_MESSAGES_TOTAL.labels(
+                    queue=CrawlerQueueChannels.PAGE_METADATA_TO_SAVE.value,
+                    status="failure"
+                ).inc()
 
         except Exception as e:
             self._logger.error("Unexpected error occurred: %s", e)
+            PUBLISHED_MESSAGES_TOTAL.labels(
+                queue=CrawlerQueueChannels.PAGE_METADATA_TO_SAVE.value,
+                status="failure"
+            ).inc()
 
     def store_successful_crawl(
         self,
@@ -121,8 +134,15 @@ class PublishingService:
 
             self._queue_service.publish(
                 CrawlerQueueChannels.PAGES_TO_PARSE.value, message.model_dump_json())
-            self._logger.debug(
-                "Published: Parsing Task - %s", compressed_filepath
-            )
+            
+            self._logger.debug("Published: Parsing Task - %s", compressed_filepath)
+            PUBLISHED_MESSAGES_TOTAL.labels(
+                queue=CrawlerQueueChannels.PAGES_TO_PARSE.value,
+                status="success"
+            ).inc()
         except Exception as e:
             self._logger.error("Failed to publish parsing task: %s", e)
+            PUBLISHED_MESSAGES_TOTAL.labels(
+                queue=CrawlerQueueChannels.PAGES_TO_PARSE.value,
+                status="failure"
+            ).inc()

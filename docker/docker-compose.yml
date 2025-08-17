@@ -8,6 +8,9 @@ x-crawler-common: &crawler-common
     - redis
   env_file: .env
   command: [ "python", "-m", "components.crawler.main" ]
+  networks:
+    default:
+      aliases: [ 'crawler' ]
   volumes:
     - compressed_html_data:/data/html
   environment:

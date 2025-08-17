@@ -1,6 +1,18 @@
 from prometheus_client import Counter, Histogram
 
 # Counters
+CRAWLER_MESSAGES_RECEIVED_TOTAL = Counter(
+    "crawler_messages_received_total",
+    "Total messages received by crawler message handler",
+    ["status"]
+)
+
+CRAWLER_MESSAGE_FAILURES_TOTAL = Counter(
+    "crawler_message_failures_total",
+    "Unexpected exceptions in crawler message handler",
+    ["error_type"]
+)
+
 CRAWL_PAGES_TOTAL = Counter(
     'crawl_pages_total',
     'Total number of pages crawled by the CrawlerService',
@@ -18,7 +30,13 @@ CRAWLER_HTML_DOWNLOAD_RETRIES_TOTAL = Counter(
     "Total number of HTML download retries attempted (excluding initial attempt)",
     ["url_host"]
 )
-2
+
+PUBLISHED_MESSAGES_TOTAL = Counter(
+    "crawler_published_messages_total",
+    "Total messages published to RabbitMQ queues by the crawler",
+    ["queue", "status"]  # e.g. queue="parsed_content_to_save", status="success"
+)
+
 # Histograms for latency
 PAGE_CRAWL_LATENCY_SECONDS = Histogram(
     'page_crawl_latency_seconds',

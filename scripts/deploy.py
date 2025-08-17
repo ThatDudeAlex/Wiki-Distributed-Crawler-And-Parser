@@ -41,13 +41,17 @@ def up_service(compose_files: list[Path], service: str, scale_count: int) -> boo
     if scale_count <= 0:
         print(f"Skipping {service} (scale set to 0)")
         return False
-    
+
     cmd = ["docker", "compose"]
     for f in compose_files:
-        cmd += ["-f", str(f)]
+        cmd.extend(["-f", str(f)])
 
-    up_cmd = cmd + ["up", "-d", "--remove-orphans", "--scale", f"{service}={scale_count}", service]
-    run_command(up_cmd)
+    cmd.extend(["up", "-d", "--remove-orphans"])
+    if scale_count > 1:
+        cmd.extend(["--scale", f"{service}={scale_count}"])
+    cmd.append(service)
+
+    run_command(cmd)
     return True
 
     

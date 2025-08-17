@@ -14,8 +14,9 @@ def run():
         configs['logging']['logger_name'], configs['logging']['log_level']
     )
 
-    start_http_server(8000)
-    logger.info("Prometheus metrics exposed on port 8000")
+    prometheus_port = configs.get("monitoring", {}).get("port", 8000)
+    start_http_server(prometheus_port)
+    logger.info(f"Prometheus metrics exposed on port {prometheus_port} at /metrics")
 
     queue_service = QueueService(logger, ParserQueueChannels.get_values())
 
