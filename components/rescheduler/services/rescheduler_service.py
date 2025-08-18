@@ -8,7 +8,6 @@ from shared.utils import get_timestamp_eastern_time
 
 from components.rescheduler.monitoring.metrics import (
     RESCHEDULER_PAGES_RESCHEDULED_TOTAL,
-    RESCHEDULER_CRAWL_TASKS_PUBLISHED_TOTAL,
     RESCHEDULER_ERRORS_TOTAL,
     RESCHEDULER_RESCHEDULE_LATENCY_SECONDS,
 )
