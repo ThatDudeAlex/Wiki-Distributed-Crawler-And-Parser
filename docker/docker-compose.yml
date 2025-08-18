@@ -1,3 +1,5 @@
+name: distributed_system
+
 x-crawler-common: &crawler-common
   build:
     context: ..
