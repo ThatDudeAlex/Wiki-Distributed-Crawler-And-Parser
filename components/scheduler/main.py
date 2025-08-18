@@ -18,16 +18,17 @@ from shared.configs.config_loader import component_config_loader, global_config_
 
 COMPONENT_NAME = "scheduler"
 
-def run(configs_override=None):
+def run():
     global_configs = global_config_loader()
 
     redis_configs = global_configs['redis']
-    component_configs = configs_override or component_config_loader(COMPONENT_NAME, True)
+    component_configs = component_config_loader(COMPONENT_NAME, True)
+
     logger = get_logger(
         component_configs['logging']['logger_name'], component_configs['logging']['log_level']
     )
 
-    logger.info("🚀 Scheduler service is starting up...")
+    logger.info("Scheduler service is starting up...")
 
     queue_service = QueueService(logger, SchedulerQueueChannels.get_values())
 
