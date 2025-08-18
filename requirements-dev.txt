@@ -14,6 +14,6 @@ isort
 Pygments
 colorlog
 
-# Pytest-related internals (if not already installed as pytest deps)
+# Pytest-related internals
 iniconfig
 pluggy
