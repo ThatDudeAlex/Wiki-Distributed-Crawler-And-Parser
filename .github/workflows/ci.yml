@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [main, dev]
 
 jobs:
   lint:
@@ -10,9 +10,9 @@ jobs:
     env:
       RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
       RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
-      POSTGRES_DB: ${{ secrets.POSTGRES_DB}}
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD}}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       DL_HTML_PATH: ${{ secrets.DL_HTML_PATH }}
     steps:
       - name: Checkout code
@@ -23,12 +23,11 @@ jobs:
           pip install ruff
           ruff check .
 
-      - uses: actions/checkout@v4
       - name: Install yq
         run: |
           wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
           chmod +x /usr/local/bin/yq
-      
+
       - name: Verify proxy flag - dev
         run: |
           FILE="docker/environments/deploy_configs/scaling.dev.yml"
@@ -37,7 +36,7 @@ jobs:
             echo "::error file=$FILE::use_proxies must be false in dev."
             exit 1
           fi
-      
+
       - name: Verify proxy flag - prod
         run: |
           FILE="docker/environments/deploy_configs/scaling.prod.yml"
@@ -56,8 +55,120 @@ jobs:
           echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
           echo "DL_HTML_PATH=${{ secrets.DL_HTML_PATH }}" >> .env
 
+  # Runs only on main branch
+  enforce-crawler-only-noproxy:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
+          chmod +x /usr/local/bin/yq
+
+      - name: Ensure only crawler_noproxy in root docker-compose.yml
+        run: |
+          set -euo pipefail
+          FILE="docker/docker-compose.yml"
+
+          mapfile -t offenders < <(
+            yq -r '.services | keys[] | select(test("^crawler_") and . != "crawler_noproxy")' "$FILE"
+          )
+
+          if ((${#offenders[@]})); then
+            for s in "${offenders[@]}"; do
+              echo "::error file=$FILE::Disallowed crawler service found: $s (only 'crawler_noproxy' allowed)"
+            done
+            exit 1
+          else
+            echo "OK ($FILE): no disallowed crawler_* services found."
+          fi
+
+      - name: Ensure only crawler_noproxy in docker/environments/docker-compose.dev.yml
+        run: |
+          set -euo pipefail
+          FILE="docker/environments/docker-compose.dev.yml"
+
+          mapfile -t offenders < <(
+            yq -r '.services | keys[] | select(test("^crawler_") and . != "crawler_noproxy")' "$FILE"
+          )
+
+          if ((${#offenders[@]})); then
+            for s in "${offenders[@]}"; do
+              echo "::error file=$FILE::Disallowed crawler service found: $s (only 'crawler_noproxy' allowed)"
+            done
+            exit 1
+          else
+            echo "OK ($FILE): no disallowed crawler_* services found."
+          fi
+
+      - name: Ensure only crawler_noproxy in docker/environments/docker-compose.prod.yml
+        run: |
+          set -euo pipefail
+          FILE="docker/environments/docker-compose.prod.yml"
+
+          mapfile -t offenders < <(
+            yq -r '.services | keys[] | select(test("^crawler_") and . != "crawler_noproxy")' "$FILE"
+          )
+
+          if ((${#offenders[@]})); then
+            for s in "${offenders[@]}"; do
+              echo "::error file=$FILE::Disallowed crawler service found: $s (only 'crawler_noproxy' allowed)"
+            done
+            exit 1
+          else
+            echo "OK ($FILE): no disallowed crawler_* services found."
+          fi
+
+      - name: Ensure only crawler_noproxy appears as a key in scaling.dev.yml
+        run: |
+          set -euo pipefail
+          FILE="docker/environments/deploy_configs/scaling.dev.yml"
+
+          mapfile -t offenders < <(
+            yq -r 'paths | select(length>0) as $p | ($p | .[-1]) as $last
+                    | getpath($p) as $v
+                    | ($last | tostring) as $k
+                    | select($k | test("^crawler_") and . != "crawler_noproxy")
+                    | $k' "$FILE" | sort -u
+          )
+
+          if ((${#offenders[@]})); then
+            for k in "${offenders[@]}"; do
+              echo "::error file=$FILE::Disallowed crawler key found: $k (only 'crawler_noproxy' allowed)"
+            done
+            exit 1
+          else
+            echo "OK ($FILE): no disallowed crawler_* keys found."
+          fi
+
+      - name: Ensure only crawler_noproxy appears as a key in scaling.prod.yml
+        run: |
+          set -euo pipefail
+          FILE="docker/environments/deploy_configs/scaling.prod.yml"
+
+          mapfile -t offenders < <(
+            yq -r 'paths | select(length>0) as $p | ($p | .[-1]) as $last
+                    | getpath($p) as $v
+                    | ($last | tostring) as $k
+                    | select($k | test("^crawler_") and . != "crawler_noproxy")
+                    | $k' "$FILE" | sort -u
+          )
+
+          if ((${#offenders[@]})); then
+            for k in "${offenders[@]}"; do
+              echo "::error file=$FILE::Disallowed crawler key found: $k (only 'crawler_noproxy' allowed)"
+            done
+            exit 1
+          else
+            echo "OK ($FILE): no disallowed crawler_* keys found."
+          fi
+
   unit-test:
     runs-on: ubuntu-latest
+    needs: lint
 
     services:
       postgres:
@@ -77,11 +188,11 @@ jobs:
     env:
       RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
       RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
-      POSTGRES_DB: ${{ secrets.POSTGRES_DB}}
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD}}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       DL_HTML_PATH: ${{ secrets.DL_HTML_PATH }}
-    needs: lint
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -110,4 +221,3 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
           DB_READER_HOST: http://localhost:8001
         run: PYTHONPATH=${{ github.workspace }} pytest -m "not integration" tests/
-        
