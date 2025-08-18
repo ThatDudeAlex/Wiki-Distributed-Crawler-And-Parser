@@ -28,12 +28,12 @@ jobs:
         run: |
           wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
           chmod +x /usr/local/bin/yq
-
+      
       - name: Verify proxy flag - dev
         run: |
           FILE="docker/environments/deploy_configs/scaling.dev.yml"
           VALUE=$(yq '.components.crawler.use_proxies' "$FILE" || echo "null")
-          if [ "$VALUE" = "true" ]; then
+          if [ "$(echo "$VALUE" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
             echo "::error file=$FILE::use_proxies must be false in dev."
             exit 1
           fi
@@ -42,7 +42,7 @@ jobs:
         run: |
           FILE="docker/environments/deploy_configs/scaling.prod.yml"
           VALUE=$(yq '.components.crawler.use_proxies' "$FILE" || echo "null")
-          if [ "$VALUE" = "true" ]; then
+          if [ "$(echo "$VALUE" | tr '[:upper:]' '[:lower:]')" = "true" ]; then
             echo "::error file=$FILE::use_proxies must be false in prod."
             exit 1
           fi

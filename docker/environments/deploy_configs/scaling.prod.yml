@@ -18,7 +18,7 @@ components:
     scaling: 1
 
   crawler:
-    use_proxies: False
+    use_proxies: True
 
     crawler_noproxy:
       scaling: 1
