@@ -3,7 +3,8 @@ logging:
   log_level: INFO
   logger_name: Dispatcher
 
-dispatch_count: 60
+# adjust to the desire number of pages you want to crawl/sec
+dispatch_count: 1
 
 # seconds between each dispatch
 dispatch_tick: 1 

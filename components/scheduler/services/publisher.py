@@ -8,6 +8,7 @@ Handles serialization and routing of:
 
 import logging
 from typing import List
+from components.scheduler.monitoring.metrics import SCHEDULER_PUBLISHED_MESSAGES_TOTAL, SCHEDULER_LINKS_SCHEDULED_TOTAL
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
 from shared.rabbitmq.schemas.crawling import CrawlTask
 from shared.rabbitmq.schemas.scheduling import LinkData
@@ -36,13 +37,23 @@ class PublishingService:
             self._logger.warning("No links provided to publish_save_processed_links - skipping publish")
             return
         
-        message = SaveProcessedLinks(links=links_to_save)
+        try:
+            message = SaveProcessedLinks(links=links_to_save)
 
-        self._queue_service.publish(
-            SchedulerQueueChannels.SCHEDULED_LINKS_TO_SAVE.value, 
-            message.model_dump_json())
+            self._queue_service.publish(
+                SchedulerQueueChannels.SCHEDULED_LINKS_TO_SAVE.value, 
+                message.model_dump_json())
 
-        self._logger.info("Published: Save Processed Links")
+            self._logger.info("Published: Save Processed Links")
+            SCHEDULER_PUBLISHED_MESSAGES_TOTAL.labels(
+                status="success"
+            ).inc()
+        
+        except Exception as e:
+            self._logger.error("Unexpected error occurred: %s", e)
+            SCHEDULER_PUBLISHED_MESSAGES_TOTAL.labels(
+                status="error"
+            ).inc()
 
 
     # TODO: Implement retry mechanism and dead-letter
@@ -56,21 +67,32 @@ class PublishingService:
         if not links_to_crawl:
             self._logger.warning("No links provided to publish_links_to_schedule - skipping publish")
             return
+        try:
         
-        scheduled_links = []
-        
-        for link in links_to_crawl:
-            task = CrawlTask(
-                url=link.url,
-                scheduled_at=get_timestamp_eastern_time(isoformat=True),
-                depth=link.depth
-            )
-            scheduled_links.append(task)
+            scheduled_links = []
+            
+            for link in links_to_crawl:
+                task = CrawlTask(
+                    url=link.url,
+                    scheduled_at=get_timestamp_eastern_time(isoformat=True),
+                    depth=link.depth
+                )
+                scheduled_links.append(task)
+                # SCHEDULER_LINKS_SCHEDULED_TOTAL.inc()
 
-        message = SaveLinksToSchedule(links=scheduled_links)
+            message = SaveLinksToSchedule(links=scheduled_links)
 
-        self._queue_service.publish(
-            SchedulerQueueChannels.ADD_LINKS_TO_SCHEDULE.value, 
-            message.model_dump_json())
-        
-        self._logger.info("Published: %s Links Scheduled", len(scheduled_links))
+            self._queue_service.publish(
+                SchedulerQueueChannels.ADD_LINKS_TO_SCHEDULE.value, 
+                message.model_dump_json())
+            
+            self._logger.info("Published: %s Links Scheduled", len(scheduled_links))
+            SCHEDULER_LINKS_SCHEDULED_TOTAL.inc(len(scheduled_links))
+            SCHEDULER_PUBLISHED_MESSAGES_TOTAL.labels(
+                status="success"
+            ).inc()
+        except Exception as e:
+            self._logger.error("Unexpected error occurred: %s", e)
+            SCHEDULER_PUBLISHED_MESSAGES_TOTAL.labels(
+                status="error"
+            ).inc()

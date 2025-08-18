@@ -12,7 +12,7 @@ SCALING_CONFIG_DIR = Path("docker/environments/deploy_configs")
 
 def run_command(cmd: list[str]):
     """Runs a shell command and exits if it fails."""
-    print(f"\n▶️ Running: {' '.join(cmd)}")
+    print(f"\nRunning: {' '.join(cmd)}")
     result = subprocess.run(cmd)
     if result.returncode != 0:
         print(f"❌ Command failed: {' '.join(cmd)}")
@@ -41,13 +41,17 @@ def up_service(compose_files: list[Path], service: str, scale_count: int) -> boo
     if scale_count <= 0:
         print(f"Skipping {service} (scale set to 0)")
         return False
-    
+
     cmd = ["docker", "compose"]
     for f in compose_files:
-        cmd += ["-f", str(f)]
+        cmd.extend(["-f", str(f)])
 
-    up_cmd = cmd + ["up", "-d", "--remove-orphans", "--scale", f"{service}={scale_count}", service]
-    run_command(up_cmd)
+    cmd.extend(["up", "-d", "--remove-orphans"])
+    if scale_count > 1:
+        cmd.extend(["--scale", f"{service}={scale_count}"])
+    cmd.append(service)
+
+    run_command(cmd)
     return True
 
     
@@ -73,20 +77,24 @@ def deploy_component_gradually(components: dict, compose_files: list[Path], serv
     build_service(compose_files, service)
 
     print(f"Gradually Scaling {service} (2 → {target_scale})...")
-    current_scale = 2
-    while current_scale < target_scale:
-        # If the next increment overshoots, just jump to target
-        next_scale = current_scale + 2
-        if next_scale > target_scale:
-            current_scale = target_scale
-        else:
-            current_scale = next_scale
 
+    current_scale = 0
+    while current_scale < target_scale:
+        next_scale = current_scale + 2
+
+        # If target is odd, just jump to the target
+        if next_scale > target_scale:
+            next_scale = target_scale
+
+        current_scale = next_scale
         print(f"Scaling {service} to {current_scale}...")
         up_service(compose_files, service, current_scale)
-        run_command(["sleep", "2"])
+
+        if current_scale < target_scale:
+            run_command(["sleep", "2"])
 
     print(f"✅ {service} scaled to {target_scale}")
+
 
 
 def deploy_monitoring_services(compose_files: list[Path]):

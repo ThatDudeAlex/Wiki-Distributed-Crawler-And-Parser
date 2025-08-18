@@ -1,3 +1,4 @@
+from prometheus_client import start_http_server
 from shared.logging_utils import get_logger
 from shared.rabbitmq.queue_service import QueueService
 from components.rescheduler.services.rescheduler_service import Rescheduler
@@ -14,10 +15,14 @@ def main():
 
     queue_service = QueueService(logger, ReschedulerQueueChannels.get_values())
 
-    dispatcher = Rescheduler(configs, queue_service, logger)
+    prometheus_port = configs.get("monitoring", {}).get("port", 8000)
+    start_http_server(prometheus_port)
+    logger.info(f"Prometheus metrics exposed on port {prometheus_port}")
+
+    rescheduler = Rescheduler(configs, queue_service, logger)
 
     logger.info("Starting Rescheduler Component...")
-    dispatcher.run()
+    rescheduler.run()
 
 
 if __name__ == "__main__":

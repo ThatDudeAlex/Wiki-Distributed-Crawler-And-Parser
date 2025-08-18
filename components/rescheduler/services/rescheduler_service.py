@@ -8,7 +8,6 @@ from shared.utils import get_timestamp_eastern_time
 
 from components.rescheduler.monitoring.metrics import (
     RESCHEDULER_PAGES_RESCHEDULED_TOTAL,
-    RESCHEDULER_CRAWL_TASKS_PUBLISHED_TOTAL,
     RESCHEDULER_ERRORS_TOTAL,
     RESCHEDULER_RESCHEDULE_LATENCY_SECONDS,
 )
@@ -39,9 +38,9 @@ class Rescheduler:
         Main rescheduling loop
         """
         while True:
+            sleep(self.configs['rescheduling_tick'])
             self._logger.info("Rescheduler Running...")
             self._reschedule()
-            sleep(self.configs['rescheduling_tick'])
 
 
     def _reschedule(self) -> None:
@@ -64,10 +63,9 @@ class Rescheduler:
                         )
                         for page in pages
                     ]
-
+                    
                     self._publisher.publish_crawl_tasks(tasks)
-                    RESCHEDULER_CRAWL_TASKS_PUBLISHED_TOTAL.inc(len(tasks))
-
+                    
         except Exception:
             self._logger.exception("Rescheduler encountered an unexpected error")
             RESCHEDULER_ERRORS_TOTAL.inc()

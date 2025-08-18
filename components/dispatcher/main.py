@@ -1,3 +1,4 @@
+from prometheus_client import start_http_server
 from shared.logging_utils import get_logger
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import DispatcherQueueChannels
@@ -25,6 +26,10 @@ def run() -> None:
     )
 
     queue_service = QueueService(logger, DispatcherQueueChannels.get_values())
+
+    prometheus_port = dispatcher_configs.get("monitoring", {}).get("port", 8000)
+    start_http_server(prometheus_port)
+    logger.info(f"Prometheus metrics exposed on port {prometheus_port}")
 
     dispatcher = Dispatcher(dispatcher_configs, queue_service, logger)
 

@@ -7,7 +7,8 @@ RESCHEDULER_PAGES_RESCHEDULED_TOTAL = Counter(
 
 RESCHEDULER_CRAWL_TASKS_PUBLISHED_TOTAL = Counter(
     "rescheduler_crawl_tasks_published_total",
-    "Total number of crawl tasks published by the rescheduler"
+    "Total number of crawl tasks published by the rescheduler",
+    ["status"]
 )
 
 RESCHEDULER_ERRORS_TOTAL = Counter(

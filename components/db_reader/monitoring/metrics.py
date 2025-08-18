@@ -1,5 +1,18 @@
 from prometheus_client import Counter, Histogram
 
+# Counters
+DB_READER_REQUESTS_RECEIVED_TOTAL = Counter(
+    "db_reader_requests_received_total",
+    "Total requests received by db_reader",
+    ["status", "operation"]
+)
+
+DB_READER_REQUESTS_FAILURES_TOTAL = Counter(
+    "db_reader_requests_failures_total",
+    "Unexpected exceptions in db_reader",
+    ["error_type"]
+)
+
 # Count of links popped from the scheduled_links table
 DB_READER_LINKS_POPPED_TOTAL = Counter(
     "db_reader_links_popped_total",

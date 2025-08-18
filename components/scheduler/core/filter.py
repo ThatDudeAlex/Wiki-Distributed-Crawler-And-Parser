@@ -1,7 +1,7 @@
 import logging
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
-from components.scheduler.monitoring.metrics import FILTERED_LINKS_TOTAL
+from components.scheduler.monitoring.metrics import FILTERED_LINKS_TOTAL, SCHEDULER_PROCESSING_DURATION_SECONDS
 from shared.rabbitmq.schemas.scheduling import LinkData
 
 
@@ -48,15 +48,18 @@ class FilteringService:
         Returns:
             True if the link should be filtered, False otherwise
         """
-        return (
-            self._exceeds_max_depth(link) or
-            self._is_external_domain(link) or
-            self._is_not_article_page(link) or
-            self._is_blocked_by_robot(link)
-        )
+        with SCHEDULER_PROCESSING_DURATION_SECONDS.labels("filtering").time():
+            return (
+                self._exceeds_max_depth(link) or
+                self._is_external_domain(link) or
+                self._is_not_article_page(link) or
+                self._is_blocked_by_robot(link)
+            )
 
     def _exceeds_max_depth(self, link: LinkData) -> bool:
         if link.depth > self._configs['filters']['max_depth']:
+            self._logger.info('Link Depth: %s', link.depth)
+            self._logger.info('Scheduler Depth Config: %s', self._configs['filters']['max_depth'])
             FILTERED_LINKS_TOTAL.labels(filter_type="depth").inc()
             return True
         return False

@@ -6,6 +6,8 @@ to handle incoming scheduling tasks via RabbitMQ
 """
 
 import logging
+
+from prometheus_client import start_http_server
 from shared.logging_utils import get_logger
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
@@ -16,18 +18,24 @@ from shared.configs.config_loader import component_config_loader, global_config_
 
 COMPONENT_NAME = "scheduler"
 
-def run(configs_override=None):
+def run():
     global_configs = global_config_loader()
 
     redis_configs = global_configs['redis']
-    component_configs = configs_override or component_config_loader(COMPONENT_NAME, True)
+    component_configs = component_config_loader(COMPONENT_NAME, True)
+
     logger = get_logger(
         component_configs['logging']['logger_name'], component_configs['logging']['log_level']
     )
 
-    logger.info("🚀 Scheduler service is starting up...")
+    logger.info("Scheduler service is starting up...")
 
     queue_service = QueueService(logger, SchedulerQueueChannels.get_values())
+
+    prometheus_port = component_configs.get("monitoring", {}).get("port", 8000)
+    start_http_server(prometheus_port)
+    logger.info(f"Prometheus metrics exposed on port {prometheus_port}")
+
     scheduler_service = ScheduleService(component_configs, redis_configs, queue_service, logger)
     start_schedule_listener(scheduler_service, queue_service, logger)
 

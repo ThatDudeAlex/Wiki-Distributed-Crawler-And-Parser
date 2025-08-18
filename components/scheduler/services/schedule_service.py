@@ -3,7 +3,6 @@ from typing import List, Optional
 from components.scheduler.monitoring.metrics import (
     SCHEDULER_LINKS_DEDUPLICATED_TOTAL,
     SCHEDULER_LINKS_RECEIVED_TOTAL,
-    SCHEDULER_LINKS_SCHEDULED_TOTAL,
     SCHEDULER_PROCESSING_DURATION_SECONDS,
 
 )
@@ -51,10 +50,8 @@ class ScheduleService:
         total_links = len(page_links.links)
         SCHEDULER_LINKS_RECEIVED_TOTAL.inc(total_links)
         
-
-        with SCHEDULER_PROCESSING_DURATION_SECONDS.time():
-            unseen_links = self._get_unseen_links(page_links.links)
-            valid_links = self._process_links_concurrently(unseen_links)
+        unseen_links = self._get_unseen_links(page_links.links)
+        valid_links = self._process_links_concurrently(unseen_links)
 
         self._logger.info("Link Processing Completed — %d valid out of %d",
                       len(valid_links), total_links)
@@ -70,16 +67,17 @@ class ScheduleService:
         all_urls = [link.url for link in all_links]
 
         try:
-            seen_flags = self.cache.batch_is_seen_url(all_urls)
-            unseen_links = [link for link, seen in zip(all_links, seen_flags) if not seen]
+            with SCHEDULER_PROCESSING_DURATION_SECONDS.labels("deduplication").time():
+                seen_flags = self.cache.batch_is_seen_url(all_urls)
+                unseen_links = [link for link, seen in zip(all_links, seen_flags) if not seen]
 
-            deduplicated_count = len(all_links) - len(unseen_links)
+                deduplicated_count = len(all_links) - len(unseen_links)
 
-            # Increment the metric by however many URLs were dropped because they had already
-            # been processed before
-            SCHEDULER_LINKS_DEDUPLICATED_TOTAL.inc(deduplicated_count)
+                # Increment the metric by however many URLs were dropped because they had already
+                # been processed before
+                SCHEDULER_LINKS_DEDUPLICATED_TOTAL.inc(deduplicated_count)
 
-            return unseen_links
+                return unseen_links
         
         except Exception:
             self._logger.exception("Redis batch seen check failed")
@@ -115,6 +113,9 @@ class ScheduleService:
 
     def _publish_valid_links(self, links: List[LinkData]) -> None:
         self._logger.info("Publishing %d valid links", len(links))
-        SCHEDULER_LINKS_SCHEDULED_TOTAL.inc(len(links))
-        self._publisher.publish_save_processed_links(links)
-        self._publisher.publish_links_to_schedule(links)
+        
+        with SCHEDULER_PROCESSING_DURATION_SECONDS.labels("publish_save_processed_links").time():
+            self._publisher.publish_save_processed_links(links)
+
+        with SCHEDULER_PROCESSING_DURATION_SECONDS.labels("publish_links_to_schedule").time():
+            self._publisher.publish_links_to_schedule(links)

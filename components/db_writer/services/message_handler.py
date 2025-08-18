@@ -1,6 +1,7 @@
 import logging
 from functools import partial
 
+from components.db_writer.monitoring.metrics import DB_WRITER_MESSAGE_FAILURES_TOTAL, DB_WRITER_MESSAGES_RECEIVED_TOTAL
 from shared.rabbitmq.enums.queue_names import DbWriterQueueChannels
 from shared.rabbitmq.queue_service import QueueService
 from components.db_writer.core.db_writer import (
@@ -37,16 +38,19 @@ def consume_save_page_metadata(ch, method, properties, body, logger: logging.Log
         save_page_metadata(task, logger)
 
         # acknowledge success
+        DB_WRITER_MESSAGES_RECEIVED_TOTAL.labels(status="valid").inc()
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     except ValueError as e:
         logger.error(f"Message Skipped - Invalid task message: {e}")
+        DB_WRITER_MESSAGE_FAILURES_TOTAL.labels(error_type="ValueError").inc()
+        DB_WRITER_MESSAGES_RECEIVED_TOTAL.labels(status="error").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
     except Exception as e:
-        # TODO: look into if retrying could help the situation
-        # maybe requeue for OperationalError or add a dead-letter queue
         logger.error(f"Error processing message: {e}")
+        DB_WRITER_MESSAGE_FAILURES_TOTAL.labels(error_type="UnexpectedError").inc()
+        DB_WRITER_MESSAGES_RECEIVED_TOTAL.labels(status="error").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
@@ -72,16 +76,19 @@ def consume_save_parsed_content(ch, method, properties, body, logger: logging.Lo
         save_parsed_data(task, logger)
 
         # acknowledge success
+        DB_WRITER_MESSAGES_RECEIVED_TOTAL.labels(status="valid").inc()
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     except ValueError as e:
         logger.error(f"Message Skipped - Invalid task message: {e}")
+        DB_WRITER_MESSAGE_FAILURES_TOTAL.labels(error_type="ValueError").inc()
+        DB_WRITER_MESSAGES_RECEIVED_TOTAL.labels(status="error").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
     except Exception as e:
-        # TODO: look into if retrying could help the situation
-        # maybe requeue for OperationalError or add a dead-letter queue
         logger.error(f"Error processing message: {e}")
+        DB_WRITER_MESSAGE_FAILURES_TOTAL.labels(error_type="UnexpectedError").inc()
+        DB_WRITER_MESSAGES_RECEIVED_TOTAL.labels(status="error").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
@@ -107,16 +114,19 @@ def consume_save_processed_links(ch, method, properties, body, logger: logging.L
         save_processed_links(task, logger)
 
         # acknowledge success
+        DB_WRITER_MESSAGES_RECEIVED_TOTAL.labels(status="valid").inc()
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     except ValueError as e:
-        logger.error("Message Skipped - Invalid task message: %s", e)
+        logger.error(f"Message Skipped - Invalid task message: {e}")
+        DB_WRITER_MESSAGE_FAILURES_TOTAL.labels(error_type="ValueError").inc()
+        DB_WRITER_MESSAGES_RECEIVED_TOTAL.labels(status="error").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
     except Exception as e:
-        # TODO: look into if retrying could help the situation
-        # maybe requeue for OperationalError or add a dead-letter queue
-        logger.error("Error processing message: %s", e)
+        logger.error(f"Error processing message: {e}")
+        DB_WRITER_MESSAGE_FAILURES_TOTAL.labels(error_type="UnexpectedError").inc()
+        DB_WRITER_MESSAGES_RECEIVED_TOTAL.labels(status="error").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 
@@ -144,16 +154,19 @@ def consume_add_links_to_schedule(ch, method, properties, body, logger: logging.
         add_links_to_schedule(task, logger)
 
         # acknowledge success
+        DB_WRITER_MESSAGES_RECEIVED_TOTAL.labels(status="valid").inc()
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     except ValueError as e:
-        logger.error("Message Skipped - Invalid task message: %s", e)
+        logger.error(f"Message Skipped - Invalid task message: {e}")
+        DB_WRITER_MESSAGE_FAILURES_TOTAL.labels(error_type="ValueError").inc()
+        DB_WRITER_MESSAGES_RECEIVED_TOTAL.labels(status="error").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-        
+
     except Exception as e:
-        # TODO: look into if retrying could help the situation
-        # maybe requeue for OperationalError or add a dead-letter queue
-        logger.error("Error processing message: %s", e)
+        logger.error(f"Error processing message: {e}")
+        DB_WRITER_MESSAGE_FAILURES_TOTAL.labels(error_type="UnexpectedError").inc()
+        DB_WRITER_MESSAGES_RECEIVED_TOTAL.labels(status="error").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 

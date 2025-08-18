@@ -2,46 +2,57 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  # Dev 
-  - job_name: "dev-node-exporter"
+  - job_name: "node-exporter"
     static_configs:
-      - targets: ["192.168.86.15:9100"]
-        labels:
-          env: dev
+      - targets: ["node-exporter:9100"]
 
-  - job_name: "dev-cadvisor"
+  - job_name: "cadvisor"
     static_configs:
-      - targets: ["192.168.86.15:8080"]
-        labels:
-          env: dev
-
-  - job_name: "dev-crawler-service"
-    static_configs:
-      - targets: ["192.168.86.15:8000"]
-        labels:
-          env: dev
+      - targets: ["cadvisor:8080"]
   
-  # Prod
-  - job_name: "prod-node-exporter"
-    static_configs:
-      - targets: ["192.168.86.16:9100"]
-        labels:
-          env: prod
+  - job_name: "crawlers"
+    dns_sd_configs:
+      - names: ["crawler"]   # the shared network alias
+        type: A
+        port: 8000
 
-  - job_name: "prod-cadvisor"
-    static_configs:
-      - targets: ["192.168.86.16:8080"]
-        labels:
-          env: prod
+  - job_name: 'db_writers'
+    dns_sd_configs:
+      - names: ['db_writer']
+        type: A
+        port: 8000
 
-  - job_name: "prod-crawler-service"
-    static_configs:
-      - targets: ["192.168.86.16:8000"]
-        labels:
-          env: prod
+  - job_name: 'db_readers'
+    dns_sd_configs:
+      - names: ['db_reader']
+        type: A
+        port: 8000
+
+  - job_name: 'schedulers'
+    dns_sd_configs:
+      - names: ['scheduler']
+        type: A
+        port: 8000
+
+  - job_name: 'dispatchers'
+    dns_sd_configs:
+      - names: ['dispatcher']
+        type: A
+        port: 8000
+
+  - job_name: 'reschedulers'
+    dns_sd_configs:
+      - names: ['rescheduler']
+        type: A
+        port: 8000
+
+  - job_name: 'parsers'
+    dns_sd_configs:
+      - names: ['parser']
+        type: A
+        port: 8000
+
 
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
-        labels:
-          env: prod

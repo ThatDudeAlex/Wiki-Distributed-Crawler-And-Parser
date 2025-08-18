@@ -2,6 +2,7 @@ import logging
 from functools import partial
 
 from pydantic import ValidationError
+from components.crawler.monitoring.metrics import CRAWLER_MESSAGE_FAILURES_TOTAL, CRAWLER_MESSAGES_RECEIVED_TOTAL, PAGE_CRAWL_LATENCY_SECONDS
 from components.crawler.services.crawler_service import CrawlerService
 from shared.rabbitmq.queue_service import QueueService
 from shared.rabbitmq.schemas.crawling import CrawlTask
@@ -18,22 +19,31 @@ def handle_crawl_message(ch, method, properties, body, crawler_service: CrawlerS
     try:
         task = parse_crawl_task(body)
 
-        logger.info("Initiating crawl for URL: %s", task.url)
-        crawler_service.run(task)
+
+        with PAGE_CRAWL_LATENCY_SECONDS.labels("total_latency").time():
+            logger.info("Initiating crawl for URL: %s", task.url)
+            crawler_service.run(task)
 
         # Acknowledge message
+        CRAWLER_MESSAGES_RECEIVED_TOTAL.labels(status="valid").inc()
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     except UnicodeDecodeError as e:
         logger.error("Failed to decode message body as UTF-8: %s", e)
+        CRAWLER_MESSAGE_FAILURES_TOTAL.labels(error_type="UnicodeDecodeError").inc()
+        CRAWLER_MESSAGES_RECEIVED_TOTAL.labels(status="error").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
     except ValidationError as e:
         logger.error("Message failed schema validation: %s", e)
+        CRAWLER_MESSAGE_FAILURES_TOTAL.labels(error_type="ValidationError").inc()
+        CRAWLER_MESSAGES_RECEIVED_TOTAL.labels(status="error").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
     except Exception as e:
         logger.exception("Unexpected error processing message: %s", e)
+        CRAWLER_MESSAGE_FAILURES_TOTAL.labels(error_type="UnexpectedError").inc()
+        CRAWLER_MESSAGES_RECEIVED_TOTAL.labels(status="error").inc()
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 

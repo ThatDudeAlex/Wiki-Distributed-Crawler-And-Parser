@@ -1,6 +1,7 @@
 import logging
 from typing import List
-from shared.rabbitmq.enums.queue_names import SchedulerQueueChannels
+from components.dispatcher.monitoring.metrics import DISPATCHER_CRAWL_TASKS_PUBLISHED_TOTAL, DISPATCHER_DISPATCH_ERRORS_TOTAL
+from shared.rabbitmq.enums.queue_names import DispatcherQueueChannels
 from shared.rabbitmq.schemas.crawling import CrawlTask
 from shared.rabbitmq.queue_service import QueueService
 
@@ -33,14 +34,21 @@ class PublishingService:
         for task in crawl_tasks:
             try:
                 self._queue_service.publish(
-                    SchedulerQueueChannels.URLS_TO_CRAWL.value, 
+                    DispatcherQueueChannels.URLS_TO_CRAWL.value, 
                     task.model_dump_json()
                 )
                 self._logger.debug("Published Crawl Task: %s", task)
                 successful += 1
+                DISPATCHER_CRAWL_TASKS_PUBLISHED_TOTAL.labels(
+                    status="success"
+                ).inc()
 
             except Exception:
                 self._logger.exception("Failed to publish crawl task")
+                DISPATCHER_DISPATCH_ERRORS_TOTAL.inc()
+                DISPATCHER_CRAWL_TASKS_PUBLISHED_TOTAL.labels(
+                    status="error"
+                ).inc()
 
         self._logger.info("Successfully published %d out of %d crawl tasks", successful, len(crawl_tasks))
 
