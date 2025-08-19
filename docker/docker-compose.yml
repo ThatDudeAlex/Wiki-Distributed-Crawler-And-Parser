@@ -1,5 +1,17 @@
 name: distributed_system
 
+# Rotating file handler
+
+# IMPORTANT:
+#     Not using something to limit log file size (like rotating logs) will slowly but surely 
+#     lead to a catastrophic failure. Trust me, your machine or VM will eventually run 
+#     out of disk space if you don't.
+
+# REAL EXAMPLE:
+#     I learned this the hard way. I ran a simple, single-instance crawler for three 
+#     days straight without rotating logs. My VM completely ran out of disk space and 
+#     crashed because of all the logs piling up. Don't repeat my mistake!
+
 x-logging: &default-logging
   driver: json-file
   options:
