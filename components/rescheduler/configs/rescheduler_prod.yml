@@ -1,5 +1,4 @@
 logging:
-  log_to_file: true
   log_level: INFO
   logger_name: Rescheduler
 

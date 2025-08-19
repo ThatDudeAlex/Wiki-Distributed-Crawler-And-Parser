@@ -1,19 +1,22 @@
 components:
+  # Keep db_reader as 1
   db_reader:
     scaling: 1
   
   db_writer:
-    scaling: 1
+    scaling: 4
 
   parser:
-    scaling: 1
+    scaling: 12
   
   scheduler:
-    scaling: 1
+    scaling: 14
   
+  # Keep dispatcher as 1
   dispatcher:
     scaling: 1
 
+  # Keep rescheduler as 1
   rescheduler:
     scaling: 1
 
@@ -21,7 +24,7 @@ components:
     use_proxies: False
 
     crawler_noproxy:
-      scaling: 1
+      scaling: 3
 
     proxies:
       
