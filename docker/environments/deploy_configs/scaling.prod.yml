@@ -1,4 +1,5 @@
 components:
+  # Keep db_reader as 1
   db_reader:
     scaling: 1
   
@@ -9,11 +10,13 @@ components:
     scaling: 12
   
   scheduler:
-    scaling: 12
+    scaling: 14
   
+  # Keep dispatcher as 1
   dispatcher:
     scaling: 1
 
+  # Keep rescheduler as 1
   rescheduler:
     scaling: 1
 
@@ -96,7 +99,7 @@ components:
       crawler_nyc2:
         scaling: 0
       crawler_nyc3:
-        scaling: 3
+        scaling: 0
       crawler_nyc4:
         scaling: 0
       crawler_nyc5:
@@ -110,7 +113,7 @@ components:
       crawler_dallas1:
         scaling: 3
       crawler_dallas2:
-        scaling: 3
+        scaling: 0
       crawler_victoria1:
         scaling: 3
       crawler_victoria2:

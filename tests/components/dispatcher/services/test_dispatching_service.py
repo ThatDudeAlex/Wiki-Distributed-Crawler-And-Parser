@@ -101,8 +101,23 @@ def test_seed_empty_queue_creates_and_publishes_tasks(
     mock_publisher.publish_crawl_tasks.assert_called_once_with(expected_tasks)
 
 
-def test_dispatch_success(mock_dispatcher):
+@patch("components.dispatcher.services.dispatching_service.DBReaderClient")
+@patch("components.dispatcher.services.dispatching_service.PublishingService")
+def test_dispatch_success(
+    mock_publisher_cls, mock_db_cls, mock_queue_service,
+    mock_logger, configs
+):
+
     # Setup
+    mock_db = MagicMock()
+    mock_db.tables_are_empty.return_value = False
+    mock_db_cls.return_value = mock_db
+
+    mock_publisher = MagicMock()
+    mock_publisher_cls.return_value = mock_publisher
+
+    service = Dispatcher(configs, mock_queue_service, mock_logger)
+
     links_to_dispatch = [
         {
             'url': "https://a.com",
@@ -119,23 +134,39 @@ def test_dispatch_success(mock_dispatcher):
         CrawlTask(url="https://a.com", depth=0, scheduled_at="2025-07-25T00:00:00Z"),
         CrawlTask(url="https://b.com", depth=0, scheduled_at="2025-07-25T00:00:00Z")
     ]
-    mock_dispatcher._dbclient.pop_links_from_schedule.return_value = links_to_dispatch
+    mock_db.pop_links_from_schedule.return_value = links_to_dispatch
     
     # Act
-    mock_dispatcher._dispatch()
+    service._dispatch()
 
     # Assert
-    mock_dispatcher._publisher.publish_crawl_tasks.assert_called_once_with(expected_tasks)
+    service._publisher.publish_crawl_tasks.assert_called_once_with(expected_tasks)
 
 
-def test_dispatch_logs_exception(mock_dispatcher):
+@patch("components.dispatcher.services.dispatching_service.DBReaderClient")
+@patch("components.dispatcher.services.dispatching_service.PublishingService")
+def test_dispatch_logs_exception(
+    mock_publisher_cls, mock_db_cls, mock_queue_service,
+    mock_logger, configs
+):
+
+    # Setup
+    mock_db = MagicMock()
+    mock_db.tables_are_empty.return_value = False
+    mock_db_cls.return_value = mock_db
+
+    mock_publisher = MagicMock()
+    mock_publisher_cls.return_value = mock_publisher
+
+    service = Dispatcher(configs, mock_queue_service, mock_logger)
+
     # Setup: Simulate exception
-    mock_dispatcher._dbclient.pop_links_from_schedule.side_effect = Exception("DB Error")
+    mock_db.pop_links_from_schedule.side_effect = Exception("DB Error")
 
     # Act
-    mock_dispatcher._dispatch()
+    service._dispatch()
 
     # Assert
-    mock_dispatcher._publisher.publish_crawl_tasks.assert_not_called()
+    service._publisher.publish_crawl_tasks.assert_not_called()
 
 
