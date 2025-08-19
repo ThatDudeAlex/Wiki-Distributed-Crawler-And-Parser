@@ -3,7 +3,7 @@ logging:
   logger_name: Dispatcher
 
 # adjust to the desire number of pages you want to crawl/sec
-dispatch_count: 1
+dispatch_count: 81
 
 # seconds between each dispatch
 dispatch_tick: 1 
