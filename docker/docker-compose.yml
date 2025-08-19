@@ -1,5 +1,11 @@
 name: distributed_system
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 x-crawler-common: &crawler-common
   build:
     context: ..
@@ -10,6 +16,7 @@ x-crawler-common: &crawler-common
     - redis
   env_file: .env
   command: [ "python", "-m", "components.crawler.main" ]
+  logging: *default-logging
   networks:
     default:
       aliases: [ 'crawler' ]
@@ -26,6 +33,7 @@ services:
     container_name: rabbitmq
     restart: unless-stopped
     env_file: .env
+    logging: *default-logging
     ports:
       - "15672:15672"
       - "5672:5672"
@@ -37,6 +45,7 @@ services:
     image: postgres:16
     container_name: postgres
     restart: unless-stopped
+    logging: *default-logging
     environment:
       POSTGRES_DB: "${POSTGRES_DB}"
       POSTGRES_USER: "${POSTGRES_USER}"
@@ -61,6 +70,7 @@ services:
     image: redis:alpine
     container_name: redis
     restart: unless-stopped
+    logging: *default-logging
     command: redis-server --maxmemory 2147483648 --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
@@ -399,13 +409,14 @@ services:
     build:
       context: ..
       dockerfile: components/parser/Dockerfile
+    logging: *default-logging
     depends_on:
       - postgres
       - rabbitmq
     env_file: .env
     command: [ "python", "-m", "components.parser.main" ]
     volumes:
-      - compressed_html_data:${DL_HTML_PATH}
+      - compressed_html_data:/data/html
 
   # === Database Services ===
 
@@ -413,6 +424,7 @@ services:
     build:
       context: ..
       dockerfile: components/db_writer/Dockerfile
+    logging: *default-logging
     env_file: .env
     depends_on:
       - postgres
@@ -423,6 +435,7 @@ services:
     build:
       context: ..
       dockerfile: components/db_reader/Dockerfile
+    logging: *default-logging
     env_file: .env
     ports:
       - "8001:8001"
@@ -436,6 +449,7 @@ services:
     build:
       context: ..
       dockerfile: components/scheduler/Dockerfile
+    logging: *default-logging
     env_file: .env
     depends_on:
       - rabbitmq
@@ -449,6 +463,7 @@ services:
     build:
       context: ..
       dockerfile: components/dispatcher/Dockerfile
+    logging: *default-logging
     env_file: .env
     depends_on:
       - rabbitmq
@@ -464,6 +479,7 @@ services:
     build:
       context: ..
       dockerfile: components/rescheduler/Dockerfile
+    logging: *default-logging
     env_file: .env
     depends_on:
       - rabbitmq
