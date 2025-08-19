@@ -28,7 +28,7 @@ It demonstrates a **distributed, event-driven architecture** capable of crawling
 ![RabbitMQ Queues](https://res.cloudinary.com/dmllp7gur/image/upload/v1755366075/Screenshot_2025-08-16_at_1.40.03_PM_qpbjjh.png)
 
 ### Tech Stack
-- **Python 3.11**
+- **Python**
 - **Docker Compose** (dev & prod)  
 - **RabbitMQ** for messaging & load balancing  
 - **PostgreSQL + SQLAlchemy** for persistence  
