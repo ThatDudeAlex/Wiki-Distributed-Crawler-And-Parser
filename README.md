@@ -122,20 +122,78 @@ This step is required before running the deployment script.
 # Clone repository
 git clone https://github.com/ThatDudeAlex/Wiki-Distributed-Crawler-And-Parser.git
 cd Wiki-Distributed-Crawler-And-Parser/
-
-# Deploy in dev mode without monitoring
-./scripts/deploy-system-arm64 --env dev
-
-# Deploy in dev mode with monitoring
-./scripts/deploy-system-arm64 --env dev --monitoring
 ```
 
-This script handles environment selection, scaling configs, and launching containers.  
-Linux/Windows binaries are planned; current binary is for ARM64 (Mac).  
+Run the deployment binary appropriate for your OS:
 
-### Resetting State
+- **Mac (Apple Silicon / ARM64):**
+  ```bash
+  ./scripts/deploy-system-arm64 --env dev
+  ./scripts/deploy-system-arm64 --env dev --monitoring
+
+  # Example: deploy with production configs
+  ./scripts/deploy-system-arm64 --env prod --monitoring
+  ```
+
+- **Linux (x86_64):**
+  ```bash
+  ./scripts/deploy-system-linux --env dev
+  ./scripts/deploy-system-linux --env dev --monitoring
+
+  # Example: deploy with production configs
+  ./scripts/deploy-system-linux --env prod --monitoring
+  ```
+
+- **Windows (x86_64):**
+  ```powershell
+  .\scripts\deploy-system-windows.exe --env dev
+  .\scripts\deploy-system-windows.exe --env dev --monitoring
+
+  # Example: deploy with production configs
+  .\scripts\deploy-system-windows.exe --env prod --monitoring
+  ```
+
+This deployment script handles environment selection, scaling configs, and launching containers.  
+It accepts the following flags:
+
+- `--monitoring` → Determines whether the monitoring stack (Prometheus, Grafana, cAdvisor, node-exporter, pgAdmin) is deployed.  
+- `--env` → Specifies which environment configs to use. Available values: `dev` or `prod`.  
+  - If `--env` is not provided, the script defaults to **dev** configs.  
+
+You only need Docker & Docker Compose installed.  
+
+### Reset Project Docker State (Safe Reset)
+If you only want to clear containers, networks, and volumes **related to this project** (without touching global Docker state), use:
+
 ```bash
-scripts/reset-vm-docker-state.sh
+scripts/reset-project-docker-state.sh
+```
+
+This script runs:
+
+```bash
+docker compose -f docker/docker-compose.yml down -v
+```
+
+It removes all services, networks, and volumes created by the project’s Compose files.  
+
+⚠️ **Note:** Project volumes (e.g., PostgreSQL and Redis data) will also be deleted. If you want to preserve data volumes, run instead:
+
+```bash
+docker compose -f docker/docker-compose.yml stop
+docker compose -f docker/docker-compose.yml rm -f
+```
+
+
+### Resetting Docker State (Full Cleanup)
+This script **stops all containers and prunes all Docker data** on the host connected to the docker context:  
+- Stops running containers  
+- Removes all containers, images, networks, build cache, and volumes  
+
+⚠️ **Warning:** This is destructive and will wipe *all* Docker state on the machine, not just this project.
+
+```bash
+scripts/wipe-docker-host.sh
 ```
 
 ---
