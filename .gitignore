@@ -24,6 +24,7 @@ __pycache__/
 .env
 .coverage
 .ruff_cache
+.venv
 
 # Logs
 logs/

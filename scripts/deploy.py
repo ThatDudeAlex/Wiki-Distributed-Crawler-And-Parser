@@ -126,17 +126,15 @@ def main():
         BASE_COMPOSE,
         ENV_COMPOSE_DIR / f"docker-compose.{args.env}.yml"
     ]
+
+    print(f"Deploying to {args.env.upper()} environment")
+
     if args.monitoring:
         compose_files.append(MONITORING_COMPOSE)
         deploy_monitoring_services(compose_files)
 
     scaling = load_scaling_config(args.env)
     components = scaling.get("components", {})
-
-    docker_context = f"distribute-{args.env}"
-    run_command(['docker', 'context', 'use', docker_context])
-
-    print(f"Deploying to {args.env.upper()} environment")
 
     # Step 1: Infra
     build_and_up(compose_files, "rabbitmq", 1, build=True)
